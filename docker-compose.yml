@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AI_DOCS_DIR: /docs
+      DATABASE_URL: postgres://payload:payload@postgres:5432/payload
+      XAI_API_KEY: ${XAI_API_KEY}
+      XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
+      GROK_TEXT_MODEL: ${GROK_TEXT_MODEL:-grok-4.3}
+      GROK_IMAGE_MODEL: ${GROK_IMAGE_MODEL:-grok-imagine-image}
+      GROK_VIDEO_MODEL: ${GROK_VIDEO_MODEL:-grok-imagine-video}
+      GROK_VIDEO_POLL_ATTEMPTS: ${GROK_VIDEO_POLL_ATTEMPTS:-12}
+      GROK_VIDEO_POLL_INTERVAL_MS: ${GROK_VIDEO_POLL_INTERVAL_MS:-5000}
+      PAYLOAD_ADMIN_EMAIL: ${PAYLOAD_ADMIN_EMAIL:-dev@payloadcms.com}
+      PAYLOAD_ADMIN_PASSWORD: ${PAYLOAD_ADMIN_PASSWORD:-test}
+      PAYLOAD_DB_PUSH: ${PAYLOAD_DB_PUSH:-true}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-local-dev-secret-change-me}
+      PORT: 3000
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - ${APP_PORT:-3000}:3000
+    volumes:
+      - type: bind
+        source: ${AI_DOCS_DIR:-./docs}
+        target: /docs
+        read_only: true
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_PASSWORD: payload
+      POSTGRES_USER: payload
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U payload -d payload']
+      interval: 2s
+      retries: 30
+      start_period: 5s
+      timeout: 5s
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

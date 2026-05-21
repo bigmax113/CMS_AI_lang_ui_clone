@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: cms-ai
+    env: docker
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /ai
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cms-ai-postgres
+          property: connectionString
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: cms-ai-postgres
+          property: connectionString
+      - key: PAYLOAD_SECRET
+        generateValue: true
+      - key: PAYLOAD_ADMIN_EMAIL
+        value: dev@payloadcms.com
+      - key: PAYLOAD_ADMIN_PASSWORD
+        sync: false
+      - key: PAYLOAD_DB_PUSH
+        value: 'true'
+      - key: AI_DOCS_DIR
+        value: /app/docs
+      - key: XAI_API_KEY
+        sync: false
+      - key: XAI_BASE_URL
+        value: https://api.x.ai/v1
+      - key: GROK_TEXT_MODEL
+        value: grok-4.3
+      - key: GROK_IMAGE_MODEL
+        value: grok-imagine-image
+      - key: GROK_VIDEO_MODEL
+        value: grok-imagine-video
+      - key: GROK_VIDEO_POLL_ATTEMPTS
+        value: '12'
+      - key: GROK_VIDEO_POLL_INTERVAL_MS
+        value: '5000'
+
+databases:
+  - name: cms-ai-postgres
+    databaseName: payload
+    user: payload
+    plan: starter
