@@ -2,8 +2,8 @@ services:
   - type: web
     name: cms-ai
     env: docker
-    plan: starter
-    region: frankfurt
+    plan: free
+    region: oregon
     healthCheckPath: /ai
     envVars:
       - key: DATABASE_URL
@@ -22,6 +22,8 @@ services:
         sync: false
       - key: PAYLOAD_DB_PUSH
         value: 'true'
+      - key: PAYLOAD_DB_SCHEMA
+        value: cms_ai
       - key: AI_DOCS_DIR
         value: /app/docs
       - key: XAI_API_KEY
@@ -43,4 +45,4 @@ databases:
   - name: cms-ai-postgres
     databaseName: payload
     user: payload
-    plan: starter
+    plan: free

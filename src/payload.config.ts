@@ -22,6 +22,7 @@ import { SiteLinksCollection, siteLinksSlug } from './collections/SiteLinks'
 import { SitesCollection, sitesSlug } from './collections/Sites'
 import { TestRunsCollection, testRunsSlug } from './collections/TestRuns'
 import { Users, usersSlug } from './collections/Users'
+import { migrations } from './migrations'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,6 +30,7 @@ const payloadSecret =
   process.env.PAYLOAD_SECRET ||
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
+const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
 
 const richTextParagraph = ({ text }: { text: string }) => ({
   root: {
@@ -96,7 +98,9 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || '',
     },
+    prodMigrations: migrations,
     push: process.env.PAYLOAD_DB_PUSH !== 'false',
+    schemaName: databaseSchemaName,
   }),
   onInit: async (payload) => {
     const adminEmail = process.env.PAYLOAD_ADMIN_EMAIL || 'dev@payloadcms.com'
