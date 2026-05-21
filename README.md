@@ -13,7 +13,7 @@ Docker-ready Payload CMS + Grok prototype for AI-assisted content operations.
 - `Blog Templates` - reusable blog structures, SEO patterns, AI prompts, and linking rules.
 - `Blog Posts` - template-driven posts with AI briefs, related content, SEO, and link plans.
 - `Site Links` - approved cross-site links, transition-page copy, anchors, and AI rationale.
-- `Articles` and `Media` - normal CMS editor surfaces for content testing.
+- `Articles` and `Media` - normal CMS editor surfaces for content testing and RAG document uploads.
 
 ## AI Provider
 
@@ -57,7 +57,10 @@ test
 docker compose up --build
 ```
 
-Set `AI_DOCS_DIR` in `.env` if you want Docker to mount a real document folder.
+Set `AI_DOCS_DIR` in `.env` if you want Docker to mount a real seed document folder.
+Upload test RAG files through `/admin/collections/media`; the AI workbench scans both `AI_DOCS_DIR` and `PAYLOAD_UPLOAD_DIR`.
+
+Supported RAG upload formats: PDF, TXT, Markdown, DOCX, XLIFF, and XML. On Render free, uploaded files are suitable for prototype testing but can disappear after restarts or redeploys because the local filesystem is ephemeral.
 
 ## Render
 

@@ -1,6 +1,17 @@
 import React from 'react'
+import Link from 'next/link'
 
 const quickLinks = [
+  {
+    description: 'Open the connected AI workspace for RAG tests, media generation, and UI translation.',
+    href: '/ai',
+    label: 'AI Workbench',
+  },
+  {
+    description: 'Upload PDFs, DOCX, Markdown, TXT, XML, and XLIFF files for RAG testing.',
+    href: '/admin/collections/media',
+    label: 'RAG Documents',
+  },
   {
     description: 'Manage goals, source folders, model defaults, and acceptance criteria.',
     href: '/admin/collections/ai-projects',
@@ -36,7 +47,7 @@ const quickLinks = [
 const metrics = [
   {
     label: 'AI surfaces',
-    value: '3',
+    value: '4',
   },
   {
     label: 'CMS systems',
@@ -59,6 +70,14 @@ export const AdminDashboard = () => {
             A focused admin workspace for AI-assisted document QA, prompt reuse, blog
             templates, and managed cross-site linking.
           </p>
+          <div className="custom-admin-dashboard__actions">
+            <Link className="custom-admin-dashboard__primary-action" href="/ai">
+              Open AI Workbench
+            </Link>
+            <Link className="custom-admin-dashboard__secondary-action" href="/admin/collections/media">
+              Upload RAG documents
+            </Link>
+          </div>
         </div>
         <div className="custom-admin-dashboard__metrics" aria-label="Admin workspace metrics">
           {metrics.map((metric) => (
@@ -72,10 +91,10 @@ export const AdminDashboard = () => {
 
       <div className="custom-admin-dashboard__grid">
         {quickLinks.map((item) => (
-          <a className="custom-admin-dashboard__link" href={item.href} key={item.href}>
+          <Link className="custom-admin-dashboard__link" href={item.href} key={item.href}>
             <strong>{item.label}</strong>
             <span>{item.description}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

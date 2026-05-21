@@ -231,7 +231,9 @@ export function AiDocsWorkbench() {
     return inventory.files
       .filter(
         (file) =>
-          folder === 'all' || file.folder === folder || file.folder.startsWith(`${folder}\\`),
+          folder === 'all' ||
+          file.folder === folder ||
+          (Boolean(folder) && file.folder.startsWith(`${folder}/`)),
       )
       .filter((file) => !include || file.relativePath.toLowerCase().includes(include.toLowerCase()))
       .slice(0, 160)
@@ -938,6 +940,16 @@ export function AiDocsWorkbench() {
               <span className={styles.badge}>
                 {visibleFiles.length} {t('visible')}
               </span>
+            </div>
+
+            <div className={styles.uploadCallout}>
+              <div>
+                <strong>{t('uploadRagDocuments')}</strong>
+                <span>{t('uploadRagDocumentsHint')}</span>
+              </div>
+              <Link className={styles.secondaryLink} href="/admin/collections/media">
+                {t('openMediaLibrary')}
+              </Link>
             </div>
 
             <div className={styles.corpusGrid}>

@@ -271,6 +271,7 @@
           <a href="#ask">5. Вопросы к документам</a>
           <a href="#media">6. Генерация изображений и видео</a>
           <a href="#corpus">7. Корпус документов</a>
+          <a href="#rag-upload">7.1. Загрузка документов для RAG</a>
           <a href="#admin">8. Payload Admin</a>
           <a href="#blog">9. Блог, шаблоны и перелинковка</a>
           <a href="#render">10. Render и переменные окружения</a>
@@ -492,6 +493,35 @@
           Если документов нет, интерфейс покажет нули по файлам и папкам, но
           остальные AI-функции продолжат работать.
         </p>
+        <h3 id="rag-upload">Как загрузить документы для RAG-теста</h3>
+        <div class="steps">
+          <div class="step">
+            Откройте <a href="https://cms-ai.onrender.com/admin">/admin</a> и войдите в Payload Admin.
+          </div>
+          <div class="step">
+            На dashboard нажмите <strong>Upload RAG documents</strong> или откройте коллекцию
+            <strong>Media</strong>.
+          </div>
+          <div class="step">
+            Нажмите <strong>Create New</strong>, выберите файл и сохраните запись. Для теста подходят
+            PDF, TXT, Markdown, DOCX, XLIFF и XML.
+          </div>
+          <div class="step">
+            Вернитесь в <a href="https://cms-ai.onrender.com/ai">/ai</a>, откройте вкладку
+            <strong>Corpus</strong> и нажмите <strong>Refresh</strong>. Загруженные файлы появятся
+            в группе <strong>Uploaded media</strong>.
+          </div>
+          <div class="step">
+            На вкладке <strong>Ask</strong> выберите <strong>Uploaded media</strong> или оставьте
+            <strong>All folders</strong>, затем нажмите <strong>Preview sources</strong> и
+            <strong>Ask Grok</strong>.
+          </div>
+        </div>
+        <div class="note">
+          В Render free загрузки хранятся в локальной папке <code>/app/media</code>. Этого достаточно
+          для демонстрационного RAG-теста, но после redeploy или restart файлы могут исчезнуть.
+          Для production-режима нужен Render Disk, S3 или другой постоянный storage.
+        </div>
       </section>
 
       <section id="admin">
@@ -593,6 +623,14 @@
               <td><code>cms_ai</code>, изоляция прототипа в Postgres.</td>
             </tr>
             <tr>
+              <td><code>AI_DOCS_DIR</code></td>
+              <td>Seed-каталог документов, который входит в Docker-образ: <code>/app/docs</code>.</td>
+            </tr>
+            <tr>
+              <td><code>PAYLOAD_UPLOAD_DIR</code></td>
+              <td>Каталог загрузок Media для RAG-теста: <code>/app/media</code>.</td>
+            </tr>
+            <tr>
               <td><code>PAYLOAD_SECRET</code></td>
               <td>Секрет Payload, сгенерирован в Render.</td>
             </tr>
@@ -633,7 +671,11 @@
             </tr>
             <tr>
               <td>Нет документов в Corpus</td>
-              <td>Проверить, что файлы лежат в Docker-образе в <code>/app/docs</code>.</td>
+              <td>
+                Проверить <code>/app/docs</code> для seed-файлов и загрузить тестовые документы
+                через <strong>Admin -> Media</strong>. После загрузки нажать <strong>Refresh</strong>
+                во вкладке Corpus.
+              </td>
             </tr>
             <tr>
               <td>Генерация видео долго висит</td>

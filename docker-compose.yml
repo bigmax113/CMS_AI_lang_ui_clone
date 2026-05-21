@@ -9,6 +9,7 @@ services:
     environment:
       AI_DOCS_DIR: /docs
       DATABASE_URL: postgres://payload:payload@postgres:5432/payload
+      PAYLOAD_UPLOAD_DIR: /app/media
       XAI_API_KEY: ${XAI_API_KEY}
       XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
       GROK_TEXT_MODEL: ${GROK_TEXT_MODEL:-grok-4.3}
@@ -30,6 +31,9 @@ services:
         source: ${AI_DOCS_DIR:-./docs}
         target: /docs
         read_only: true
+      - type: volume
+        source: media
+        target: /app/media
 
   postgres:
     image: postgres:16
@@ -49,4 +53,5 @@ services:
       - pgdata:/var/lib/postgresql/data
 
 volumes:
+  media:
   pgdata:

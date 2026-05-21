@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { Buffer } from 'node:buffer'
+import type { Dirent } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
@@ -8,9 +9,16 @@ import zlib from 'node:zlib'
 const execFileAsync = promisify(execFile)
 
 const DEFAULT_DOCS_DIR = path.resolve(process.cwd(), 'docs')
+const DEFAULT_UPLOAD_DIR = path.resolve(process.cwd(), 'media')
 const MAX_EXTRACTED_CHARS = 80_000
 
-const extractableExtensions = new Set(['.docx', '.md', '.pdf', '.txt', '.xlf', '.xliff'])
+const extractableExtensions = new Set(['.docx', '.md', '.pdf', '.txt', '.xlf', '.xliff', '.xml'])
+
+type DocumentRoot = {
+  dir: string
+  folderPrefix?: string
+  label: string
+}
 
 type DocumentCandidate = {
   extension: string
@@ -19,6 +27,7 @@ type DocumentCandidate = {
   folder: string
   mtimeMs: number
   relativePath: string
+  rootLabel: string
   size: number
 }
 
@@ -104,11 +113,11 @@ export type LocalDocFolders = {
 }
 
 export async function getLocalDocInventory(limit = 100): Promise<LocalDocInventory> {
-  const docsDir = getDocsDir()
-  const files = await listDocuments(docsDir)
+  const documentRoots = getDocumentRoots()
+  const files = await listAllDocuments(documentRoots)
 
   return {
-    docsDir,
+    docsDir: formatDocumentRoots(documentRoots),
     files: files.slice(0, limit).map((file) => ({
       extension: file.extension,
       fileName: file.fileName,
@@ -122,8 +131,8 @@ export async function getLocalDocInventory(limit = 100): Promise<LocalDocInvento
 }
 
 export async function getLocalDocFolders(): Promise<LocalDocFolders> {
-  const docsDir = getDocsDir()
-  const files = await listDocuments(docsDir)
+  const documentRoots = getDocumentRoots()
+  const files = await listAllDocuments(documentRoots)
   const folderMap = new Map<
     string,
     {
@@ -155,7 +164,7 @@ export async function getLocalDocFolders(): Promise<LocalDocFolders> {
   )
 
   return {
-    docsDir,
+    docsDir: formatDocumentRoots(documentRoots),
     folders,
     totalFiles: files.length,
     totalFolders: folders.length,
@@ -172,7 +181,8 @@ export async function buildLocalDocContext(args: {
   question: string
   rankChunks?: ContextChunkRanker
 }): Promise<LocalDocContext> {
-  const docsDir = getDocsDir()
+  const documentRoots = getDocumentRoots()
+  const docsDir = formatDocumentRoots(documentRoots)
   const maxFiles = clampNumber(args.maxFiles, 1, 500, 8)
   const maxChunks = clampNumber(args.maxChunks, 1, 20, 8)
   const maxContextChars = clampNumber(args.maxContextChars, 2_000, 40_000, 14_000)
@@ -181,7 +191,7 @@ export async function buildLocalDocContext(args: {
   const questionTokens = tokenize(args.question)
   const warnings: string[] = []
 
-  let documents = await listDocuments(docsDir)
+  let documents = await listAllDocuments(documentRoots)
 
   if (!args.includePDF) {
     documents = documents.filter((doc) => doc.extension !== '.pdf')
@@ -309,14 +319,71 @@ export async function buildLocalDocContext(args: {
 }
 
 function getDocsDir(): string {
-  return process.env.AI_DOCS_DIR || DEFAULT_DOCS_DIR
+  return resolveConfiguredPath(process.env.AI_DOCS_DIR, DEFAULT_DOCS_DIR)
 }
 
-async function listDocuments(rootDir: string): Promise<DocumentCandidate[]> {
+function getUploadDir(): string {
+  return resolveConfiguredPath(process.env.PAYLOAD_UPLOAD_DIR, DEFAULT_UPLOAD_DIR)
+}
+
+function getDocumentRoots(): DocumentRoot[] {
+  const roots: DocumentRoot[] = [
+    {
+      dir: getDocsDir(),
+      label: 'Seed docs',
+    },
+    {
+      dir: getUploadDir(),
+      folderPrefix: 'Uploaded media',
+      label: 'Uploaded media',
+    },
+  ]
+  const seen = new Set<string>()
+
+  return roots.filter((root) => {
+    const key = path.resolve(root.dir).toLowerCase()
+
+    if (seen.has(key)) {
+      return false
+    }
+
+    seen.add(key)
+
+    return true
+  })
+}
+
+function formatDocumentRoots(roots: DocumentRoot[]): string {
+  return roots.map((root) => `${root.label}: ${root.dir}`).join(' | ')
+}
+
+function resolveConfiguredPath(value: string | undefined, fallback: string): string {
+  const candidate = value?.trim() || fallback
+
+  return path.isAbsolute(candidate) ? candidate : path.resolve(process.cwd(), candidate)
+}
+
+async function listAllDocuments(roots: DocumentRoot[]): Promise<DocumentCandidate[]> {
+  const nested = await Promise.all(roots.map((root) => listDocuments(root)))
+
+  return nested.flat().sort((a, b) => a.relativePath.localeCompare(b.relativePath))
+}
+
+async function listDocuments(root: DocumentRoot): Promise<DocumentCandidate[]> {
   const files: DocumentCandidate[] = []
 
   async function walk(currentDir: string): Promise<void> {
-    const entries = await fs.readdir(currentDir, { withFileTypes: true })
+    let entries: Dirent[]
+
+    try {
+      entries = await fs.readdir(currentDir, { withFileTypes: true })
+    } catch (error) {
+      if (isMissingOrUnreadableDirectory(error)) {
+        return
+      }
+
+      throw error
+    }
 
     for (const entry of entries) {
       if (entry.name.startsWith('~$')) {
@@ -341,8 +408,11 @@ async function listDocuments(rootDir: string): Promise<DocumentCandidate[]> {
       }
 
       const stat = await fs.stat(fullPath)
-      const relativePath = path.relative(rootDir, fullPath)
-      const folder = path.dirname(relativePath)
+      const pathWithinRoot = toPortablePath(path.relative(root.dir, fullPath))
+      const relativePath = root.folderPrefix
+        ? `${root.folderPrefix}/${pathWithinRoot}`
+        : pathWithinRoot
+      const folder = path.posix.dirname(relativePath)
 
       files.push({
         extension,
@@ -351,14 +421,27 @@ async function listDocuments(rootDir: string): Promise<DocumentCandidate[]> {
         fullPath,
         mtimeMs: stat.mtimeMs,
         relativePath,
+        rootLabel: root.label,
         size: stat.size,
       })
     }
   }
 
-  await walk(rootDir)
+  await walk(root.dir)
 
   return files.sort((a, b) => a.fileName.localeCompare(b.fileName))
+}
+
+function isMissingOrUnreadableDirectory(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    'code' in error &&
+    ['ENOENT', 'ENOTDIR', 'EACCES', 'EPERM'].includes(String(error.code))
+  )
+}
+
+function toPortablePath(value: string): string {
+  return value.replace(/\\/gu, '/')
 }
 
 async function extractDocument(doc: DocumentCandidate): Promise<ExtractedDocument> {
@@ -375,7 +458,7 @@ async function extractDocument(doc: DocumentCandidate): Promise<ExtractedDocumen
     extracted = await extractDocx(doc.fullPath)
   } else if (doc.extension === '.pdf') {
     extracted = await extractPDF(doc.fullPath)
-  } else if (doc.extension === '.xlf' || doc.extension === '.xliff') {
+  } else if (doc.extension === '.xlf' || doc.extension === '.xliff' || doc.extension === '.xml') {
     const text = await fs.readFile(doc.fullPath, 'utf8')
     extracted = {
       extractor: 'xml-strip',

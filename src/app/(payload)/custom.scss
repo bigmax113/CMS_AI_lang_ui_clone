@@ -43,6 +43,53 @@
   max-width: 740px;
 }
 
+.custom-admin-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.custom-admin-dashboard__primary-action,
+.custom-admin-dashboard__secondary-action {
+  align-items: center;
+  border-radius: 6px;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 0 14px;
+  text-decoration: none;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.custom-admin-dashboard__primary-action {
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  color: #0a5053;
+}
+
+.custom-admin-dashboard__secondary-action {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #f8fbfb;
+}
+
+.custom-admin-dashboard__primary-action:hover,
+.custom-admin-dashboard__primary-action:focus-visible {
+  background: #dff4f2;
+  border-color: #dff4f2;
+}
+
+.custom-admin-dashboard__secondary-action:hover,
+.custom-admin-dashboard__secondary-action:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.44);
+}
+
 .custom-admin-dashboard__metrics {
   display: grid;
   gap: 10px;
