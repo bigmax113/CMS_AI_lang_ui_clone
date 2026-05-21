@@ -49,6 +49,21 @@ type GenerateVideoRequestBody = {
   waitForResult?: boolean
 }
 
+type TranslateUIRequestBody = {
+  locale?: string
+  strings?: Record<string, string>
+}
+
+const UI_TRANSLATION_LANGUAGES: Record<string, string> = {
+  en: 'English',
+  pl: 'Polish',
+  ro: 'Romanian',
+  ru: 'Russian',
+  uk: 'Ukrainian',
+}
+
+const uiTranslationCache = new Map<string, Record<string, string>>()
+
 export const aiDocsEndpoint: Endpoint = {
   handler: async (req) => {
     const url = new URL(req.url || 'http://payload.local/api/ai-docs')
@@ -189,6 +204,63 @@ export const generateVideoEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/generate-video',
+}
+
+export const translateUiEndpoint: Endpoint = {
+  handler: async (req) => {
+    let body: TranslateUIRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as TranslateUIRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const locale = body.locale?.trim().toLowerCase() || 'en'
+    const language = UI_TRANSLATION_LANGUAGES[locale]
+
+    if (!language) {
+      return Response.json({ error: 'Unsupported locale.' }, { status: 400 })
+    }
+
+    const strings = Object.entries(body.strings || {})
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      .slice(0, 180)
+
+    if (!strings.length) {
+      return Response.json({ error: 'Field "strings" is required.' }, { status: 400 })
+    }
+
+    if (locale === 'en') {
+      return Response.json({ locale, strings: Object.fromEntries(strings) })
+    }
+
+    const cacheKey = `${locale}:${JSON.stringify(strings)}`
+    const cached = uiTranslationCache.get(cacheKey)
+
+    if (cached) {
+      return Response.json({ cached: true, locale, strings: cached })
+    }
+
+    const result = await translateUIStrings({
+      language,
+      strings: Object.fromEntries(strings),
+    })
+
+    if (!result.ok) {
+      return Response.json(result, { status: result.status || 502 })
+    }
+
+    uiTranslationCache.set(cacheKey, result.strings)
+
+    return Response.json({
+      locale,
+      model: result.model,
+      strings: result.strings,
+    })
+  },
+  method: 'post',
+  path: '/translate-ui',
 }
 
 function createEmbeddingRanker(args: {
@@ -486,6 +558,91 @@ async function generateGrokVideo(args: {
       error: error instanceof Error ? error.message : String(error),
       model,
       ok: false,
+    }
+  }
+}
+
+async function translateUIStrings(args: {
+  language: string
+  strings: Record<string, string>
+}): Promise<{
+  error?: string
+  model: string
+  ok: boolean
+  status?: number
+  strings: Record<string, string>
+}> {
+  const baseURL = getXAIBaseURL()
+  const model = process.env.GROK_TEXT_MODEL || DEFAULT_GROK_TEXT_MODEL
+
+  try {
+    const response = await fetch(`${baseURL}/chat/completions`, {
+      body: JSON.stringify({
+        max_tokens: 4_000,
+        messages: [
+          {
+            content: [
+              'You translate short user-interface strings for a Payload CMS AI prototype.',
+              `Target language: ${args.language}.`,
+              'Return only valid JSON with exactly the same keys as the input object.',
+              'Do not translate product names, model names, API variable names, URLs, or collection slugs.',
+              'Keep button labels short and natural for software UI.',
+            ].join(' '),
+            role: 'system',
+          },
+          {
+            content: JSON.stringify(args.strings),
+            role: 'user',
+          },
+        ],
+        model,
+        response_format: { type: 'json_object' },
+        temperature: 0,
+      }),
+      headers: createXAIHeaders(),
+      method: 'POST',
+    })
+
+    const payloadText = await response.text()
+
+    if (!response.ok) {
+      return {
+        error: payloadText,
+        model,
+        ok: false,
+        status: response.status,
+        strings: {},
+      }
+    }
+
+    const payload = JSON.parse(payloadText) as {
+      choices?: Array<{
+        message?: {
+          content?: string
+        }
+      }>
+    }
+    const content = payload.choices?.[0]?.message?.content || '{}'
+    const parsed = JSON.parse(content) as Record<string, unknown>
+    const strings = Object.fromEntries(
+      Object.keys(args.strings).map((key) => [
+        key,
+        typeof parsed[key] === 'string' && parsed[key] ? parsed[key] : args.strings[key],
+      ]),
+    )
+
+    return {
+      model,
+      ok: true,
+      status: response.status,
+      strings,
+    }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+      model,
+      ok: false,
+      strings: {},
     }
   }
 }

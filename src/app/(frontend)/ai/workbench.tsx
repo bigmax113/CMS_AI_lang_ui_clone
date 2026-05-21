@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 
+import { baseUICopy, supportedLocales, type UICopy, type UICopyKey, type UILocale } from './i18n'
 import styles from './workbench.module.css'
 
 type DocFile = {
@@ -95,71 +96,85 @@ type GenerateVideoResponse = {
 
 const presets = [
   {
-    label: 'Quick inventory',
-    question: 'Briefly describe what documents are available in this folder.',
+    labelKey: 'presetQuickInventory',
+    questionKey: 'presetQuickInventoryQuestion',
   },
   {
-    label: 'Tester summary',
-    question: 'What should a non-technical tester check first in this workspace?',
+    labelKey: 'presetTesterSummary',
+    questionKey: 'presetTesterSummaryQuestion',
   },
   {
-    label: 'Business answer',
-    question: 'Answer the question using only the retrieved sources and cite the file names.',
+    labelKey: 'presetBusinessAnswer',
+    questionKey: 'presetBusinessAnswerQuestion',
   },
   {
-    label: 'Find gaps',
-    question: 'What information is missing from the current source set?',
+    labelKey: 'presetFindGaps',
+    questionKey: 'presetFindGapsQuestion',
   },
-]
+] satisfies Array<{ labelKey: UICopyKey; questionKey: UICopyKey }>
 
 const adminLinks = [
   {
-    description: 'Create and edit rich content pages with drafts and SEO fields.',
+    descriptionKey: 'adminArticlesDescription',
     href: '/admin/collections/articles',
-    label: 'Articles',
+    labelKey: 'adminArticlesLabel',
   },
   {
-    description: 'Describe validation goals, owner, model, and success criteria.',
+    descriptionKey: 'adminProjectsDescription',
     href: '/admin/collections/ai-projects',
-    label: 'AI Projects',
+    labelKey: 'adminProjectsLabel',
   },
   {
-    description: 'Save reusable prompts for QA, summaries, audits, and drafts.',
+    descriptionKey: 'adminPromptTemplatesDescription',
     href: '/admin/collections/prompt-templates',
-    label: 'Prompt Templates',
+    labelKey: 'adminPromptTemplatesLabel',
   },
   {
-    description: 'Record tester questions, answers, source quality, and review notes.',
+    descriptionKey: 'adminTestRunsDescription',
     href: '/admin/collections/test-runs',
-    label: 'Test Runs',
+    labelKey: 'adminTestRunsLabel',
   },
   {
-    description: 'Create template-driven blog posts with AI briefs and link plans.',
+    descriptionKey: 'adminBlogPostsDescription',
     href: '/admin/collections/blog-posts',
-    label: 'Blog Posts',
+    labelKey: 'adminBlogPostsLabel',
   },
   {
-    description: 'Approve cross-site transitions, anchors, and routing handoffs.',
+    descriptionKey: 'adminSiteLinksDescription',
     href: '/admin/collections/site-links',
-    label: 'Site Links',
+    labelKey: 'adminSiteLinksLabel',
   },
   {
-    description: 'Manage domains, locales, site roles, and default blog paths.',
+    descriptionKey: 'adminSitesDescription',
     href: '/admin/collections/sites',
-    label: 'Sites',
+    labelKey: 'adminSitesLabel',
   },
   {
-    description: 'Upload images, PDFs, and supporting files for CMS content.',
+    descriptionKey: 'adminMediaDescription',
     href: '/admin/collections/media',
-    label: 'Media',
+    labelKey: 'adminMediaLabel',
   },
-]
+] satisfies Array<{ descriptionKey: UICopyKey; href: string; labelKey: UICopyKey }>
 
 export function AiDocsWorkbench() {
   const [activeView, setActiveView] = useState<ActiveView>('ask')
+  const [uiLocale, setUiLocale] = useState<UILocale>(() => {
+    if (typeof window === 'undefined') {
+      return 'en'
+    }
+
+    const storedLocale = window.localStorage.getItem('cms-ai-ui-locale') as UILocale | null
+
+    return storedLocale && supportedLocales.some((locale) => locale.code === storedLocale)
+      ? storedLocale
+      : 'en'
+  })
+  const [uiCopy, setUiCopy] = useState<UICopy>(baseUICopy)
+  const [translatingUi, setTranslatingUi] = useState(false)
+  const [translationNotice, setTranslationNotice] = useState<string | null>(null)
   const [inventory, setInventory] = useState<Inventory | null>(null)
   const [folders, setFolders] = useState<FoldersResponse | null>(null)
-  const [question, setQuestion] = useState(presets[1].question)
+  const [question, setQuestion] = useState(baseUICopy.presetTesterSummaryQuestion)
   const [include, setInclude] = useState('')
   const [folder, setFolder] = useState('all')
   const [answerInQuestionLanguage, setAnswerInQuestionLanguage] = useState(true)
@@ -188,9 +203,15 @@ export function AiDocsWorkbench() {
   const [loadingInventory, setLoadingInventory] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const t = (key: UICopyKey): string => uiCopy[key] || baseUICopy[key]
+
   useEffect(() => {
     void loadInventory()
   }, [])
+
+  useEffect(() => {
+    void loadUiTranslation(uiLocale)
+  }, [uiLocale])
 
   const folderOptions = useMemo(() => folders?.folders || [], [folders?.folders])
 
@@ -215,6 +236,61 @@ export function AiDocsWorkbench() {
       .filter((file) => !include || file.relativePath.toLowerCase().includes(include.toLowerCase()))
       .slice(0, 160)
   }, [folder, include, inventory])
+
+  async function loadUiTranslation(locale: UILocale) {
+    window.localStorage.setItem('cms-ai-ui-locale', locale)
+
+    if (locale === 'en') {
+      setUiCopy(baseUICopy)
+      setTranslationNotice(null)
+      return
+    }
+
+    const cacheKey = `cms-ai-ui-copy:${locale}:v1`
+    const cached = window.localStorage.getItem(cacheKey)
+
+    if (cached) {
+      try {
+        setUiCopy({ ...baseUICopy, ...(JSON.parse(cached) as Partial<UICopy>) })
+        setTranslationNotice(baseUICopy.aiTranslated)
+        return
+      } catch (_error) {
+        window.localStorage.removeItem(cacheKey)
+      }
+    }
+
+    setTranslatingUi(true)
+    setTranslationNotice(baseUICopy.translating)
+
+    try {
+      const response = await fetch('/api/translate-ui', {
+        body: JSON.stringify({
+          locale,
+          strings: baseUICopy,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as {
+        strings?: Partial<UICopy>
+      }
+
+      if (!response.ok || !payload.strings) {
+        throw new Error('UI translation failed.')
+      }
+
+      window.localStorage.setItem(cacheKey, JSON.stringify(payload.strings))
+      setUiCopy({ ...baseUICopy, ...payload.strings })
+      setTranslationNotice(baseUICopy.translationReady)
+    } catch (_error) {
+      setUiCopy(baseUICopy)
+      setTranslationNotice(baseUICopy.translationFailed)
+    } finally {
+      setTranslatingUi(false)
+    }
+  }
 
   async function loadInventory() {
     setLoadingInventory(true)
@@ -365,7 +441,7 @@ export function AiDocsWorkbench() {
           <span className={styles.logo}>P</span>
           <span>
             <strong>Payload AI</strong>
-            <small>Workbench</small>
+            <small>{t('brandSubtitle')}</small>
           </span>
         </a>
 
@@ -375,80 +451,98 @@ export function AiDocsWorkbench() {
             onClick={() => setActiveView('ask')}
             type="button"
           >
-            Ask
+            {t('ask')}
           </button>
           <button
             className={activeView === 'generate' ? styles.activeNavButton : styles.navButton}
             onClick={() => setActiveView('generate')}
             type="button"
           >
-            Generate
+            {t('generate')}
           </button>
           <button
             className={activeView === 'corpus' ? styles.activeNavButton : styles.navButton}
             onClick={() => setActiveView('corpus')}
             type="button"
           >
-            Corpus
+            {t('corpus')}
           </button>
           <button
             className={activeView === 'admin' ? styles.activeNavButton : styles.navButton}
             onClick={() => setActiveView('admin')}
             type="button"
           >
-            Admin
+            {t('admin')}
           </button>
         </nav>
 
         <div className={styles.sidebarBox}>
-          <span>Tester flow</span>
+          <span>{t('testerFlow')}</span>
           <ol>
-            <li>Preview sources.</li>
-            <li>Ask Grok after sources look right.</li>
-            <li>Generate media drafts when needed.</li>
-            <li>Save useful runs in Admin.</li>
+            <li>{t('flowPreviewSources')}</li>
+            <li>{t('flowAskGrok')}</li>
+            <li>{t('flowGenerateMedia')}</li>
+            <li>{t('flowSaveRuns')}</li>
           </ol>
         </div>
 
+        <div className={styles.languageBox}>
+          <label className={styles.field}>
+            {t('language')}
+            <select
+              disabled={translatingUi}
+              onChange={(event) => setUiLocale(event.target.value as UILocale)}
+              value={uiLocale}
+            >
+              {supportedLocales.map((locale) => (
+                <option key={locale.code} value={locale.code}>
+                  {locale.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p>{translationNotice || t('languageHint')}</p>
+        </div>
+
         <Link className={styles.adminButton} href="/admin">
-          Open Payload Admin
+          {t('openPayloadAdmin')}
         </Link>
       </aside>
 
       <section className={styles.workspace}>
         <header className={styles.topbar}>
           <div>
-            <p className={styles.kicker}>Documents + Payload Admin + Grok 4.3</p>
-            <h1>AI workspace for content testing</h1>
+            <p className={styles.kicker}>{t('kicker')}</p>
+            <h1>{t('title')}</h1>
           </div>
           <button
             className={styles.iconButton}
             disabled={loadingInventory}
             onClick={loadInventory}
-            title="Refresh document inventory"
+            title={t('refreshTitle')}
             type="button"
           >
-            Refresh
+            {t('refresh')}
           </button>
         </header>
 
         <section className={styles.metrics} aria-label="Workspace status">
           <div>
-            <span>Documents</span>
+            <span>{t('documents')}</span>
             <strong>{loadingInventory ? '...' : totalFiles.toLocaleString()}</strong>
           </div>
           <div>
-            <span>Folders</span>
+            <span>{t('folders')}</span>
             <strong>{loadingInventory ? '...' : totalFolders.toLocaleString()}</strong>
           </div>
           <div>
-            <span>Selected scope</span>
-            <strong>{folder === 'all' ? 'All folders' : folder || '(root)'}</strong>
+            <span>{t('selectedScope')}</span>
+            <strong>{folder === 'all' ? t('allFolders') : folder || t('rootFolder')}</strong>
           </div>
           <div>
-            <span>Docs root</span>
+            <span>{t('docsRoot')}</span>
             <strong className={styles.pathText}>
-              {inventory?.docsDir || folders?.docsDir || 'Waiting for API...'}
+              {inventory?.docsDir || folders?.docsDir || t('waitingForApi')}
             </strong>
           </div>
         </section>
@@ -460,16 +554,16 @@ export function AiDocsWorkbench() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <h2>Question editor</h2>
-                  <p>Keep retrieval narrow, preview sources, then call the model.</p>
+                  <h2>{t('questionEditor')}</h2>
+                  <p>{t('questionEditorHint')}</p>
                 </div>
                 <button className={styles.secondaryButton} onClick={prepareSafeRun} type="button">
-                  Safe defaults
+                  {t('safeDefaults')}
                 </button>
               </div>
 
               <label className={styles.field}>
-                Question
+                {t('question')}
                 <textarea
                   onChange={(event) => setQuestion(event.target.value)}
                   rows={7}
@@ -480,30 +574,30 @@ export function AiDocsWorkbench() {
               <div className={styles.presets}>
                 {presets.map((preset) => (
                   <button
-                    key={preset.label}
-                    onClick={() => setQuestion(preset.question)}
+                    key={preset.labelKey}
+                    onClick={() => setQuestion(t(preset.questionKey))}
                     type="button"
                   >
-                    {preset.label}
+                    {t(preset.labelKey)}
                   </button>
                 ))}
               </div>
 
               <div className={styles.splitFields}>
                 <label className={styles.field}>
-                  Folder
+                  {t('folder')}
                   <select value={folder} onChange={(event) => setFolder(event.target.value)}>
-                    <option value="all">All folders</option>
+                    <option value="all">{t('allFolders')}</option>
                     {folderOptions.map((item) => (
                       <option key={item.folder || '__root'} value={item.folder}>
-                        {item.folder || '(root)'} - {item.totalFiles}
+                        {item.folder || t('rootFolder')} - {item.totalFiles}
                       </option>
                     ))}
                   </select>
                 </label>
 
                 <label className={styles.field}>
-                  Name/path filter
+                  {t('namePathFilter')}
                   <input
                     onChange={(event) => setInclude(event.target.value)}
                     placeholder="B2B, invoice, manual..."
@@ -519,7 +613,7 @@ export function AiDocsWorkbench() {
                     onChange={(event) => setAnswerInQuestionLanguage(event.target.checked)}
                     type="checkbox"
                   />
-                  Answer in question language
+                  {t('answerInQuestionLanguage')}
                 </label>
                 <label>
                   <input
@@ -527,7 +621,7 @@ export function AiDocsWorkbench() {
                     onChange={(event) => setCrossLanguageSearch(event.target.checked)}
                     type="checkbox"
                   />
-                  Cross-language search
+                  {t('crossLanguageSearch')}
                 </label>
                 <label>
                   <input
@@ -535,7 +629,7 @@ export function AiDocsWorkbench() {
                     onChange={(event) => setIncludePDF(event.target.checked)}
                     type="checkbox"
                   />
-                  Include PDFs
+                  {t('includePDFs')}
                 </label>
                 <label>
                   <input
@@ -543,22 +637,22 @@ export function AiDocsWorkbench() {
                     onChange={(event) => setUseEmbeddings(event.target.checked)}
                     type="checkbox"
                   />
-                  Use semantic reranking
+                  {t('useSemanticReranking')}
                 </label>
               </div>
 
               <label className={styles.field}>
-                Optional embedding model
+                {t('optionalEmbeddingModel')}
                 <input
                   onChange={(event) => setEmbeddingModel(event.target.value)}
-                  placeholder="Set XAI_EMBEDDING_MODEL or leave blank"
+                  placeholder={t('embeddingPlaceholder')}
                   value={embeddingModel}
                 />
               </label>
 
               <div className={styles.numberGrid}>
                 <label>
-                  Files
+                  {t('files')}
                   <input
                     max={500}
                     min={1}
@@ -568,7 +662,7 @@ export function AiDocsWorkbench() {
                   />
                 </label>
                 <label>
-                  Chunks
+                  {t('chunks')}
                   <input
                     max={20}
                     min={1}
@@ -578,7 +672,7 @@ export function AiDocsWorkbench() {
                   />
                 </label>
                 <label>
-                  Embed candidates
+                  {t('embedCandidates')}
                   <input
                     max={5000}
                     min={1}
@@ -596,7 +690,7 @@ export function AiDocsWorkbench() {
                   onClick={() => void runAsk(true)}
                   type="button"
                 >
-                  Preview sources
+                  {t('previewSources')}
                 </button>
                 <button
                   className={styles.primaryButton}
@@ -604,13 +698,13 @@ export function AiDocsWorkbench() {
                   onClick={() => void runAsk(false)}
                   type="button"
                 >
-                  Ask Grok
+                  {t('askGrok')}
                 </button>
               </div>
 
               {loading ? (
                 <div className={styles.running}>
-                  Retrieving context and waiting for Grok...
+                  {t('retrievingContext')}
                 </div>
               ) : null}
             </section>
@@ -618,26 +712,26 @@ export function AiDocsWorkbench() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <h2>Result</h2>
+                  <h2>{t('result')}</h2>
                   <p>
                     {result
-                      ? `${result.scanned || 0} files scanned, ${sourceCount} sources, ${chunkCount} chunks`
-                      : 'Run a preview to inspect source quality first.'}
+                      ? `${result.scanned || 0} ${t('resultStatsFilesScanned')}, ${sourceCount} ${t('resultStatsSources')}, ${chunkCount} ${t('resultStatsChunks')}`
+                      : t('resultEmptyHint')}
                   </p>
                 </div>
                 {result ? (
                   <span
                     className={result.grok?.ok === false ? styles.badgeError : styles.badge}
                   >
-                    {result.dryRun ? 'preview' : result.grok?.model || 'answer'}
+                    {result.dryRun ? t('previewBadge') : result.grok?.model || t('answerBadge')}
                   </span>
                 ) : null}
               </div>
 
               {!result ? (
                 <div className={styles.emptyState}>
-                  <strong>Nothing has run yet.</strong>
-                  <span>Start with Preview sources so the tester can trust the context.</span>
+                  <strong>{t('noRunTitle')}</strong>
+                  <span>{t('noRunHint')}</span>
                 </div>
               ) : null}
 
@@ -654,13 +748,13 @@ export function AiDocsWorkbench() {
               {result ? (
                 <div className={styles.resultColumns}>
                   <div>
-                    <h3>Sources</h3>
+                    <h3>{t('sources')}</h3>
                     <div className={styles.sourceList}>
                       {(result.sources || []).slice(0, 80).map((source) => (
                         <article className={styles.sourceRow} key={source.path}>
                           <strong>{source.fileName}</strong>
                           <span>
-                            {source.extractor} - {formatBytes(source.chars)} - score{' '}
+                            {source.extractor} - {formatBytes(source.chars)} - {t('score')}{' '}
                             {source.score.toFixed(3)}
                           </span>
                           <small>{source.relativePath || source.path}</small>
@@ -669,7 +763,7 @@ export function AiDocsWorkbench() {
                     </div>
                   </div>
                   <div>
-                    <h3>Top chunks</h3>
+                    <h3>{t('topChunks')}</h3>
                     <div className={styles.chunkList}>
                       {(result.chunks || []).map((chunk, index) => (
                         <details key={`${chunk.path}-${index}`}>
@@ -692,14 +786,14 @@ export function AiDocsWorkbench() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <h2>Image generation</h2>
-                  <p>Generate CMS hero images and editorial drafts with Grok Imagine.</p>
+                  <h2>{t('imageGeneration')}</h2>
+                  <p>{t('imageGenerationHint')}</p>
                 </div>
                 <span className={styles.badge}>grok-imagine-image</span>
               </div>
 
               <label className={styles.field}>
-                Image prompt
+                {t('imagePrompt')}
                 <textarea
                   onChange={(event) => setImagePrompt(event.target.value)}
                   rows={7}
@@ -709,7 +803,7 @@ export function AiDocsWorkbench() {
 
               <div className={styles.splitFields}>
                 <label className={styles.field}>
-                  Aspect ratio
+                  {t('aspectRatio')}
                   <select
                     onChange={(event) => setImageAspectRatio(event.target.value)}
                     value={imageAspectRatio}
@@ -731,23 +825,25 @@ export function AiDocsWorkbench() {
                   onClick={() => void runImageGeneration()}
                   type="button"
                 >
-                  Generate image
+                  {t('generateImage')}
                 </button>
               </div>
 
-              {generatingImage ? <div className={styles.running}>Waiting for Grok Imagine...</div> : null}
+              {generatingImage ? <div className={styles.running}>{t('waitingForImagine')}</div> : null}
 
               {imageResult?.data?.length ? (
                 <div className={styles.sourceList}>
                   {imageResult.data.map((image, index) => (
                     <article className={styles.sourceRow} key={`${image.url || 'image'}-${index}`}>
-                      <strong>Image {index + 1}</strong>
+                      <strong>
+                        {t('imageLabel')} {index + 1}
+                      </strong>
                       {image.url ? (
                         <a href={image.url} rel="noreferrer" target="_blank">
                           {image.url}
                         </a>
                       ) : null}
-                      {image.b64_json ? <small>Base64 image returned</small> : null}
+                      {image.b64_json ? <small>{t('base64ImageReturned')}</small> : null}
                       {image.revised_prompt ? <small>{image.revised_prompt}</small> : null}
                     </article>
                   ))}
@@ -758,14 +854,14 @@ export function AiDocsWorkbench() {
             <section className={styles.panel}>
               <div className={styles.panelHeader}>
                 <div>
-                  <h2>Video generation</h2>
-                  <p>Create short Grok Imagine videos from text, optionally guided by an image URL.</p>
+                  <h2>{t('videoGeneration')}</h2>
+                  <p>{t('videoGenerationHint')}</p>
                 </div>
                 <span className={styles.badge}>grok-imagine-video</span>
               </div>
 
               <label className={styles.field}>
-                Video prompt
+                {t('videoPrompt')}
                 <textarea
                   onChange={(event) => setVideoPrompt(event.target.value)}
                   rows={6}
@@ -774,16 +870,16 @@ export function AiDocsWorkbench() {
               </label>
 
               <label className={styles.field}>
-                Optional source image URL
+                {t('optionalSourceImageURL')}
                 <input
                   onChange={(event) => setVideoImageURL(event.target.value)}
-                  placeholder="https://..."
+                  placeholder={t('sourceImagePlaceholder')}
                   value={videoImageURL}
                 />
               </label>
 
               <label className={styles.field}>
-                Duration seconds
+                {t('durationSeconds')}
                 <input
                   max={15}
                   min={6}
@@ -800,18 +896,26 @@ export function AiDocsWorkbench() {
                   onClick={() => void runVideoGeneration()}
                   type="button"
                 >
-                  Generate video
+                  {t('generateVideo')}
                 </button>
               </div>
 
               {generatingVideo ? (
-                <div className={styles.running}>Starting video request and polling xAI...</div>
+                <div className={styles.running}>{t('startingVideo')}</div>
               ) : null}
 
               {videoResult ? (
                 <div className={styles.emptyState}>
-                  <strong>{videoResult.ok ? 'Video ready' : `Status: ${videoResult.status || 'pending'}`}</strong>
-                  {videoResult.requestID ? <span>Request ID: {videoResult.requestID}</span> : null}
+                  <strong>
+                    {videoResult.ok
+                      ? t('videoReady')
+                      : `${t('status')}: ${videoResult.status || 'pending'}`}
+                  </strong>
+                  {videoResult.requestID ? (
+                    <span>
+                      {t('requestId')}: {videoResult.requestID}
+                    </span>
+                  ) : null}
                   {videoResult.video?.url ? (
                     <a href={videoResult.video.url} rel="noreferrer" target="_blank">
                       {videoResult.video.url}
@@ -828,10 +932,12 @@ export function AiDocsWorkbench() {
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
               <div>
-                <h2>Document corpus</h2>
-                <p>Browse the mounted AI_DOCS_DIR before running retrieval.</p>
+                <h2>{t('documentCorpus')}</h2>
+                <p>{t('documentCorpusHint')}</p>
               </div>
-              <span className={styles.badge}>{visibleFiles.length} visible</span>
+              <span className={styles.badge}>
+                {visibleFiles.length} {t('visible')}
+              </span>
             </div>
 
             <div className={styles.corpusGrid}>
@@ -841,8 +947,10 @@ export function AiDocsWorkbench() {
                   onClick={() => setFolder('all')}
                   type="button"
                 >
-                  <strong>All folders</strong>
-                  <span>{totalFiles.toLocaleString()} files</span>
+                  <strong>{t('allFolders')}</strong>
+                  <span>
+                    {totalFiles.toLocaleString()} {t('filesUnit')}
+                  </span>
                 </button>
                 {folderOptions.map((item) => (
                   <button
@@ -851,9 +959,9 @@ export function AiDocsWorkbench() {
                     onClick={() => setFolder(item.folder)}
                     type="button"
                   >
-                    <strong>{item.folder || '(root)'}</strong>
+                    <strong>{item.folder || t('rootFolder')}</strong>
                     <span>
-                      {item.totalFiles.toLocaleString()} files - {formatBytes(item.size)}
+                      {item.totalFiles.toLocaleString()} {t('filesUnit')} - {formatBytes(item.size)}
                     </span>
                   </button>
                 ))}
@@ -862,10 +970,10 @@ export function AiDocsWorkbench() {
               <div>
                 <div className={styles.corpusToolbar}>
                   <label className={styles.field}>
-                    Filter files
+                    {t('filterFiles')}
                     <input
                       onChange={(event) => setInclude(event.target.value)}
-                      placeholder="Type part of a file name or path"
+                      placeholder={t('filterPlaceholder')}
                       value={include}
                     />
                   </label>
@@ -903,21 +1011,19 @@ export function AiDocsWorkbench() {
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
               <div>
-                <h2>Admin workspace</h2>
-                <p>
-                  Payload Admin is the place to manage content, prompt presets, and test evidence.
-                </p>
+                <h2>{t('adminWorkspace')}</h2>
+                <p>{t('adminHint')}</p>
               </div>
               <Link className={styles.primaryLink} href="/admin">
-                Open admin
+                {t('openAdmin')}
               </Link>
             </div>
 
             <div className={styles.adminGrid}>
               {adminLinks.map((link) => (
                 <Link className={styles.adminCard} href={link.href} key={link.href}>
-                  <strong>{link.label}</strong>
-                  <span>{link.description}</span>
+                  <strong>{t(link.labelKey)}</strong>
+                  <span>{t(link.descriptionKey)}</span>
                 </Link>
               ))}
             </div>

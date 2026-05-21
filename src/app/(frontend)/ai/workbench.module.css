@@ -116,6 +116,24 @@
   padding-left: 18px;
 }
 
+.languageBox {
+  background: #f6f8fb;
+  border: 1px solid #d8e0e9;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.languageBox .field {
+  margin-bottom: 9px;
+}
+
+.languageBox p {
+  color: #60758f;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+}
+
 .adminButton {
   background: #16202f;
   border-color: #16202f;

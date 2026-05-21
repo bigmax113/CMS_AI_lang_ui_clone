@@ -11,6 +11,7 @@ import {
   askEndpoint,
   generateImageEndpoint,
   generateVideoEndpoint,
+  translateUiEndpoint,
 } from './ai/endpoints'
 import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
 import { ArticlesCollection, articlesSlug } from './collections/Articles'
@@ -89,6 +90,7 @@ export default buildConfig({
     askEndpoint,
     generateImageEndpoint,
     generateVideoEndpoint,
+    translateUiEndpoint,
   ],
   secret: payloadSecret,
   typescript: {
