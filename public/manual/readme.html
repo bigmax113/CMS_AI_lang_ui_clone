@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS AI - функциональный README</title>
+    <style>
+      :root {
+        --bg: #eef2f6;
+        --ink: #172030;
+        --muted: #5c7089;
+        --line: #d9e2ec;
+        --teal: #0b6b6f;
+        --teal-soft: #e5f4f4;
+        --gold-soft: #fff6dc;
+        --card: #ffffff;
+        --soft: #f7fafc;
+        --navy: #16202f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      a {
+        color: var(--teal);
+        font-weight: 700;
+      }
+
+      .page {
+        margin: 0 auto;
+        max-width: 1220px;
+        padding: 34px 22px 70px;
+      }
+
+      .hero,
+      section,
+      details {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(23, 37, 56, 0.05);
+      }
+
+      .hero {
+        background:
+          linear-gradient(135deg, rgba(11, 107, 111, 0.94), rgba(22, 32, 47, 0.98)),
+          url("./screenshots/01-ai-workbench-ask.png") center / cover;
+        color: #ffffff;
+        margin-bottom: 18px;
+        min-height: 520px;
+        padding: 46px;
+      }
+
+      .hero p {
+        color: #d9ebee;
+        font-size: 18px;
+        max-width: 840px;
+      }
+
+      .kicker {
+        color: #bfe9e9;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      summary {
+        letter-spacing: 0;
+        line-height: 1.15;
+      }
+
+      h1 {
+        font-size: clamp(38px, 6vw, 68px);
+        margin: 0 0 16px;
+        max-width: 980px;
+      }
+
+      h2 {
+        font-size: 29px;
+        margin: 0 0 13px;
+      }
+
+      h3 {
+        font-size: 20px;
+        margin: 22px 0 10px;
+      }
+
+      p {
+        margin: 0 0 12px;
+      }
+
+      section,
+      details {
+        margin-bottom: 18px;
+        padding: 28px;
+      }
+
+      details {
+        padding: 0;
+      }
+
+      summary {
+        cursor: pointer;
+        font-size: 20px;
+        font-weight: 900;
+        list-style: none;
+        padding: 20px 24px;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      details[open] summary {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .details-body {
+        padding: 8px 24px 24px;
+      }
+
+      .hero-actions,
+      .toc,
+      .grid,
+      .workflow,
+      .cards {
+        display: grid;
+        gap: 14px;
+      }
+
+      .hero-actions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin-top: 34px;
+      }
+
+      .hero-actions a,
+      .toc a,
+      .card,
+      .metric,
+      .step,
+      .note,
+      .warning {
+        border-radius: 8px;
+      }
+
+      .hero-actions a {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        color: #ffffff;
+        min-height: 88px;
+        padding: 14px 16px;
+        text-decoration: none;
+      }
+
+      .hero-actions span,
+      .card span,
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      .hero-actions a span {
+        color: #d9ebee;
+      }
+
+      .toc {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 14px;
+      }
+
+      .toc a {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        color: var(--ink);
+        min-height: 64px;
+        padding: 12px 14px;
+        text-decoration: none;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .cards {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .card,
+      .metric {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        padding: 16px;
+      }
+
+      .card strong,
+      .metric strong {
+        display: block;
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+
+      .workflow {
+        counter-reset: step;
+      }
+
+      .step {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        min-height: 76px;
+        padding: 15px 18px 15px 58px;
+        position: relative;
+      }
+
+      .step::before {
+        background: var(--teal);
+        border-radius: 999px;
+        color: #ffffff;
+        content: counter(step);
+        counter-increment: step;
+        font-weight: 900;
+        height: 30px;
+        left: 16px;
+        line-height: 30px;
+        position: absolute;
+        text-align: center;
+        top: 17px;
+        width: 30px;
+      }
+
+      .note,
+      .warning {
+        padding: 15px 17px;
+      }
+
+      .note {
+        background: var(--teal-soft);
+        border: 1px solid #b9dfdf;
+        color: #174f53;
+      }
+
+      .warning {
+        background: var(--gold-soft);
+        border: 1px solid #edd07b;
+        color: #64500f;
+      }
+
+      table {
+        border-collapse: collapse;
+        margin: 14px 0;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: #40546b;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      code {
+        background: #edf3f8;
+        border: 1px solid #d4dfeb;
+        border-radius: 5px;
+        color: #263a51;
+        padding: 2px 5px;
+      }
+
+      figure {
+        margin: 18px 0 6px;
+      }
+
+      figure img {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: block;
+        width: 100%;
+      }
+
+      figcaption {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 8px;
+      }
+
+      .map {
+        background: #111b29;
+        border-radius: 8px;
+        color: #dbe8f4;
+        font-family:
+          "Cascadia Mono",
+          "SFMono-Regular",
+          Consolas,
+          monospace;
+        overflow-x: auto;
+        padding: 18px;
+        white-space: pre;
+      }
+
+      @media (max-width: 980px) {
+        .hero-actions,
+        .toc,
+        .cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .hero,
+        section,
+        summary,
+        .details-body {
+          padding: 20px;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .hero-actions,
+        .toc,
+        .grid,
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <article class="hero">
+        <div class="kicker">Функциональный README</div>
+        <h1>CMS AI: что умеет продукт и как им пользоваться</h1>
+        <p>
+          Это визуальная версия README для демонстрации заказчику. Она объясняет
+          не технический движок, а продукт: как связаны Payload Admin и AI
+          Workbench, зачем нужны коллекции, как проверять документы через RAG,
+          как готовить блог и управлять переходами между сайтами.
+        </p>
+        <div class="hero-actions">
+          <a href="/ai">Открыть AI Workbench<span>Вопросы, corpus, генерация медиа</span></a>
+          <a href="/admin">Открыть Payload Admin<span>Контент, поля, связи, загрузки</span></a>
+          <a href="./CMS_AI_presentation_ru.pptx">Скачать PPT<span>15 слайдов по функционалу продукта</span></a>
+          <a href="./index.html">Открыть мануал<span>Пошаговая инструкция со скриншотами</span></a>
+        </div>
+      </article>
+
+      <section id="toc">
+        <h2>Содержание</h2>
+        <div class="toc">
+          <a href="#product">1. Что решает продукт</a>
+          <a href="#roles">2. Рабочие роли</a>
+          <a href="#flow">3. Основной рабочий цикл</a>
+          <a href="#connection">4. Связь Admin и AI</a>
+          <a href="#workbench">5. AI Workbench</a>
+          <a href="#admin">6. Payload Admin</a>
+          <a href="#collections">7. Коллекции и поля</a>
+          <a href="#rag">8. Загрузка документов для RAG</a>
+          <a href="#blog">9. Блог и перелинковка</a>
+          <a href="#demo">10. Demo script</a>
+          <a href="#limits">11. Ограничения прототипа</a>
+          <a href="#materials">12. Материалы</a>
+        </div>
+      </section>
+
+      <section id="product">
+        <h2>1. Что решает продукт</h2>
+        <p>
+          CMS AI объединяет управляемую CMS и AI-инструменты в один рабочий
+          контур. Редактор хранит контент, документы, сайты, шаблоны и ссылки в
+          Payload Admin. Тестировщик или контент-специалист использует AI
+          Workbench, чтобы задать вопрос по документам, проверить источники,
+          получить ответ, подготовить медиа-черновик и вернуться к CMS.
+        </p>
+        <div class="cards">
+          <div class="metric">
+            <strong>Payload Admin</strong>
+            Контролируемая база данных продукта.
+            <span>Статьи, блог, сайты, медиа, шаблоны, тесты.</span>
+          </div>
+          <div class="metric">
+            <strong>AI Workbench</strong>
+            Рабочая зона для AI-проверок.
+            <span>Ask, Generate, Corpus, быстрые переходы в Admin.</span>
+          </div>
+          <div class="metric">
+            <strong>RAG Corpus</strong>
+            Документы, по которым AI отвечает.
+            <span>Seed docs плюс файлы, загруженные пользователем в Media.</span>
+          </div>
+          <div class="metric">
+            <strong>Blog & Links</strong>
+            Система для контента и переходов.
+            <span>Шаблоны, посты, related content, cross-site handoff.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="roles">
+        <h2>2. Рабочие роли</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Заказчик</strong>
+            Видит end-to-end прототип: админка, AI, загрузка документов,
+            проверка источников, блог, управляемые переходы.
+          </div>
+          <div class="card">
+            <strong>Редактор</strong>
+            Создает статьи и посты, выбирает сайт и шаблон, добавляет SEO,
+            планирует related content и link plan.
+          </div>
+          <div class="card">
+            <strong>Тестировщик AI</strong>
+            Загружает документы, просматривает источники, задает вопросы,
+            сохраняет результаты проверок в Test Runs.
+          </div>
+          <div class="card">
+            <strong>Контент-менеджер сайтов</strong>
+            Управляет сайтами, доменами, языками, переходами, CTA и
+            transition screen между сайтами.
+          </div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <h2>3. Основной рабочий цикл</h2>
+        <div class="workflow">
+          <div class="step">
+            <strong>Загрузить документы.</strong> Пользователь открывает
+            <code>/admin</code>, переходит в Media и выбирает PDF, DOCX, TXT,
+            Markdown, XLIFF или XML со своего компьютера.
+          </div>
+          <div class="step">
+            <strong>Проверить корпус.</strong> В <code>/ai</code> на вкладке
+            Corpus пользователь нажимает Refresh и видит файлы в группе
+            Uploaded media.
+          </div>
+          <div class="step">
+            <strong>Посмотреть источники.</strong> На вкладке Ask пользователь
+            выбирает folder/filter и запускает Preview sources до генерации
+            ответа.
+          </div>
+          <div class="step">
+            <strong>Получить ответ.</strong> Ask формирует ответ по выбранным
+            источникам, а пользователь видит, какие фрагменты легли в основу.
+          </div>
+          <div class="step">
+            <strong>Зафиксировать проверку.</strong> В Test Runs можно сохранить
+            вопрос, ответ, источники, рейтинг и review notes.
+          </div>
+          <div class="step">
+            <strong>Подготовить контент.</strong> В Sites, Blog Templates и Blog
+            Posts создается структура публикации, SEO и AI Brief.
+          </div>
+          <div class="step">
+            <strong>Настроить перелинковку.</strong> Site Links описывает, откуда
+            и куда ведет ссылка, какой anchor text используется и нужен ли
+            transition screen.
+          </div>
+          <div class="step">
+            <strong>Показать результат.</strong> Демонстрация закрывает полный
+            цикл: documents -> QA -> content -> links -> managed sites.
+          </div>
+        </div>
+      </section>
+
+      <section id="connection">
+        <h2>4. Как связаны Admin и AI Workbench</h2>
+        <p>
+          В прототипе AI и админка не должны выглядеть как две отдельные части.
+          Связь сделана двусторонней: из AI есть быстрые переходы в Payload
+          Admin, а из Dashboard админки есть вход в AI Workbench и загрузку RAG
+          документов.
+        </p>
+        <div class="map">Media uploads
+  -> AI Workbench Corpus
+  -> Ask / RAG answers
+  -> Test Runs
+
+Sites
+  -> Blog Posts
+  -> Site Links
+
+Blog Templates
+  -> Blog Posts
+  -> AI Brief
+
+Articles / Blog Posts
+  -> related content
+  -> Site Links sourceContent / targetContent</div>
+        <figure>
+          <img src="./screenshots/07-payload-admin-dashboard.png" alt="Payload Admin dashboard" />
+          <figcaption>
+            Dashboard админки служит входной точкой: AI Workbench, загрузка RAG
+            документов и ключевые коллекции находятся рядом.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="workbench">
+        <h2>5. AI Workbench</h2>
+        <p>
+          AI Workbench нужен не просто для чата. Он помогает тестировать
+          документы, контролировать источники и готовить черновики для CMS.
+          Интерфейс поддерживает 5 языков: English, Russian, Ukrainian,
+          Romanian, Polish.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Вкладка</th>
+              <th>Для чего нужна</th>
+              <th>Как связана с CMS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Ask</td>
+              <td>Вопросы к документам, выбор folder/filter, Preview sources, Ask.</td>
+              <td>Ответы и источники можно фиксировать в Test Runs.</td>
+            </tr>
+            <tr>
+              <td>Generate</td>
+              <td>Черновики изображений и видео для контента, статей, презентаций.</td>
+              <td>Готовые ассеты можно загрузить в Media и использовать в Articles/Blog Posts.</td>
+            </tr>
+            <tr>
+              <td>Corpus</td>
+              <td>Инвентаризация seed docs и пользовательских загрузок из Media.</td>
+              <td>Показывает, какие документы доступны RAG-поиску.</td>
+            </tr>
+            <tr>
+              <td>Admin</td>
+              <td>Быстрые переходы к AI Projects, Prompt Templates, Test Runs, Media и CMS-разделам.</td>
+              <td>Убирает ощущение, что AI живет отдельно от админки.</td>
+            </tr>
+          </tbody>
+        </table>
+        <figure>
+          <img src="./screenshots/01-ai-workbench-ask.png" alt="AI Workbench Ask" />
+          <figcaption>Ask начинается с проверки источников, а не сразу с генерации ответа.</figcaption>
+        </figure>
+      </section>
+
+      <section id="admin">
+        <h2>6. Payload Admin</h2>
+        <p>
+          Payload Admin - это место, где продуктовые данные становятся
+          управляемыми: можно создавать записи, связывать их между собой,
+          загружать файлы, хранить SEO и фиксировать результаты AI-проверок.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Раздел</th>
+              <th>Смысл</th>
+              <th>Что показывает заказчику</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AI Projects</td>
+              <td>Бизнес-контейнер для проверок.</td>
+              <td>Какая цель теста, кто владелец, какие критерии успеха.</td>
+            </tr>
+            <tr>
+              <td>Prompt Templates</td>
+              <td>Повторяемые инструкции для AI.</td>
+              <td>Промпты можно хранить и улучшать, а не держать в чате.</td>
+            </tr>
+            <tr>
+              <td>Test Runs</td>
+              <td>Журнал проверок.</td>
+              <td>Вопрос, ответ, источники, рейтинг и review notes сохраняются.</td>
+            </tr>
+            <tr>
+              <td>Sites</td>
+              <td>Карта управляемых сайтов.</td>
+              <td>Сайт имеет домен, язык, роль, статус и путь блога.</td>
+            </tr>
+            <tr>
+              <td>Blog Templates</td>
+              <td>Структура будущих публикаций.</td>
+              <td>Шаблоны управляют секциями, SEO и правилами ссылок.</td>
+            </tr>
+            <tr>
+              <td>Blog Posts</td>
+              <td>Конкретные блоговые материалы.</td>
+              <td>Пост связан с сайтом, шаблоном, SEO, related content и link plan.</td>
+            </tr>
+            <tr>
+              <td>Site Links</td>
+              <td>Управляемые переходы между сайтами.</td>
+              <td>Ссылка имеет источник, цель, anchor, placement, риск и rationale.</td>
+            </tr>
+            <tr>
+              <td>Media</td>
+              <td>Библиотека файлов и RAG-документов.</td>
+              <td>Пользователь загружает документы со своего диска через браузер.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="collections">
+        <h2>7. Коллекции и поля</h2>
+        <p>
+          Ниже - справочник по ключевым коллекциям. Он нужен, чтобы заказчик
+          понимал назначение каждого раздела и связь полей с остальной системой.
+        </p>
+      </section>
+
+      <details open>
+        <summary>AI Projects</summary>
+        <div class="details-body">
+          <p>
+            AI Project описывает цель проверки или рабочей зоны. Это бизнес-контейнер
+            для тестов, а не технический проект разработки.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>name</td><td>Название проекта или проверки.</td><td>Используется в Test Runs.</td></tr>
+              <tr><td>status</td><td>Planning, Testing, Ready или Paused.</td><td>Показывает готовность проверки.</td></tr>
+              <tr><td>owner</td><td>Ответственный человек или команда.</td><td>Помогает назначить владение результатом.</td></tr>
+              <tr><td>goal</td><td>Что нужно доказать проверкой.</td><td>Формирует бизнес-контекст для AI Workbench.</td></tr>
+              <tr><td>docsFolder</td><td>Рекомендуемая папка источников.</td><td>Подсказывает scope для Ask.</td></tr>
+              <tr><td>successCriteria</td><td>Критерии успеха.</td><td>Используются при оценке Test Runs.</td></tr>
+              <tr><td>notes</td><td>Внутренний контекст.</td><td>Помогает редактору или тестировщику.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Prompt Templates</summary>
+        <div class="details-body">
+          <p>
+            Prompt Template хранит повторяемые инструкции, чтобы команда могла
+            переиспользовать лучшие AI-сценарии.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title</td><td>Название шаблона.</td><td>Отображается в списках и Test Runs.</td></tr>
+              <tr><td>isEnabled</td><td>Включен ли шаблон.</td><td>Позволяет архивировать без удаления.</td></tr>
+              <tr><td>mode</td><td>QA, Summary, Audit или Content draft.</td><td>Разделяет назначение шаблонов.</td></tr>
+              <tr><td>systemPrompt</td><td>Правила поведения AI.</td><td>Определяет роль, стиль, язык и работу с источниками.</td></tr>
+              <tr><td>userPrompt</td><td>Повторяемый текст запроса.</td><td>Можно использовать как основу Ask или автоматизации.</td></tr>
+              <tr><td>maxChunks</td><td>Желаемое количество фрагментов источников.</td><td>Соответствует контролю Chunks в Ask.</td></tr>
+              <tr><td>tags</td><td>Темы и области применения.</td><td>Упрощают поиск шаблонов.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Test Runs</summary>
+        <div class="details-body">
+          <p>
+            Test Run - журнал проверки, где сохраняются вопрос, ответ, источники,
+            рейтинг и заметки ревьюера.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title</td><td>Название проверки.</td><td>Отображается в списке Test Runs.</td></tr>
+              <tr><td>project</td><td>Связь с AI Project.</td><td>Показывает, какой цели относится результат.</td></tr>
+              <tr><td>promptTemplate</td><td>Использованный шаблон.</td><td>Помогает повторить или улучшить тест.</td></tr>
+              <tr><td>status</td><td>New, Passed, Needs review или Failed.</td><td>Показывает состояние проверки.</td></tr>
+              <tr><td>rating</td><td>Good, Okay или Bad.</td><td>Быстрая оценка качества ответа.</td></tr>
+              <tr><td>question / answer</td><td>Что спрашивали и что ответил AI.</td><td>Фиксирует проверку для демонстрации.</td></tr>
+              <tr><td>sources</td><td>Файлы, пути и score источников.</td><td>Соответствует Preview sources в AI Workbench.</td></tr>
+              <tr><td>reviewNotes</td><td>Выводы редактора или тестировщика.</td><td>Используется для доработок.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Sites</summary>
+        <div class="details-body">
+          <p>
+            Sites описывает управляемые сайты. Коллекция нужна для мультисайтового
+            контента и cross-site переходов.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>name</td><td>Человеческое название сайта.</td><td>Используется в Blog Posts и Site Links.</td></tr>
+              <tr><td>slug</td><td>Стабильный ключ сайта.</td><td>Нужен для шаблонов, ссылок и правил.</td></tr>
+              <tr><td>status</td><td>Draft, Live, Paused или Archived.</td><td>Показывает состояние сайта.</td></tr>
+              <tr><td>primaryDomain</td><td>Канонический домен.</td><td>Используется для маршрутов и target URL.</td></tr>
+              <tr><td>locale</td><td>Язык сайта.</td><td>Важен для локализации и language-switch ссылок.</td></tr>
+              <tr><td>siteRole</td><td>Роль сайта.</td><td>Помогает принимать решения о линковке.</td></tr>
+              <tr><td>defaultBlogPath</td><td>Базовый путь блога.</td><td>Используется Blog Posts для URL-логики.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Blog Templates</summary>
+        <div class="details-body">
+          <p>
+            Blog Template - шаблон статьи до написания текста. Он описывает
+            структуру, SEO, перелинковку и AI-подсказки.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title / key</td><td>Название и уникальный ключ шаблона.</td><td>Выбираются в Blog Posts.</td></tr>
+              <tr><td>templateType</td><td>Guide, News, Case study, Comparison и другие типы.</td><td>Определяет формат материала.</td></tr>
+              <tr><td>editorialGoal</td><td>Что помогает создать шаблон.</td><td>Объясняет редактору назначение.</td></tr>
+              <tr><td>titlePattern / summaryPattern</td><td>Формулы заголовка и summary.</td><td>Помогают планировать пост.</td></tr>
+              <tr><td>structure</td><td>Секции статьи, роли секций, инструкции.</td><td>Формирует outline и проверку полноты.</td></tr>
+              <tr><td>requiredInternalLinks</td><td>Минимум внутренних ссылок.</td><td>Связано с related content в Blog Posts.</td></tr>
+              <tr><td>requiredCrossSiteLinks</td><td>Минимум cross-site ссылок.</td><td>Связано с Site Links.</td></tr>
+              <tr><td>aiPrompts</td><td>Brief, outline и linking prompts.</td><td>Используются для AI-assisted workflow.</td></tr>
+              <tr><td>seo</td><td>Meta title, description и keyword guidance.</td><td>Подсказывает SEO-поля Blog Posts.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Blog Posts</summary>
+        <div class="details-body">
+          <p>
+            Blog Post - конкретная публикация. Она связывает сайт, шаблон,
+            контент, AI Brief, SEO и link plan.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title / slug</td><td>Заголовок и URL-сегмент.</td><td>Работают вместе с Sites.defaultBlogPath.</td></tr>
+              <tr><td>status</td><td>Idea, Draft, In review, Scheduled или Published.</td><td>Управляет редакционным состоянием.</td></tr>
+              <tr><td>site</td><td>Сайт публикации.</td><td>Relationship к Sites.</td></tr>
+              <tr><td>template</td><td>Шаблон поста.</td><td>Relationship к Blog Templates.</td></tr>
+              <tr><td>summary / coverImage / content</td><td>Карточка, обложка и основной rich text.</td><td>Использует Media и редактор Payload.</td></tr>
+              <tr><td>relatedArticles</td><td>Связанные статьи.</td><td>Relationship к Articles.</td></tr>
+              <tr><td>relatedPosts</td><td>Связанные посты.</td><td>Relationship к Blog Posts.</td></tr>
+              <tr><td>linkPlan</td><td>Утвержденные или предложенные ссылки.</td><td>Relationship к Site Links.</td></tr>
+              <tr><td>aiAssist</td><td>Brief, target keywords, questions, linking notes.</td><td>Мост между AI Workbench и редакционным процессом.</td></tr>
+              <tr><td>seo</td><td>SEO title, description и image.</td><td>Может опираться на Blog Template.</td></tr>
+            </tbody>
+          </table>
+          <div class="note">
+            В Blog Posts включены drafts и autosave, поэтому редактор может
+            безопасно работать с черновиками и возвращаться к версиям.
+          </div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Site Links</summary>
+        <div class="details-body">
+          <p>
+            Site Link - управляемая запись перехода. Она нужна для contextual
+            links, CTA, redirect, language switch и transition-page сценариев.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title / status</td><td>Название и готовность ссылки.</td><td>Используется в linkPlan.</td></tr>
+              <tr><td>linkType</td><td>Contextual, Navigation, CTA, Redirect и другие типы.</td><td>Определяет назначение перехода.</td></tr>
+              <tr><td>sourceSite / targetSite</td><td>Откуда и куда ведем.</td><td>Relationship к Sites.</td></tr>
+              <tr><td>sourcePath / sourceContent</td><td>URL path или CMS-документ источника.</td><td>Relationship к Articles или Blog Posts.</td></tr>
+              <tr><td>targetURL / targetContent</td><td>Финальный URL или CMS-документ назначения.</td><td>Relationship к Articles или Blog Posts.</td></tr>
+              <tr><td>anchorText</td><td>Видимый текст ссылки или CTA.</td><td>Используется в публикации и transition blocks.</td></tr>
+              <tr><td>placement / priority</td><td>Где показывать ссылку и в каком порядке.</td><td>Body, header, footer, related, blog-card, transition-page.</td></tr>
+              <tr><td>transitionTemplate</td><td>Режим, headline, description, CTA label.</td><td>Нужен для мягкого перехода между сайтами.</td></tr>
+              <tr><td>aiReview</td><td>Rationale, risk и suggestedBy.</td><td>Показывает, почему ссылка полезна и насколько она рискованна.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Articles</summary>
+        <div class="details-body">
+          <p>
+            Articles - базовая библиотека контента: knowledge base, release
+            notes, internal guides и product content.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Поле</th>
+                <th>Для чего нужно</th>
+                <th>Связь</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>title / slug</td><td>Заголовок и URL-сегмент статьи.</td><td>Используются в related content и Site Links.</td></tr>
+              <tr><td>status / publishedAt</td><td>Редакционное состояние и дата публикации.</td><td>Нужны для истории и сортировки.</td></tr>
+              <tr><td>summary / coverImage</td><td>Короткое описание и обложка.</td><td>Используются в карточках и previews.</td></tr>
+              <tr><td>content</td><td>Rich text с headings, lists, links, uploads и таблицами.</td><td>Основной контент статьи.</td></tr>
+              <tr><td>category / tags</td><td>Классификация и темы.</td><td>Поиск, фильтрация, планирование.</td></tr>
+              <tr><td>seo</td><td>SEO title, description и image.</td><td>Для поисковой выдачи и шаринга.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Media и Users</summary>
+        <div class="details-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Коллекция</th>
+                <th>Для чего нужна</th>
+                <th>Ключевые поля и связи</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Media</td>
+                <td>Общая библиотека файлов и точка загрузки RAG-документов.</td>
+                <td>file upload, alt, caption, tags. Используется Articles, Blog Posts, SEO images и AI Corpus.</td>
+              </tr>
+              <tr>
+                <td>Users</td>
+                <td>Auth-коллекция Payload для входа в админку.</td>
+                <td>Email и пароль управляются auth-механикой Payload.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Поддерживаемые RAG-форматы в Media: PDF, TXT, Markdown, DOCX,
+            XLIFF, XML.
+          </p>
+        </div>
+      </details>
+
+      <section id="rag">
+        <h2>8. Загрузка документов для RAG</h2>
+        <p>
+          Пользователь, которому вы даете ссылку на сервис, сможет загрузить
+          документы со своего диска через браузер. Это не привязано к вашему
+          локальному компьютеру. Файл отправляется в Media текущего сервиса, а
+          затем появляется в AI Workbench -> Corpus в группе Uploaded media.
+        </p>
+        <div class="grid">
+          <div class="note">
+            <strong>Как тестировать:</strong>
+            открыть <code>/admin</code>, перейти в Media, загрузить файл,
+            открыть <code>/ai</code>, перейти в Corpus и нажать Refresh.
+          </div>
+          <div class="warning">
+            <strong>Важно для Render free:</strong>
+            локальные загрузки подходят для прототипа, но могут исчезнуть после
+            restart или redeploy. Для production нужен постоянный storage:
+            Render Disk, S3 или аналог.
+          </div>
+        </div>
+        <figure>
+          <img src="./screenshots/04-ai-corpus.png" alt="AI Workbench Corpus" />
+          <figcaption>
+            Corpus показывает seed docs и документы, которые пользователи
+            загрузили через Media.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="blog">
+        <h2>9. Блог, шаблоны и перелинковка</h2>
+        <p>
+          Блоговая часть нужна не только для хранения постов. Она задает
+          управляемый процесс: сайт -> шаблон -> пост -> related content ->
+          link plan -> Site Links. Благодаря этому можно объяснить, зачем
+          существует каждая часть системы и как она участвует в публикации.
+        </p>
+        <div class="grid">
+          <figure>
+            <img src="./screenshots/08-blog-posts-collection.png" alt="Blog Posts collection" />
+            <figcaption>
+              Blog Posts связывает сайт, шаблон, контент, AI Brief, SEO и link plan.
+            </figcaption>
+          </figure>
+          <figure>
+            <img src="./screenshots/09-site-links-collection.png" alt="Site Links collection" />
+            <figcaption>
+              Site Links превращает ссылки между сайтами в управляемые записи.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="demo">
+        <h2>10. Demo script</h2>
+        <div class="workflow">
+          <div class="step">Открыть <code>/admin</code> и показать Dashboard с кнопками AI Workbench и Upload RAG documents.</div>
+          <div class="step">Открыть Media, загрузить тестовый PDF или DOCX со своего компьютера.</div>
+          <div class="step">Открыть <code>/ai</code>, перейти в Corpus, нажать Refresh и показать Uploaded media.</div>
+          <div class="step">Перейти в Ask, выбрать scope, нажать Preview sources и объяснить найденные фрагменты.</div>
+          <div class="step">Нажать Ask, получить ответ и показать, где можно сохранить результат в Test Runs.</div>
+          <div class="step">Открыть Sites, Blog Templates, Blog Posts и Site Links, объяснить связь сайта, шаблона, поста и link plan.</div>
+          <div class="step">Завершить циклом: documents -> QA -> content -> links -> managed sites.</div>
+        </div>
+      </section>
+
+      <section id="limits">
+        <h2>11. Ограничения прототипа</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Ограничение</th>
+              <th>Что значит</th>
+              <th>Как решается в production</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Render free storage</td>
+              <td>Загрузки в локальную папку контейнера могут быть временными.</td>
+              <td>Подключить Render Disk, S3, R2 или другой постоянный storage.</td>
+            </tr>
+            <tr>
+              <td>Общий прототип</td>
+              <td>Файлы, загруженные пользователями, попадают в одну Media-библиотеку сервиса.</td>
+              <td>Добавить роли, ownership, tenant/site scope и ACL.</td>
+            </tr>
+            <tr>
+              <td>AI-провайдер</td>
+              <td>Провайдер является инфраструктурной заменяемой частью.</td>
+              <td>Сохранять продуктовую модель данных и менять adapter при необходимости.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="materials">
+        <h2>12. Материалы</h2>
+        <div class="grid">
+          <a class="card" href="./index.html">
+            <strong>Подробный мануал</strong>
+            Инструкция со скриншотами, входом, RAG, админкой и проверками.
+          </a>
+          <a class="card" href="./CMS_AI_presentation_ru.pptx">
+            <strong>Презентация PPT</strong>
+            15 слайдов о функционале продукта и смысле каждой части.
+          </a>
+        </div>
+        <figure>
+          <img src="./ppt-preview/montage.png" alt="Превью презентации CMS AI" />
+          <figcaption>Превью слайдов продуктовой презентации.</figcaption>
+        </figure>
+      </section>
+    </main>
+  </body>
+</html>
