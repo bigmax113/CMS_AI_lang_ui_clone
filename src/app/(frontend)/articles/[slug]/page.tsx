@@ -6,6 +6,7 @@ import {
   PublicImage,
   RichText,
   StructuredData,
+  createSEOPageMetadata,
   findPublishedArticleBySlug,
   formatDate,
 } from '../../_content/contentHelpers'
@@ -28,10 +29,12 @@ export const generateMetadata = async ({ params }: PageProps) => {
     }
   }
 
-  return {
-    description: article.seo?.description || article.summary || undefined,
+  return createSEOPageMetadata({
+    description: article.seo?.description || article.summary,
+    image: article.seo?.image || article.coverImage,
+    path: articlePublicPath(article.slug),
     title: `${article.seo?.title || article.title} - CMS AI`,
-  }
+  })
 }
 
 export default async function ArticlePage({ params }: PageProps) {

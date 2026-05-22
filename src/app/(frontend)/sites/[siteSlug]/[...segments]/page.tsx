@@ -6,6 +6,7 @@ import {
   PublicImage,
   RichText,
   StructuredData,
+  createSEOPageMetadata,
   findPublishedBlogPostBySitePath,
   formatDate,
   isSite,
@@ -30,10 +31,15 @@ export const generateMetadata = async ({ params }: PageProps) => {
     }
   }
 
-  return {
-    description: post.seo?.description || post.summary || undefined,
+  const site = isSite(post.site) ? post.site : null
+
+  return createSEOPageMetadata({
+    canonicalURL: post.canonicalURL,
+    description: post.seo?.description || post.summary,
+    image: post.seo?.image || post.coverImage,
+    path: blogPostPublicPath({ site, slug: post.slug }),
     title: `${post.seo?.title || post.title} - CMS AI`,
-  }
+  })
 }
 
 export default async function SiteBlogPostPage({ params }: PageProps) {

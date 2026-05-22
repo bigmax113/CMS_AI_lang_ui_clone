@@ -420,6 +420,10 @@ export interface Media {
    * Optional editor note. For RAG uploads, describe the document purpose.
    */
   caption?: string | null;
+  /**
+   * Stable external image URL. Use this when Render free storage lost the uploaded local file.
+   */
+  externalImageURL?: string | null;
   tags?:
     | {
         tag?: string | null;
@@ -1013,6 +1017,7 @@ export interface ArticlesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  externalImageURL?: T;
   tags?:
     | T
     | {

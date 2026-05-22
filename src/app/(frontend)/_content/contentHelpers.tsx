@@ -1,4 +1,5 @@
 import configPromise from '@payload-config'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
 import { getPayload } from 'payload'
@@ -18,6 +19,8 @@ type LexicalNode = {
   url?: string
   value?: unknown
 }
+
+const defaultSEOImagePath = '/seo/default-og.png'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -51,6 +54,10 @@ export const mediaURL = (media?: Media | null | number) => {
     return media.embeddedImageDataURL
   }
 
+  if (media.externalImageURL) {
+    return media.externalImageURL
+  }
+
   if (media.url && !isLocalPayloadMediaURL(media.url)) {
     return media.url
   }
@@ -80,6 +87,58 @@ const schemaImageURL = (media?: Media | null | number) => {
   }
 
   return absoluteURL(url)
+}
+
+const seoImageURL = (media?: Media | null | number) => schemaImageURL(media) || absoluteURL(defaultSEOImagePath)
+
+export const createSEOPageMetadata = ({
+  canonicalURL,
+  description,
+  image,
+  path,
+  title,
+  type = 'article',
+}: {
+  canonicalURL?: null | string
+  description?: null | string
+  image?: Media | null | number
+  path?: null | string
+  title: string
+  type?: 'article' | 'website'
+}): Metadata => {
+  const canonical = canonicalURL || absoluteURL(path) || publicBaseURL()
+  const imageURL = seoImageURL(image)
+  const images = imageURL
+    ? [
+        {
+          alt: title,
+          height: 630,
+          url: imageURL,
+          width: 1200,
+        },
+      ]
+    : undefined
+
+  return {
+    alternates: {
+      canonical,
+    },
+    description: description || undefined,
+    openGraph: {
+      description: description || undefined,
+      images,
+      title,
+      type,
+      url: canonical,
+    },
+    title,
+    twitter: {
+      card: 'summary_large_image',
+      description: description || undefined,
+      images: imageURL ? [imageURL] : undefined,
+      title,
+    },
+  }
 }
 
 const collectBlockFields = (
@@ -381,7 +440,7 @@ export const StructuredData = ({
       datePublished: publishedAt || undefined,
       description: description || undefined,
       headline: title,
-      image: schemaImageURL(image),
+      image: seoImageURL(image),
       mainEntityOfPage: pageURL,
     },
     faqItems.length

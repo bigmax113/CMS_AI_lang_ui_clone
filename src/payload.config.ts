@@ -17,7 +17,7 @@ import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
 import { ArticlesCollection, articlesSlug } from './collections/Articles'
 import { BlogPostsCollection, blogPostsSlug } from './collections/BlogPosts'
 import { BlogTemplatesCollection, blogTemplatesSlug } from './collections/BlogTemplates'
-import { Media } from './collections/Media'
+import { Media, mediaSlug } from './collections/Media'
 import { PromptTemplatesCollection, promptTemplatesSlug } from './collections/PromptTemplates'
 import { SiteLinksCollection, siteLinksSlug } from './collections/SiteLinks'
 import { SitesCollection, sitesSlug } from './collections/Sites'
@@ -32,6 +32,13 @@ const payloadSecret =
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
 const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
+const plugPlayImageURL =
+  'https://news.asbis.com/news/wp-content/uploads/2026/04/PlugPlay_750x350.jpg'
+const plugPlayDemoFilenames = [
+  'PlugPlay_750x350.jpg',
+  'PlugPlay_750x350-2.jpg',
+  'PlugPlay_750x350-3.jpg',
+]
 
 const richTextParagraph = ({ text }: { text: string }) => ({
   root: {
@@ -125,6 +132,29 @@ export default buildConfig({
           password: adminPassword,
         },
       })
+    }
+
+    for (const filename of plugPlayDemoFilenames) {
+      const media = await payload.find({
+        collection: mediaSlug,
+        limit: 1,
+        where: {
+          filename: {
+            equals: filename,
+          },
+        },
+      })
+      const mediaDoc = media.docs[0]
+
+      if (mediaDoc && mediaDoc.externalImageURL !== plugPlayImageURL) {
+        await payload.update({
+          collection: mediaSlug,
+          data: {
+            externalImageURL: plugPlayImageURL,
+          },
+          id: mediaDoc.id,
+        })
+      }
     }
 
     const demoProjects = await payload.find({

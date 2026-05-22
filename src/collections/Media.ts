@@ -42,6 +42,15 @@ export const Media: CollectionConfig = {
       },
     },
     {
+      name: 'externalImageURL',
+      type: 'text',
+      admin: {
+        description:
+          'Stable external image URL. Use this when Render free storage lost the uploaded local file.',
+      },
+      label: 'External image URL',
+    },
+    {
       name: 'tags',
       type: 'array',
       fields: [
