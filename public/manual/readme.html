@@ -1038,8 +1038,8 @@ Articles / Blog Posts
           <tbody>
             <tr>
               <td>Render free storage</td>
-              <td>Загрузки в локальную папку контейнера могут быть временными.</td>
-              <td>Подключить Render Disk, S3, R2 или другой постоянный storage.</td>
+              <td>Загрузки в локальную папку контейнера могут быть временными: запись Media остается, а файл может исчезнуть.</td>
+              <td>Для небольших новых изображений есть database fallback; для production подключить Render Disk, S3, R2 или другой постоянный storage.</td>
             </tr>
             <tr>
               <td>Общий прототип</td>
@@ -1053,6 +1053,10 @@ Articles / Blog Posts
             </tr>
           </tbody>
         </table>
+        <div class="warning">
+          Уже потерянный файл восстановить из filename нельзя. Нужно загрузить изображение заново.
+          После этого небольшие изображения дополнительно сохраняются в Postgres как fallback для Render free.
+        </div>
       </section>
 
       <section id="materials">

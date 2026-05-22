@@ -2,11 +2,11 @@ import { notFound } from 'next/navigation'
 
 import {
   PublicChrome,
+  PublicImage,
   RichText,
   findPublishedBlogPostBySlug,
   formatDate,
   isSite,
-  mediaURL,
 } from '../../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -42,16 +42,14 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   const site = isSite(post.site) ? post.site : null
-  const coverURL = mediaURL(post.coverImage)
   const kicker = [site?.name, formatDate(post.publishedAt) || post.category].filter(Boolean).join(' / ')
 
   return (
     <PublicChrome kicker={kicker || 'Blog post'} title={post.title}>
       <article className="public-content__article">
         {post.summary ? <p className="public-content__summary">{post.summary}</p> : null}
-        {coverURL ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Payload media URLs are dynamic in this prototype.
-          <img alt={post.title} className="public-content__cover" src={coverURL} />
+        {post.coverImage ? (
+          <PublicImage alt={post.title} className="public-content__cover" media={post.coverImage} />
         ) : null}
         <RichText content={post.content} />
       </article>

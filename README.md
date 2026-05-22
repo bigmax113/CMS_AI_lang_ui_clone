@@ -441,6 +441,14 @@ AI-провайдер и конкретные модели являются за
 
 На Render free локальные загрузки подходят для прототипа и RAG-теста, но могут исчезнуть после restart или redeploy. Для production-хранения нужен постоянный storage: Render Disk, S3 или аналог.
 
+Для небольших изображений прототип дополнительно сохраняет database fallback в Media:
+
+- поле **Embedded image fallback** хранит data URL в Postgres;
+- поле **Embedded image status** показывает, удалось ли сохранить копию;
+- лимит по умолчанию - 3 MB на изображение, переменная `MEDIA_DB_IMAGE_MAX_BYTES`.
+
+Это сделано только для демонстрации на Render free. Для production правильное решение - S3/R2/Cloudinary/Uploadthing или платный Render Disk. Уже потерянные Render free файлы восстановить из filename нельзя: их нужно загрузить заново.
+
 ## Локальный запуск для проверки
 
 ```powershell

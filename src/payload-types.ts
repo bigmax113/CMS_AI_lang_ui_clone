@@ -426,6 +426,14 @@ export interface Media {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Prototype fallback for small images on Render free. Use object storage for production.
+   */
+  embeddedImageDataURL?: string | null;
+  /**
+   * Shows whether an image copy was stored in Postgres for free-plan persistence.
+   */
+  embeddedImageStatus?: ('stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1011,6 +1019,8 @@ export interface MediaSelect<T extends boolean = true> {
         tag?: T;
         id?: T;
       };
+  embeddedImageDataURL?: T;
+  embeddedImageStatus?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

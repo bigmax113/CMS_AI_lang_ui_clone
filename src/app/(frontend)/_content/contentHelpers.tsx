@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 
 import type { Article, BlogPost, Media, Site } from '@/payload-types'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath } from '@/lib/publicURLs'
+import { SafeImage } from './SafeImage'
 
 type LexicalNode = {
   children?: LexicalNode[]
@@ -39,11 +40,11 @@ export const formatDate = (value?: null | string) => {
 }
 
 export const mediaURL = (media?: Media | null | number) => {
-  if (!isMedia(media) || !media.url) {
+  if (!isMedia(media)) {
     return null
   }
 
-  return media.url
+  return media.embeddedImageDataURL || media.url || null
 }
 
 const renderText = (node: LexicalNode, key: string) => {
@@ -126,8 +127,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
 
     return (
       <figure className="public-content__figure" key={key}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- Payload media URLs are dynamic in this prototype. */}
-        <img alt={media.alt || media.filename || ''} src={url} />
+        <SafeImage alt={media.alt || media.filename || ''} fileName={media.filename} src={url} />
         {media.caption ? <figcaption>{media.caption}</figcaption> : null}
       </figure>
     )
@@ -183,6 +183,27 @@ export const RichText = ({ content }: { content?: Article['content'] | BlogPost[
   }
 
   return <div className="public-content__richtext">{renderNode(root, 'root')}</div>
+}
+
+export const PublicImage = ({
+  alt,
+  className,
+  media,
+}: {
+  alt: string
+  className?: string
+  media?: Media | null | number
+}) => {
+  const resolvedMedia = isMedia(media) ? media : null
+
+  return (
+    <SafeImage
+      alt={alt}
+      className={className}
+      fileName={resolvedMedia?.filename}
+      src={mediaURL(resolvedMedia)}
+    />
+  )
 }
 
 export const PublicChrome = ({

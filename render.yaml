@@ -28,6 +28,8 @@ services:
         value: /app/docs
       - key: PAYLOAD_UPLOAD_DIR
         value: /app/media
+      - key: MEDIA_DB_IMAGE_MAX_BYTES
+        value: '3000000'
       - key: XAI_API_KEY
         sync: false
       - key: XAI_BASE_URL

@@ -166,6 +166,32 @@ body {
   width: 100%;
 }
 
+.public-content__image-missing {
+  background: #fff6dc;
+  border: 1px solid #edd07b;
+  border-radius: 8px;
+  color: #64500f;
+  margin: 0 0 24px;
+  padding: 18px;
+}
+
+.public-content__image-missing strong,
+.public-content__image-missing span {
+  display: block;
+}
+
+.public-content__image-missing span {
+  color: #8a6f18;
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.public-content__image-missing p {
+  margin: 10px 0 0;
+}
+
 .public-content__richtext {
   max-width: 860px;
 }
