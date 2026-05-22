@@ -32,12 +32,11 @@ const payloadSecret =
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
 const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
-const plugPlayImageURL = '/seo/grok-test-blog.jpeg'
-const plugPlayDemoFilenames = [
-  'PlugPlay_750x350.jpg',
-  'PlugPlay_750x350-2.jpg',
-  'PlugPlay_750x350-3.jpg',
-]
+const plugPlayDemoImages: Record<string, string> = {
+  'PlugPlay_750x350.jpg': '/seo/grok-test-blog.jpeg',
+  'PlugPlay_750x350-2.jpg': '/seo/grok-test-blog-inline-2.jpeg',
+  'PlugPlay_750x350-3.jpg': '/seo/grok-test-blog-inline-1.jpeg',
+}
 
 const richTextParagraph = ({ text }: { text: string }) => ({
   root: {
@@ -133,7 +132,7 @@ export default buildConfig({
       })
     }
 
-    for (const filename of plugPlayDemoFilenames) {
+    for (const [filename, externalImageURL] of Object.entries(plugPlayDemoImages)) {
       const media = await payload.find({
         collection: mediaSlug,
         limit: 1,
@@ -145,11 +144,11 @@ export default buildConfig({
       })
       const mediaDoc = media.docs[0]
 
-      if (mediaDoc && mediaDoc.externalImageURL !== plugPlayImageURL) {
+      if (mediaDoc && mediaDoc.externalImageURL !== externalImageURL) {
         await payload.update({
           collection: mediaSlug,
           data: {
-            externalImageURL: plugPlayImageURL,
+            externalImageURL,
           },
           id: mediaDoc.id,
         })
