@@ -32,8 +32,7 @@ const payloadSecret =
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
 const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
-const plugPlayImageURL =
-  'https://news.asbis.com/news/wp-content/uploads/2026/04/PlugPlay_750x350.jpg'
+const plugPlayImageURL = '/seo/grok-test-blog.jpeg'
 const plugPlayDemoFilenames = [
   'PlugPlay_750x350.jpg',
   'PlugPlay_750x350-2.jpg',

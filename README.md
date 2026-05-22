@@ -409,6 +409,11 @@ Articles могут быть связаны с Blog Posts как relatedArticles
 - `FAQPage`, если в тексте есть FAQ-блок;
 - `Product`, если в тексте есть Product Card.
 
+Для проверки AI media workflow в прототип добавлен сгенерированный Grok Imagine
+тестовый hero image: `public/seo/grok-test-blog.jpeg`. Он автоматически
+подставляется в демо-медиа `PlugPlay_750x350*.jpg`, чтобы опубликованная
+страница имела рабочую картинку в HTML, Open Graph и JSON-LD даже на Render Free.
+
 ### Media
 
 Группа: **Library**.
