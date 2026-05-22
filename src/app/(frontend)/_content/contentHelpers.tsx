@@ -4,7 +4,7 @@ import React from 'react'
 import { getPayload } from 'payload'
 
 import type { Article, BlogPost, Media, Site } from '@/payload-types'
-import { articlePublicPath, blogPostPublicPath, normalizeBlogPath } from '@/lib/publicURLs'
+import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { SafeImage } from './SafeImage'
 
 type LexicalNode = {
@@ -46,6 +46,73 @@ export const mediaURL = (media?: Media | null | number) => {
 
   return media.embeddedImageDataURL || media.url || null
 }
+
+const textField = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+
+const absoluteURL = (value?: null | string) => {
+  if (!value) {
+    return undefined
+  }
+
+  if (value.startsWith('http') || value.startsWith('data:')) {
+    return value
+  }
+
+  return `${publicBaseURL()}${value.startsWith('/') ? value : `/${value}`}`
+}
+
+const schemaImageURL = (media?: Media | null | number) => {
+  if (!isMedia(media)) {
+    return undefined
+  }
+
+  return absoluteURL(media.url || media.embeddedImageDataURL || null)
+}
+
+const collectBlockFields = (
+  content: Article['content'] | BlogPost['content'] | null | undefined,
+  blockType: string,
+) => {
+  const root = content?.root as LexicalNode | undefined
+  const matches: Record<string, unknown>[] = []
+  const visit = (node?: LexicalNode) => {
+    if (!node) {
+      return
+    }
+
+    if (node.type === 'block' && node.fields?.blockType === blockType) {
+      matches.push(node.fields)
+    }
+
+    node.children?.forEach(visit)
+  }
+
+  visit(root)
+
+  return matches
+}
+
+const faqItemsFromFields = (fields: Record<string, unknown>) =>
+  (Array.isArray(fields.items) ? fields.items : [])
+    .filter(isRecord)
+    .map((item) => ({
+      answer: textField(item.answer),
+      question: textField(item.question),
+    }))
+    .filter((item) => item.question && item.answer)
+
+const productCardFromFields = (fields: Record<string, unknown>) => ({
+  brand: textField(fields.brand),
+  ctaLabel: textField(fields.ctaLabel) || 'View product',
+  description: textField(fields.description),
+  image: isMedia(fields.image) ? fields.image : null,
+  name: textField(fields.name),
+  priceLabel: textField(fields.priceLabel),
+  sku: textField(fields.sku),
+  url: textField(fields.url),
+})
+
+const safeJSON = (value: unknown) => JSON.stringify(value).replace(/</gu, '\\u003c')
 
 const renderText = (node: LexicalNode, key: string) => {
   let textNode: React.ReactNode = node.text || ''
@@ -154,6 +221,69 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
         </aside>
       )
     }
+
+    if (fields.blockType === 'htmlEmbed') {
+      const html = textField(fields.html)
+
+      return html ? (
+        <div className="public-content__html-embed" dangerouslySetInnerHTML={{ __html: html }} key={key} />
+      ) : null
+    }
+
+    if (fields.blockType === 'productCard') {
+      const product = productCardFromFields(fields)
+      const isExternal = product.url.startsWith('http')
+
+      if (!product.name) {
+        return null
+      }
+
+      return (
+        <aside className="public-content__product-card" key={key}>
+          {product.image ? (
+            <SafeImage
+              alt={product.image.alt || product.name}
+              className="public-content__product-image"
+              fileName={product.image.filename}
+              src={mediaURL(product.image)}
+            />
+          ) : null}
+          <div className="public-content__product-copy">
+            {product.brand ? <span>{product.brand}</span> : null}
+            <strong>{product.name}</strong>
+            {product.sku ? <small>SKU: {product.sku}</small> : null}
+            {product.description ? <p>{product.description}</p> : null}
+            {product.priceLabel ? <em>{product.priceLabel}</em> : null}
+            {product.url ? (
+              <a href={product.url} rel={isExternal ? 'noreferrer' : undefined} target={isExternal ? '_blank' : undefined}>
+                {product.ctaLabel}
+              </a>
+            ) : null}
+          </div>
+        </aside>
+      )
+    }
+
+    if (fields.blockType === 'faq') {
+      const items = faqItemsFromFields(fields)
+      const heading = textField(fields.heading) || 'FAQ'
+
+      if (!items.length) {
+        return null
+      }
+
+      return (
+        <section className="public-content__faq" key={key}>
+          <h2>{heading}</h2>
+          {items.map((item, index) => (
+            <details key={`${key}-${index}`}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </section>
+      )
+    }
   }
 
   if (node.type === 'table') {
@@ -203,6 +333,87 @@ export const PublicImage = ({
       fileName={resolvedMedia?.filename}
       src={mediaURL(resolvedMedia)}
     />
+  )
+}
+
+export const StructuredData = ({
+  content,
+  contentType,
+  description,
+  image,
+  publishedAt,
+  title,
+  updatedAt,
+  url,
+}: {
+  content?: Article['content'] | BlogPost['content'] | null
+  contentType: 'Article' | 'BlogPosting'
+  description?: null | string
+  image?: Media | null | number
+  publishedAt?: null | string
+  title: string
+  updatedAt?: null | string
+  url?: null | string
+}) => {
+  const pageURL = absoluteURL(url)
+  const productCards = collectBlockFields(content, 'productCard')
+    .map(productCardFromFields)
+    .filter((product) => product.name)
+  const faqItems = collectBlockFields(content, 'faq').flatMap(faqItemsFromFields)
+  const schemas = [
+    {
+      '@context': 'https://schema.org',
+      '@type': contentType,
+      dateModified: updatedAt || undefined,
+      datePublished: publishedAt || undefined,
+      description: description || undefined,
+      headline: title,
+      image: schemaImageURL(image),
+      mainEntityOfPage: pageURL,
+    },
+    faqItems.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqItems.map((item) => ({
+            '@type': 'Question',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: item.answer,
+            },
+            name: item.question,
+          })),
+        }
+      : null,
+    ...productCards.map((product) => ({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      brand: product.brand || undefined,
+      description: product.description || undefined,
+      image: schemaImageURL(product.image),
+      name: product.name,
+      offers: product.url
+        ? {
+            '@type': 'Offer',
+            availability: product.priceLabel || undefined,
+            url: absoluteURL(product.url),
+          }
+        : undefined,
+      sku: product.sku || undefined,
+      url: absoluteURL(product.url),
+    })),
+  ].filter(Boolean)
+
+  return (
+    <>
+      {schemas.map((schema, index) => (
+        <script
+          dangerouslySetInnerHTML={{ __html: safeJSON(schema) }}
+          key={index}
+          type="application/ld+json"
+        />
+      ))}
+    </>
   )
 }
 

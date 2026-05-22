@@ -391,6 +391,24 @@ Articles - базовая библиотека контента: knowledge base,
 
 Articles могут быть связаны с Blog Posts как relatedArticles и с Site Links как sourceContent или targetContent.
 
+### SEO-блоки в редакторе
+
+В `Articles` и `Blog Posts` rich text редактор поддерживает SEO-ориентированные блоки:
+
+| Блок | Для чего нужен | Что появляется на фронте |
+| --- | --- | --- |
+| HTML Embed | Вставка доверенного HTML-кода: таблицы, виджеты, SEO-фрагменты, legacy content. | HTML выводится внутри страницы. |
+| Product Card | Карточка товара внутри статьи или поста. | Название, бренд, SKU, описание, изображение, CTA и ссылка на товар. |
+| FAQ | Список вопросов и ответов для страницы. | Раскрываемый FAQ-блок и автоматическая JSON-LD разметка FAQPage. |
+| Cross-site CTA / Callout | Переходы между сайтами, смысловые выделения и CTA. | Визуальные блоки внутри текста. |
+
+Публичные страницы дополнительно выводят JSON-LD:
+
+- `Article` для статей;
+- `BlogPosting` для blog posts;
+- `FAQPage`, если в тексте есть FAQ-блок;
+- `Product`, если в тексте есть Product Card.
+
 ### Media
 
 Группа: **Library**.

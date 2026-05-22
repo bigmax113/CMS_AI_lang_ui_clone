@@ -233,6 +233,95 @@ body {
   color: #64500f;
 }
 
+.public-content__html-embed {
+  border: 1px dashed #9fb0c2;
+  border-radius: 8px;
+  margin: 24px 0;
+  overflow-x: auto;
+  padding: 16px;
+}
+
+.public-content__product-card {
+  align-items: stretch;
+  background: #f7fafc;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(160px, 240px) 1fr;
+  margin: 24px 0;
+  padding: 16px;
+}
+
+.public-content__product-image {
+  aspect-ratio: 4 / 3;
+  background: #ffffff;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.public-content__product-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+}
+
+.public-content__product-copy span,
+.public-content__product-copy small,
+.public-content__product-copy em {
+  color: #5c7089;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.public-content__product-copy strong {
+  color: #172030;
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.public-content__product-copy p {
+  margin: 0;
+}
+
+.public-content__product-copy a {
+  align-self: flex-start;
+  background: #0b6b6f;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 6px;
+  padding: 12px 14px;
+  text-decoration: none;
+}
+
+.public-content__faq {
+  margin: 28px 0;
+}
+
+.public-content__faq details {
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 14px 16px;
+}
+
+.public-content__faq summary {
+  color: #172030;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.public-content__faq p {
+  margin: 12px 0 0;
+}
+
 .public-content__table {
   border-collapse: collapse;
   width: 100%;
@@ -269,6 +358,10 @@ body {
   }
 
   .public-content__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .public-content__product-card {
     grid-template-columns: 1fr;
   }
 }

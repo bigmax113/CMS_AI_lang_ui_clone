@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation'
 
+import { blogPostPublicPath } from '@/lib/publicURLs'
 import {
   PublicChrome,
   PublicImage,
   RichText,
+  StructuredData,
   findPublishedBlogPostBySitePath,
   formatDate,
   isSite,
@@ -47,6 +49,16 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
 
   return (
     <PublicChrome kicker={kicker || 'Blog post'} title={post.title}>
+      <StructuredData
+        content={post.content}
+        contentType="BlogPosting"
+        description={post.seo?.description || post.summary}
+        image={post.seo?.image || post.coverImage}
+        publishedAt={post.publishedAt}
+        title={post.seo?.title || post.title}
+        updatedAt={post.updatedAt}
+        url={blogPostPublicPath({ site, slug: post.slug })}
+      />
       <article className="public-content__article">
         {post.summary ? <p className="public-content__summary">{post.summary}</p> : null}
         {post.coverImage ? (

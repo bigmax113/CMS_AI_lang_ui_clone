@@ -13,6 +13,7 @@ import { articlesSlug } from '../Articles'
 import { blogTemplatesSlug } from '../BlogTemplates'
 import { mediaSlug } from '../Media'
 import { sitesSlug } from '../Sites'
+import { faqBlock, htmlEmbedBlock, productCardBlock } from '../contentBlocks'
 
 export const blogPostsSlug = 'blog-posts'
 
@@ -210,7 +211,7 @@ export const BlogPostsCollection: CollectionConfig = {
                   FixedToolbarFeature(),
                   InlineToolbarFeature(),
                   BlocksFeature({
-                    blocks: [crossSiteCtaBlock],
+                    blocks: [crossSiteCtaBlock, htmlEmbedBlock, productCardBlock, faqBlock],
                   }),
                 ],
               }),

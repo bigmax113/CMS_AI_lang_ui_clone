@@ -11,6 +11,7 @@ import {
 
 import { absolutePublicURL, articlePublicPath } from '../../lib/publicURLs'
 import { mediaSlug } from '../Media'
+import { faqBlock, htmlEmbedBlock, productCardBlock } from '../contentBlocks'
 
 export const articlesSlug = 'articles'
 
@@ -171,6 +172,9 @@ export const ArticlesCollection: CollectionConfig = {
                   BlocksFeature({
                     blocks: [
                       calloutBlock,
+                      htmlEmbedBlock,
+                      productCardBlock,
+                      faqBlock,
                       CodeBlock({
                         defaultLanguage: 'plaintext',
                         languages: {

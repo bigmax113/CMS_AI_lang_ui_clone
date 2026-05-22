@@ -1,6 +1,14 @@
 import { notFound } from 'next/navigation'
 
-import { PublicChrome, PublicImage, RichText, findPublishedArticleBySlug, formatDate } from '../../_content/contentHelpers'
+import { articlePublicPath } from '@/lib/publicURLs'
+import {
+  PublicChrome,
+  PublicImage,
+  RichText,
+  StructuredData,
+  findPublishedArticleBySlug,
+  formatDate,
+} from '../../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +44,16 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <PublicChrome kicker={formatDate(article.publishedAt) || article.category || 'Article'} title={article.title}>
+      <StructuredData
+        content={article.content}
+        contentType="Article"
+        description={article.seo?.description || article.summary}
+        image={article.seo?.image || article.coverImage}
+        publishedAt={article.publishedAt}
+        title={article.seo?.title || article.title}
+        updatedAt={article.updatedAt}
+        url={articlePublicPath(article.slug)}
+      />
       <article className="public-content__article">
         {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}
         {article.coverImage ? (
