@@ -27,6 +27,9 @@ export const isSite = (value: unknown): value is Site => isRecord(value) && type
 export const isMedia = (value: unknown): value is Media =>
   isRecord(value) && (typeof value.url === 'string' || typeof value.filename === 'string')
 
+const isLocalPayloadMediaURL = (value?: null | string) =>
+  Boolean(value?.startsWith('/api/media/file/') || value?.includes('/api/media/file/'))
+
 export const formatDate = (value?: null | string) => {
   if (!value) {
     return null
@@ -44,7 +47,15 @@ export const mediaURL = (media?: Media | null | number) => {
     return null
   }
 
-  return media.embeddedImageDataURL || media.url || null
+  if (media.embeddedImageDataURL) {
+    return media.embeddedImageDataURL
+  }
+
+  if (media.url && !isLocalPayloadMediaURL(media.url)) {
+    return media.url
+  }
+
+  return null
 }
 
 const textField = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
@@ -62,11 +73,13 @@ const absoluteURL = (value?: null | string) => {
 }
 
 const schemaImageURL = (media?: Media | null | number) => {
-  if (!isMedia(media)) {
+  const url = mediaURL(media)
+
+  if (!url || url.startsWith('data:')) {
     return undefined
   }
 
-  return absoluteURL(media.url || media.embeddedImageDataURL || null)
+  return absoluteURL(url)
 }
 
 const collectBlockFields = (
@@ -188,7 +201,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
     const media = isMedia(node.value) ? node.value : null
     const url = mediaURL(media)
 
-    if (!media || !url) {
+    if (!media) {
       return null
     }
 
