@@ -323,6 +323,10 @@ export interface BlogPost {
    */
   slug: string;
   status: 'idea' | 'draft' | 'review' | 'scheduled' | 'published';
+  /**
+   * Frontend link. It works after status is Published.
+   */
+  publicUrl?: string | null;
   site: number | Site;
   template?: (number | null) | BlogTemplate;
   publishedAt?: string | null;
@@ -409,11 +413,11 @@ export interface BlogPost {
 export interface Media {
   id: number;
   /**
-   * Short accessible description for images and uploaded documents.
+   * Short accessible description for images or RAG documents.
    */
   alt?: string | null;
   /**
-   * Optional note shown to content editors.
+   * Optional editor note. For RAG uploads, describe the document purpose.
    */
   caption?: string | null;
   tags?:
@@ -446,6 +450,10 @@ export interface Article {
    */
   slug: string;
   status: 'draft' | 'review' | 'published';
+  /**
+   * Frontend link. It works after status is Published.
+   */
+  publicUrl?: string | null;
   publishedAt?: string | null;
   /**
    * Short intro shown in cards, search results, and previews.
@@ -847,6 +855,7 @@ export interface BlogPostsSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   status?: T;
+  publicUrl?: T;
   site?: T;
   template?: T;
   publishedAt?: T;
@@ -965,6 +974,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   status?: T;
+  publicUrl?: T;
   publishedAt?: T;
   summary?: T;
   coverImage?: T;

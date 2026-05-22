@@ -6,13 +6,47 @@ import {
   InlineToolbarFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
+import type { PayloadRequest } from 'payload'
 
+import { absolutePublicURL, blogPostPublicPath, type PublicSite } from '../../lib/publicURLs'
 import { articlesSlug } from '../Articles'
 import { blogTemplatesSlug } from '../BlogTemplates'
 import { mediaSlug } from '../Media'
 import { sitesSlug } from '../Sites'
 
 export const blogPostsSlug = 'blog-posts'
+
+const isPublicSite = (value: unknown): value is PublicSite =>
+  typeof value === 'object' && value !== null && 'slug' in value
+
+const resolvePublicSite = async (site: unknown, req: PayloadRequest): Promise<null | PublicSite> => {
+  if (isPublicSite(site)) {
+    return site
+  }
+
+  if (typeof site !== 'number' && typeof site !== 'string') {
+    return null
+  }
+
+  const resolvedSite = await req.payload.findByID({
+    collection: sitesSlug,
+    depth: 0,
+    id: site,
+    overrideAccess: true,
+  })
+
+  return isPublicSite(resolvedSite) ? resolvedSite : null
+}
+
+const blogPostURL = async (doc: Record<string, unknown>, req: PayloadRequest) => {
+  if (doc.status !== 'published' || typeof doc.slug !== 'string') {
+    return null
+  }
+
+  const site = await resolvePublicSite(doc.site, req)
+
+  return absolutePublicURL(blogPostPublicPath({ site, slug: doc.slug }), req)
+}
 
 const crossSiteCtaBlock = {
   slug: 'crossSiteCta',
@@ -48,6 +82,7 @@ export const BlogPostsCollection: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'status', 'site', 'template', 'updatedAt'],
     group: 'CMS',
+    preview: (doc, { req }) => blogPostURL(doc, req),
     useAsTitle: 'title',
   },
   fields: [
@@ -97,6 +132,26 @@ export const BlogPostsCollection: CollectionConfig = {
         },
       ],
       required: true,
+    },
+    {
+      name: 'publicUrl',
+      type: 'text',
+      admin: {
+        description: 'Frontend link. It works after status is Published.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      hooks: {
+        afterRead: [
+          async ({ data, req }) => {
+            const publicURL = await blogPostURL(data || {}, req)
+
+            return publicURL || 'Set status to Published and save to get the public URL.'
+          },
+        ],
+      },
+      label: 'Public URL',
+      virtual: true,
     },
     {
       type: 'row',

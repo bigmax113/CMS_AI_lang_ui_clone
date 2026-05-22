@@ -390,11 +390,12 @@
           <a href="#workbench">5. AI Workbench</a>
           <a href="#admin">6. Payload Admin</a>
           <a href="#collections">7. Коллекции и поля</a>
-          <a href="#rag">8. Загрузка документов для RAG</a>
-          <a href="#blog">9. Блог и перелинковка</a>
-          <a href="#demo">10. Demo script</a>
-          <a href="#limits">11. Ограничения прототипа</a>
-          <a href="#materials">12. Материалы</a>
+          <a href="#frontend">8. Публичные страницы</a>
+          <a href="#rag">9. Загрузка документов для RAG</a>
+          <a href="#blog">10. Блог и перелинковка</a>
+          <a href="#demo">11. Demo script</a>
+          <a href="#limits">12. Ограничения прототипа</a>
+          <a href="#materials">13. Материалы</a>
         </div>
       </section>
 
@@ -911,8 +912,54 @@ Articles / Blog Posts
         </div>
       </details>
 
+      <section id="frontend">
+        <h2>8. Публичные frontend-страницы</h2>
+        <p>
+          Статус Published теперь дает не только редакционный статус в админке,
+          но и публичный frontend-адрес. В sidebar у Articles и Blog Posts есть
+          read-only поле Public URL, а для опубликованных записей работает
+          preview-ссылка из edit view.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Тип</th>
+              <th>URL</th>
+              <th>Откуда берется</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Список статей</td>
+              <td><code>/articles</code></td>
+              <td>Все Articles со статусом Published.</td>
+            </tr>
+            <tr>
+              <td>Статья</td>
+              <td><code>/articles/{articleSlug}</code></td>
+              <td>Поле slug в Articles.</td>
+            </tr>
+            <tr>
+              <td>Список постов</td>
+              <td><code>/blog</code></td>
+              <td>Все Blog Posts со статусом Published.</td>
+            </tr>
+            <tr>
+              <td>Пост, короткий URL</td>
+              <td><code>/blog/{postSlug}</code></td>
+              <td>Поле slug в Blog Posts.</td>
+            </tr>
+            <tr>
+              <td>Пост с учетом сайта</td>
+              <td><code>/sites/{siteSlug}{defaultBlogPath}/{postSlug}</code></td>
+              <td>Sites.slug, Sites.defaultBlogPath и Blog Posts.slug.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
       <section id="rag">
-        <h2>8. Загрузка документов для RAG</h2>
+        <h2>9. Загрузка документов для RAG</h2>
         <p>
           Пользователь, которому вы даете ссылку на сервис, сможет загрузить
           документы со своего диска через браузер. Это не привязано к вашему
@@ -942,7 +989,7 @@ Articles / Blog Posts
       </section>
 
       <section id="blog">
-        <h2>9. Блог, шаблоны и перелинковка</h2>
+        <h2>10. Блог, шаблоны и перелинковка</h2>
         <p>
           Блоговая часть нужна не только для хранения постов. Она задает
           управляемый процесс: сайт -> шаблон -> пост -> related content ->
@@ -966,7 +1013,7 @@ Articles / Blog Posts
       </section>
 
       <section id="demo">
-        <h2>10. Demo script</h2>
+        <h2>11. Demo script</h2>
         <div class="workflow">
           <div class="step">Открыть <code>/admin</code> и показать Dashboard с кнопками AI Workbench и Upload RAG documents.</div>
           <div class="step">Открыть Media, загрузить тестовый PDF или DOCX со своего компьютера.</div>
@@ -979,7 +1026,7 @@ Articles / Blog Posts
       </section>
 
       <section id="limits">
-        <h2>11. Ограничения прототипа</h2>
+        <h2>12. Ограничения прототипа</h2>
         <table>
           <thead>
             <tr>
@@ -1009,7 +1056,7 @@ Articles / Blog Posts
       </section>
 
       <section id="materials">
-        <h2>12. Материалы</h2>
+        <h2>13. Материалы</h2>
         <div class="grid">
           <a class="card" href="./index.html">
             <strong>Подробный мануал</strong>

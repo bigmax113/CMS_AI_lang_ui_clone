@@ -76,6 +76,26 @@ AI Workbench сделан не как чат ради чата. В нем ест
 - коллекция **Media** стала точкой загрузки документов для RAG;
 - загруженные файлы становятся видимыми в **Corpus**.
 
+## Публичные frontend-страницы
+
+Статус **Published** теперь не только помечает запись в админке, но и делает ее доступной на frontend.
+
+Ссылки:
+
+- список статей: `/articles`
+- статья: `/articles/{articleSlug}`
+- список постов: `/blog`
+- короткий URL поста: `/blog/{postSlug}`
+- URL поста с учетом сайта: `/sites/{siteSlug}{defaultBlogPath}/{postSlug}`
+
+Например, если у сайта `slug = demo-site`, `defaultBlogPath = /blog`, а у поста `slug = launch-guide`, публичный URL будет:
+
+```text
+/sites/demo-site/blog/launch-guide
+```
+
+Внутри админки у **Articles** и **Blog Posts** добавлено read-only поле **Public URL** в sidebar. Также для опубликованных записей работает preview-ссылка из edit view.
+
 ## Карта данных
 
 ```text

@@ -9,6 +9,7 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
+import { absolutePublicURL, articlePublicPath } from '../../lib/publicURLs'
 import { mediaSlug } from '../Media'
 
 export const articlesSlug = 'articles'
@@ -55,6 +56,13 @@ export const ArticlesCollection: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'status', 'category', 'updatedAt'],
     group: 'CMS',
+    preview: (doc, { req }) => {
+      if (doc.status !== 'published' || typeof doc.slug !== 'string') {
+        return null
+      }
+
+      return absolutePublicURL(articlePublicPath(doc.slug), req)
+    },
     useAsTitle: 'title',
   },
   fields: [
@@ -96,6 +104,28 @@ export const ArticlesCollection: CollectionConfig = {
         },
       ],
       required: true,
+    },
+    {
+      name: 'publicUrl',
+      type: 'text',
+      admin: {
+        description: 'Frontend link. It works after status is Published.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      hooks: {
+        afterRead: [
+          ({ data, req }) => {
+            if (data?.status !== 'published' || typeof data.slug !== 'string') {
+              return 'Set status to Published and save to get the public URL.'
+            }
+
+            return absolutePublicURL(articlePublicPath(data.slug), req)
+          },
+        ],
+      },
+      label: 'Public URL',
+      virtual: true,
     },
     {
       name: 'publishedAt',
