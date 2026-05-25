@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { articlePublicPath } from '@/lib/publicURLs'
 import {
+  AuthorByline,
   PublicChrome,
   PublicImage,
   RichText,
@@ -46,8 +47,12 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   return (
-    <PublicChrome kicker={formatDate(article.publishedAt) || article.category || 'Article'} title={article.title}>
+    <PublicChrome
+      kicker={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
+      title={article.title}
+    >
       <StructuredData
+        authors={article.authors}
         content={article.content}
         contentType="Article"
         description={article.seo?.description || article.summary}
@@ -58,6 +63,7 @@ export default async function ArticlePage({ params }: PageProps) {
         url={articlePublicPath(article.slug)}
       />
       <article className="public-content__article">
+        <AuthorByline authors={article.authors} />
         {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}
         {article.coverImage ? (
           <PublicImage alt={article.title} className="public-content__cover" media={article.coverImage} />

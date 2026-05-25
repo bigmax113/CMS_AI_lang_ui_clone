@@ -10,8 +10,15 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { absolutePublicURL, articlePublicPath } from '../../lib/publicURLs'
+import { authorsSlug } from '../Authors'
 import { mediaSlug } from '../Media'
-import { faqBlock, htmlEmbedBlock, productCardBlock } from '../contentBlocks'
+import {
+  faqBlock,
+  htmlEmbedBlock,
+  productCardBlock,
+  productCardCarouselBlock,
+  videoBlock,
+} from '../contentBlocks'
 
 export const articlesSlug = 'articles'
 
@@ -66,6 +73,10 @@ export const ArticlesCollection: CollectionConfig = {
     },
     useAsTitle: 'title',
   },
+  labels: {
+    plural: 'Content / Articles',
+    singular: 'Content item',
+  },
   fields: [
     {
       name: 'title',
@@ -102,6 +113,43 @@ export const ArticlesCollection: CollectionConfig = {
         {
           label: 'Published',
           value: 'published',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'contentType',
+      type: 'select',
+      admin: {
+        description: 'Unified editorial type. Use one collection for articles, blog posts, guides, news, and knowledge base content.',
+        position: 'sidebar',
+      },
+      defaultValue: 'article',
+      label: 'Content type',
+      options: [
+        {
+          label: 'Article',
+          value: 'article',
+        },
+        {
+          label: 'Blog post',
+          value: 'blog-post',
+        },
+        {
+          label: 'News',
+          value: 'news',
+        },
+        {
+          label: 'Guide',
+          value: 'guide',
+        },
+        {
+          label: 'Case study',
+          value: 'case-study',
+        },
+        {
+          label: 'Knowledge base',
+          value: 'knowledge-base',
         },
       ],
       required: true,
@@ -157,6 +205,15 @@ export const ArticlesCollection: CollectionConfig = {
               relationTo: mediaSlug,
             },
             {
+              name: 'authors',
+              type: 'relationship',
+              admin: {
+                description: 'Choose one or more authors from the Authors module. They are shown at the top of the public material.',
+              },
+              hasMany: true,
+              relationTo: authorsSlug,
+            },
+            {
               name: 'content',
               type: 'richText',
               admin: {
@@ -174,6 +231,8 @@ export const ArticlesCollection: CollectionConfig = {
                       calloutBlock,
                       htmlEmbedBlock,
                       productCardBlock,
+                      productCardCarouselBlock,
+                      videoBlock,
                       faqBlock,
                       CodeBlock({
                         defaultLanguage: 'plaintext',
@@ -235,6 +294,47 @@ export const ArticlesCollection: CollectionConfig = {
             },
           ],
           label: 'Settings',
+        },
+        {
+          name: 'aiAssist',
+          fields: [
+            {
+              name: 'brief',
+              type: 'textarea',
+              admin: {
+                description: 'Business brief for AI article generation.',
+              },
+            },
+            {
+              name: 'targetKeywords',
+              type: 'array',
+              fields: [
+                {
+                  name: 'keyword',
+                  type: 'text',
+                },
+              ],
+            },
+            {
+              name: 'questionsToAnswer',
+              type: 'array',
+              fields: [
+                {
+                  name: 'question',
+                  type: 'text',
+                },
+              ],
+            },
+            {
+              name: 'editorialNotes',
+              type: 'textarea',
+              admin: {
+                description:
+                  'Notes for tone, products, internal links, or sections that the AI draft must include.',
+              },
+            },
+          ],
+          label: 'AI Draft',
         },
         {
           name: 'seo',

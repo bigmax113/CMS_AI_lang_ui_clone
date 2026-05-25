@@ -4,7 +4,7 @@ import Link from 'next/link'
 import React from 'react'
 import { getPayload } from 'payload'
 
-import type { Article, BlogPost, Media, Site } from '@/payload-types'
+import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { SafeImage } from './SafeImage'
 
@@ -29,6 +29,9 @@ export const isSite = (value: unknown): value is Site => isRecord(value) && type
 
 export const isMedia = (value: unknown): value is Media =>
   isRecord(value) && (typeof value.url === 'string' || typeof value.filename === 'string')
+
+export const isAuthor = (value: unknown): value is Author =>
+  isRecord(value) && typeof value.name === 'string'
 
 const isLocalPayloadMediaURL = (value?: null | string) =>
   Boolean(value?.startsWith('/api/media/file/') || value?.includes('/api/media/file/'))
@@ -63,6 +66,14 @@ export const mediaURL = (media?: Media | null | number) => {
   }
 
   return null
+}
+
+const mediaFileURL = (media?: Media | null | number) => {
+  if (!isMedia(media)) {
+    return null
+  }
+
+  return mediaURL(media) || media.url || null
 }
 
 const textField = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
@@ -184,6 +195,90 @@ const productCardFromFields = (fields: Record<string, unknown>) => ({
   url: textField(fields.url),
 })
 
+const productCardsFromCarouselFields = (fields: Record<string, unknown>) =>
+  (Array.isArray(fields.products) ? fields.products : [])
+    .filter(isRecord)
+    .map(productCardFromFields)
+    .filter((product) => product.name)
+    .slice(0, 5)
+
+const authorListFromValue = (value: unknown) =>
+  (Array.isArray(value) ? value : [])
+    .map((item) => (isRecord(item) && 'value' in item ? item.value : item))
+    .filter(isAuthor)
+    .filter((author) => author.status !== 'hidden')
+
+const parseURL = (value: string) => {
+  try {
+    return new URL(value)
+  } catch (_error) {
+    return null
+  }
+}
+
+const getYouTubeID = (value: string) => {
+  const url = parseURL(value)
+
+  if (!url) {
+    return null
+  }
+
+  if (url.hostname.includes('youtu.be')) {
+    return url.pathname.replace(/^\/+/u, '').split('/')[0] || null
+  }
+
+  if (url.hostname.includes('youtube.com')) {
+    return url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts)\/([^/?]+)/u)?.[1] || null
+  }
+
+  return null
+}
+
+const getVimeoID = (value: string) => {
+  const url = parseURL(value)
+
+  if (!url || !url.hostname.includes('vimeo.com')) {
+    return null
+  }
+
+  return url.pathname.match(/\/(\d+)/u)?.[1] || null
+}
+
+const isDirectVideoURL = (value: string) => /\.(mp4|mov|webm)(?:[?#].*)?$/iu.test(value)
+
+const videoFromFields = (fields: Record<string, unknown>) => {
+  const upload = isMedia(fields.upload) ? fields.upload : null
+  const thumbnail = isMedia(fields.thumbnail) ? fields.thumbnail : null
+  const url = textField(fields.url)
+  const youtubeID = getYouTubeID(url)
+  const vimeoID = getVimeoID(url)
+  const schema = isRecord(fields.schema) ? fields.schema : {}
+  const uploadedURL = mediaFileURL(upload)
+  const thumbnailURL =
+    mediaURL(thumbnail) ||
+    textField(fields.thumbnailURL) ||
+    (youtubeID ? `https://i.ytimg.com/vi/${youtubeID}/hqdefault.jpg` : '') ||
+    (vimeoID ? `https://vumbnail.com/${vimeoID}.jpg` : '')
+  const embedURL =
+    textField(fields.embedURL) ||
+    (youtubeID ? `https://www.youtube.com/embed/${youtubeID}` : '') ||
+    (vimeoID ? `https://player.vimeo.com/video/${vimeoID}` : '')
+  const contentURL = textField(fields.contentURL) || uploadedURL || (isDirectVideoURL(url) ? url : '')
+
+  return {
+    contentURL,
+    description: textField(fields.description),
+    duration: textField(fields.duration),
+    embedURL,
+    sourceURL: uploadedURL || url,
+    thumbnailURL,
+    title: textField(fields.title),
+    uploadDate: textField(fields.uploadDate),
+    schemaDescription: textField(schema.description),
+    schemaName: textField(schema.name),
+  }
+}
+
 const safeJSON = (value: unknown) => JSON.stringify(value).replace(/</gu, '\\u003c')
 
 const renderText = (node: LexicalNode, key: string) => {
@@ -204,6 +299,43 @@ const renderText = (node: LexicalNode, key: string) => {
   }
 
   return <React.Fragment key={key}>{textNode}</React.Fragment>
+}
+
+const renderProductCard = (
+  product: ReturnType<typeof productCardFromFields>,
+  key: string,
+  className = 'public-content__product-card',
+) => {
+  const isExternal = product.url.startsWith('http')
+
+  if (!product.name) {
+    return null
+  }
+
+  return (
+    <aside className={className} key={key}>
+      {product.image ? (
+        <SafeImage
+          alt={product.image.alt || product.name}
+          className="public-content__product-image"
+          fileName={product.image.filename}
+          src={mediaURL(product.image)}
+        />
+      ) : null}
+      <div className="public-content__product-copy">
+        {product.brand ? <span>{product.brand}</span> : null}
+        <strong>{product.name}</strong>
+        {product.sku ? <small>SKU: {product.sku}</small> : null}
+        {product.description ? <p>{product.description}</p> : null}
+        {product.priceLabel ? <em>{product.priceLabel}</em> : null}
+        {product.url ? (
+          <a href={product.url} rel={isExternal ? 'noreferrer' : undefined} target={isExternal ? '_blank' : undefined}>
+            {product.ctaLabel}
+          </a>
+        ) : null}
+      </div>
+    </aside>
+  )
 }
 
 const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
@@ -304,35 +436,62 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
 
     if (fields.blockType === 'productCard') {
       const product = productCardFromFields(fields)
-      const isExternal = product.url.startsWith('http')
 
-      if (!product.name) {
+      return renderProductCard(product, key)
+    }
+
+    if (fields.blockType === 'productCardCarousel') {
+      const products = productCardsFromCarouselFields(fields)
+      const heading = textField(fields.heading)
+
+      if (!products.length) {
         return null
       }
 
       return (
-        <aside className="public-content__product-card" key={key}>
-          {product.image ? (
-            <SafeImage
-              alt={product.image.alt || product.name}
-              className="public-content__product-image"
-              fileName={product.image.filename}
-              src={mediaURL(product.image)}
-            />
-          ) : null}
-          <div className="public-content__product-copy">
-            {product.brand ? <span>{product.brand}</span> : null}
-            <strong>{product.name}</strong>
-            {product.sku ? <small>SKU: {product.sku}</small> : null}
-            {product.description ? <p>{product.description}</p> : null}
-            {product.priceLabel ? <em>{product.priceLabel}</em> : null}
-            {product.url ? (
-              <a href={product.url} rel={isExternal ? 'noreferrer' : undefined} target={isExternal ? '_blank' : undefined}>
-                {product.ctaLabel}
-              </a>
-            ) : null}
+        <section className="public-content__product-carousel" key={key}>
+          {heading ? <h2>{heading}</h2> : null}
+          <div className="public-content__product-carousel-track">
+            {products.map((product, index) =>
+              renderProductCard(product, `${key}-product-${index}`, 'public-content__product-card public-content__product-card--carousel'),
+            )}
           </div>
-        </aside>
+        </section>
+      )
+    }
+
+    if (fields.blockType === 'video') {
+      const video = videoFromFields(fields)
+
+      if (!video.title || (!video.sourceURL && !video.embedURL)) {
+        return null
+      }
+
+      return (
+        <figure className="public-content__video" key={key}>
+          {video.embedURL ? (
+            <iframe
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="public-content__video-frame"
+              src={video.embedURL}
+              title={video.title}
+            />
+          ) : isDirectVideoURL(video.sourceURL) ? (
+            <video className="public-content__video-frame" controls poster={video.thumbnailURL || undefined}>
+              <source src={video.sourceURL} />
+            </video>
+          ) : (
+            <a className="public-content__video-link" href={video.sourceURL} rel="noreferrer" target="_blank">
+              {video.thumbnailURL ? <SafeImage alt={video.title} src={video.thumbnailURL} /> : null}
+              <span>{video.title}</span>
+            </a>
+          )}
+          <figcaption>
+            <strong>{video.title}</strong>
+            {video.description ? <span>{video.description}</span> : null}
+          </figcaption>
+        </figure>
       )
     }
 
@@ -387,6 +546,40 @@ export const RichText = ({ content }: { content?: Article['content'] | BlogPost[
   return <div className="public-content__richtext">{renderNode(root, 'root')}</div>
 }
 
+export const AuthorByline = ({
+  authors,
+}: {
+  authors?: Article['authors'] | BlogPost['authors'] | null
+}) => {
+  const visibleAuthors = authorListFromValue(authors)
+
+  if (!visibleAuthors.length) {
+    return null
+  }
+
+  return (
+    <section className="public-content__authors" aria-label="Authors">
+      {visibleAuthors.map((author) => (
+        <div className="public-content__author" key={author.id}>
+          {author.photo ? (
+            <SafeImage
+              alt={author.name}
+              className="public-content__author-photo"
+              fileName={isMedia(author.photo) ? author.photo.filename : undefined}
+              src={mediaURL(isMedia(author.photo) ? author.photo : null)}
+            />
+          ) : null}
+          <div>
+            <strong>{author.name}</strong>
+            {author.role ? <span>{author.role}</span> : null}
+            {author.shortDescription ? <p>{author.shortDescription}</p> : null}
+          </div>
+        </div>
+      ))}
+    </section>
+  )
+}
+
 export const PublicImage = ({
   alt,
   className,
@@ -409,6 +602,7 @@ export const PublicImage = ({
 }
 
 export const StructuredData = ({
+  authors,
   content,
   contentType,
   description,
@@ -418,6 +612,7 @@ export const StructuredData = ({
   updatedAt,
   url,
 }: {
+  authors?: Article['authors'] | BlogPost['authors'] | null
   content?: Article['content'] | BlogPost['content'] | null
   contentType: 'Article' | 'BlogPosting'
   description?: null | string
@@ -428,14 +623,29 @@ export const StructuredData = ({
   url?: null | string
 }) => {
   const pageURL = absoluteURL(url)
-  const productCards = collectBlockFields(content, 'productCard')
-    .map(productCardFromFields)
-    .filter((product) => product.name)
+  const authorsList = authorListFromValue(authors)
+  const productCards = [
+    ...collectBlockFields(content, 'productCard')
+      .map(productCardFromFields)
+      .filter((product) => product.name),
+    ...collectBlockFields(content, 'productCardCarousel').flatMap(productCardsFromCarouselFields),
+  ]
   const faqItems = collectBlockFields(content, 'faq').flatMap(faqItemsFromFields)
+  const videos = collectBlockFields(content, 'video')
+    .map(videoFromFields)
+    .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
   const schemas = [
     {
       '@context': 'https://schema.org',
       '@type': contentType,
+      author: authorsList.length
+        ? authorsList.map((author) => ({
+            '@type': 'Person',
+            description: author.shortDescription || undefined,
+            image: schemaImageURL(isMedia(author.photo) ? author.photo : null),
+            name: author.name,
+          }))
+        : undefined,
       dateModified: updatedAt || undefined,
       datePublished: publishedAt || undefined,
       description: description || undefined,
@@ -474,6 +684,17 @@ export const StructuredData = ({
       sku: product.sku || undefined,
       url: absoluteURL(product.url),
     })),
+    ...videos.map((video) => ({
+      '@context': 'https://schema.org',
+      '@type': 'VideoObject',
+      contentUrl: absoluteURL(video.contentURL || video.sourceURL),
+      description: video.schemaDescription || video.description || undefined,
+      duration: video.duration || undefined,
+      embedUrl: absoluteURL(video.embedURL),
+      name: video.schemaName || video.title,
+      thumbnailUrl: video.thumbnailURL ? [absoluteURL(video.thumbnailURL)] : undefined,
+      uploadDate: video.uploadDate || publishedAt || undefined,
+    })),
   ].filter(Boolean)
 
   return (
@@ -502,7 +723,7 @@ export const PublicChrome = ({
     <header className="public-content__topbar">
       <Link href="/ai">AI Workbench</Link>
       <Link href="/admin">Admin</Link>
-      <Link href="/articles">Articles</Link>
+      <Link href="/articles">Content</Link>
       <Link href="/blog">Blog</Link>
     </header>
     <section className="public-content__hero">

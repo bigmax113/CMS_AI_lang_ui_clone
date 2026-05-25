@@ -70,7 +70,7 @@ type AskResponse = {
   warnings?: string[]
 }
 
-type ActiveView = 'ask' | 'generate' | 'corpus' | 'admin'
+type ActiveView = 'ask' | 'content' | 'generate' | 'corpus' | 'admin'
 
 type GenerateImageResponse = {
   data?: Array<{
@@ -92,6 +92,25 @@ type GenerateVideoResponse = {
   video?: {
     url?: string
   }
+}
+
+type GenerateArticleResponse = {
+  draft?: {
+    bodyMarkdown?: string
+    faq?: Array<{
+      answer: string
+      question: string
+    }>
+    outline?: string[]
+    seoDescription?: string
+    seoTitle?: string
+    slug?: string
+    summary?: string
+    title?: string
+  }
+  error?: string
+  model: string
+  ok: boolean
 }
 
 const presets = [
@@ -118,6 +137,11 @@ const adminLinks = [
     descriptionKey: 'adminArticlesDescription',
     href: '/admin/collections/articles',
     labelKey: 'adminArticlesLabel',
+  },
+  {
+    descriptionKey: 'adminAuthorsDescription',
+    href: '/admin/collections/authors',
+    labelKey: 'adminAuthorsLabel',
   },
   {
     descriptionKey: 'adminProjectsDescription',
@@ -191,6 +215,12 @@ export function AiDocsWorkbench() {
   )
   const [imageAspectRatio, setImageAspectRatio] = useState('16:9')
   const [imageResult, setImageResult] = useState<GenerateImageResponse | null>(null)
+  const [articleTitle, setArticleTitle] = useState('AI-ready CMS product guide')
+  const [articleBrief, setArticleBrief] = useState(
+    'Explain how editors use Payload CMS with authors, product cards, video blocks, FAQ, SEO microdata, and AI drafting in one publishing workflow.',
+  )
+  const [articleKeywords, setArticleKeywords] = useState('Payload CMS, AI content workflow, product cards, SEO')
+  const [articleResult, setArticleResult] = useState<GenerateArticleResponse | null>(null)
   const [videoPrompt, setVideoPrompt] = useState(
     'Animate an editorial CMS dashboard preview with subtle camera motion and polished product energy.',
   )
@@ -198,6 +228,7 @@ export function AiDocsWorkbench() {
   const [videoDuration, setVideoDuration] = useState(12)
   const [videoResult, setVideoResult] = useState<GenerateVideoResponse | null>(null)
   const [loading, setLoading] = useState(false)
+  const [generatingArticle, setGeneratingArticle] = useState(false)
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [loadingInventory, setLoadingInventory] = useState(true)
@@ -399,6 +430,42 @@ export function AiDocsWorkbench() {
     }
   }
 
+  async function runArticleGeneration() {
+    setGeneratingArticle(true)
+    setError(null)
+    setArticleResult(null)
+
+    try {
+      const response = await fetch('/api/generate-article', {
+        body: JSON.stringify({
+          audience: 'content editor and business stakeholder',
+          brief: articleBrief,
+          keywords: articleKeywords
+            .split(',')
+            .map((keyword) => keyword.trim())
+            .filter(Boolean),
+          language: 'Russian',
+          title: articleTitle,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as GenerateArticleResponse
+
+      if (!response.ok) {
+        throw new Error(payload.error || `HTTP ${response.status}`)
+      }
+
+      setArticleResult(payload)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    } finally {
+      setGeneratingArticle(false)
+    }
+  }
+
   async function runVideoGeneration() {
     setGeneratingVideo(true)
     setError(null)
@@ -454,6 +521,13 @@ export function AiDocsWorkbench() {
             type="button"
           >
             {t('ask')}
+          </button>
+          <button
+            className={activeView === 'content' ? styles.activeNavButton : styles.navButton}
+            onClick={() => setActiveView('content')}
+            type="button"
+          >
+            {t('content')}
           </button>
           <button
             className={activeView === 'generate' ? styles.activeNavButton : styles.navButton}
@@ -777,6 +851,110 @@ export function AiDocsWorkbench() {
                       ))}
                     </div>
                   </div>
+                </div>
+              ) : null}
+            </section>
+          </div>
+        ) : null}
+
+        {activeView === 'content' ? (
+          <div className={styles.askGrid}>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>{t('articleGeneration')}</h2>
+                  <p>{t('articleGenerationHint')}</p>
+                </div>
+                <span className={styles.badge}>grok-4.3</span>
+              </div>
+
+              <label className={styles.field}>
+                {t('articleTitle')}
+                <input
+                  onChange={(event) => setArticleTitle(event.target.value)}
+                  value={articleTitle}
+                />
+              </label>
+
+              <label className={styles.field}>
+                {t('articleBrief')}
+                <textarea
+                  onChange={(event) => setArticleBrief(event.target.value)}
+                  rows={8}
+                  value={articleBrief}
+                />
+              </label>
+
+              <label className={styles.field}>
+                {t('articleKeywords')}
+                <input
+                  onChange={(event) => setArticleKeywords(event.target.value)}
+                  value={articleKeywords}
+                />
+              </label>
+
+              <div className={styles.actionRow}>
+                <button
+                  className={styles.primaryButton}
+                  disabled={generatingArticle}
+                  onClick={() => void runArticleGeneration()}
+                  type="button"
+                >
+                  {t('generateArticle')}
+                </button>
+                <Link className={styles.secondaryLink} href="/admin/collections/articles">
+                  {t('openArticles')}
+                </Link>
+              </div>
+
+              {generatingArticle ? (
+                <div className={styles.running}>{t('generatingArticle')}</div>
+              ) : null}
+            </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <h2>{t('articleDraft')}</h2>
+                  <p>{articleResult?.model || t('articleDraftHint')}</p>
+                </div>
+              </div>
+
+              {!articleResult ? (
+                <div className={styles.emptyState}>
+                  <strong>{t('noArticleDraftTitle')}</strong>
+                  <span>{t('noArticleDraftHint')}</span>
+                </div>
+              ) : null}
+
+              {articleResult?.draft ? (
+                <div className={styles.sourceList}>
+                  <article className={styles.sourceRow}>
+                    <strong>{articleResult.draft.title || articleTitle}</strong>
+                    {articleResult.draft.slug ? <small>{articleResult.draft.slug}</small> : null}
+                    {articleResult.draft.summary ? <span>{articleResult.draft.summary}</span> : null}
+                  </article>
+
+                  {articleResult.draft.outline?.length ? (
+                    <article className={styles.sourceRow}>
+                      <strong>{t('outline')}</strong>
+                      <small>{articleResult.draft.outline.join(' / ')}</small>
+                    </article>
+                  ) : null}
+
+                  {articleResult.draft.bodyMarkdown ? (
+                    <pre className={styles.answer}>{articleResult.draft.bodyMarkdown}</pre>
+                  ) : null}
+
+                  {articleResult.draft.seoTitle || articleResult.draft.seoDescription ? (
+                    <article className={styles.sourceRow}>
+                      <strong>SEO</strong>
+                      {articleResult.draft.seoTitle ? <span>{articleResult.draft.seoTitle}</span> : null}
+                      {articleResult.draft.seoDescription ? (
+                        <small>{articleResult.draft.seoDescription}</small>
+                      ) : null}
+                    </article>
+                  ) : null}
                 </div>
               ) : null}
             </section>

@@ -10,10 +10,17 @@ import type { PayloadRequest } from 'payload'
 
 import { absolutePublicURL, blogPostPublicPath, type PublicSite } from '../../lib/publicURLs'
 import { articlesSlug } from '../Articles'
+import { authorsSlug } from '../Authors'
 import { blogTemplatesSlug } from '../BlogTemplates'
 import { mediaSlug } from '../Media'
 import { sitesSlug } from '../Sites'
-import { faqBlock, htmlEmbedBlock, productCardBlock } from '../contentBlocks'
+import {
+  faqBlock,
+  htmlEmbedBlock,
+  productCardBlock,
+  productCardCarouselBlock,
+  videoBlock,
+} from '../contentBlocks'
 
 export const blogPostsSlug = 'blog-posts'
 
@@ -85,6 +92,10 @@ export const BlogPostsCollection: CollectionConfig = {
     group: 'CMS',
     preview: (doc, { req }) => blogPostURL(doc, req),
     useAsTitle: 'title',
+  },
+  labels: {
+    plural: 'Legacy Blog Posts',
+    singular: 'Legacy Blog Post',
   },
   fields: [
     {
@@ -199,6 +210,16 @@ export const BlogPostsCollection: CollectionConfig = {
               relationTo: mediaSlug,
             },
             {
+              name: 'authors',
+              type: 'relationship',
+              admin: {
+                description:
+                  'Choose one or more authors from the Authors module. They are shown at the top of the public material.',
+              },
+              hasMany: true,
+              relationTo: authorsSlug,
+            },
+            {
               name: 'content',
               type: 'richText',
               admin: {
@@ -211,7 +232,14 @@ export const BlogPostsCollection: CollectionConfig = {
                   FixedToolbarFeature(),
                   InlineToolbarFeature(),
                   BlocksFeature({
-                    blocks: [crossSiteCtaBlock, htmlEmbedBlock, productCardBlock, faqBlock],
+                    blocks: [
+                      crossSiteCtaBlock,
+                      htmlEmbedBlock,
+                      productCardBlock,
+                      productCardCarouselBlock,
+                      videoBlock,
+                      faqBlock,
+                    ],
                   }),
                 ],
               }),

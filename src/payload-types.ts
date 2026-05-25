@@ -70,6 +70,7 @@ export interface Config {
     'ai-projects': AiProject;
     'prompt-templates': PromptTemplate;
     sites: Site;
+    authors: Author;
     'blog-templates': BlogTemplate;
     'blog-posts': BlogPost;
     'site-links': SiteLink;
@@ -87,6 +88,7 @@ export interface Config {
     'ai-projects': AiProjectsSelect<false> | AiProjectsSelect<true>;
     'prompt-templates': PromptTemplatesSelect<false> | PromptTemplatesSelect<true>;
     sites: SitesSelect<false> | SitesSelect<true>;
+    authors: AuthorsSelect<false> | AuthorsSelect<true>;
     'blog-templates': BlogTemplatesSelect<false> | BlogTemplatesSelect<true>;
     'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
     'site-links': SiteLinksSelect<false> | SiteLinksSelect<true>;
@@ -241,6 +243,99 @@ export interface Site {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "authors".
+ */
+export interface Author {
+  id: number;
+  name: string;
+  /**
+   * Stable author URL/key for integrations. Optional for the prototype.
+   */
+  slug?: string | null;
+  status: 'active' | 'hidden';
+  photo?: (number | null) | Media;
+  /**
+   * Job title, department, or editorial role.
+   */
+  role?: string | null;
+  /**
+   * Shown in the author block at the top of an article.
+   */
+  shortDescription?: string | null;
+  /**
+   * Longer internal or public author biography.
+   */
+  bio?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  links?:
+    | {
+        label?: string | null;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  /**
+   * Short accessible description for images or RAG documents.
+   */
+  alt?: string | null;
+  /**
+   * Optional editor note. For RAG uploads, describe the document purpose.
+   */
+  caption?: string | null;
+  /**
+   * Stable external image URL. Use this when Render free storage lost the uploaded local file.
+   */
+  externalImageURL?: string | null;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Prototype fallback for small images on Render free. Use object storage for production.
+   */
+  embeddedImageDataURL?: string | null;
+  /**
+   * Shows whether an image copy was stored in Postgres for free-plan persistence.
+   */
+  embeddedImageStatus?: ('stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blog-templates".
  */
 export interface BlogTemplate {
@@ -336,6 +431,10 @@ export interface BlogPost {
   summary?: string | null;
   coverImage?: (number | null) | Media;
   /**
+   * Choose one or more authors from the Authors module. They are shown at the top of the public material.
+   */
+  authors?: (number | Author)[] | null;
+  /**
    * Main blog body with inline tools and a reusable cross-site CTA block.
    */
   content: {
@@ -408,50 +507,6 @@ export interface BlogPost {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  /**
-   * Short accessible description for images or RAG documents.
-   */
-  alt?: string | null;
-  /**
-   * Optional editor note. For RAG uploads, describe the document purpose.
-   */
-  caption?: string | null;
-  /**
-   * Stable external image URL. Use this when Render free storage lost the uploaded local file.
-   */
-  externalImageURL?: string | null;
-  tags?:
-    | {
-        tag?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Prototype fallback for small images on Render free. Use object storage for production.
-   */
-  embeddedImageDataURL?: string | null;
-  /**
-   * Shows whether an image copy was stored in Postgres for free-plan persistence.
-   */
-  embeddedImageStatus?: ('stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "articles".
  */
 export interface Article {
@@ -463,6 +518,10 @@ export interface Article {
   slug: string;
   status: 'draft' | 'review' | 'published';
   /**
+   * Unified editorial type. Use one collection for articles, blog posts, guides, news, and knowledge base content.
+   */
+  contentType: 'article' | 'blog-post' | 'news' | 'guide' | 'case-study' | 'knowledge-base';
+  /**
    * Frontend link. It works after status is Published.
    */
   publicUrl?: string | null;
@@ -472,6 +531,10 @@ export interface Article {
    */
   summary?: string | null;
   coverImage?: (number | null) | Media;
+  /**
+   * Choose one or more authors from the Authors module. They are shown at the top of the public material.
+   */
+  authors?: (number | Author)[] | null;
   /**
    * Lexical editor: headings, lists, links, uploads, tables, inline toolbar, and structured blocks.
    */
@@ -501,6 +564,28 @@ export interface Article {
    * Business owner or department responsible for this article.
    */
   owner?: string | null;
+  aiAssist?: {
+    /**
+     * Business brief for AI article generation.
+     */
+    brief?: string | null;
+    targetKeywords?:
+      | {
+          keyword?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    questionsToAnswer?:
+      | {
+          question?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Notes for tone, products, internal links, or sections that the AI draft must include.
+     */
+    editorialNotes?: string | null;
+  };
   seo?: {
     title?: string | null;
     description?: string | null;
@@ -689,6 +774,10 @@ export interface PayloadLockedDocument {
         value: number | Site;
       } | null)
     | ({
+        relationTo: 'authors';
+        value: number | Author;
+      } | null)
+    | ({
         relationTo: 'blog-templates';
         value: number | BlogTemplate;
       } | null)
@@ -819,6 +908,28 @@ export interface SitesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "authors_select".
+ */
+export interface AuthorsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  status?: T;
+  photo?: T;
+  role?: T;
+  shortDescription?: T;
+  bio?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "blog-templates_select".
  */
 export interface BlogTemplatesSelect<T extends boolean = true> {
@@ -873,6 +984,7 @@ export interface BlogPostsSelect<T extends boolean = true> {
   publishedAt?: T;
   summary?: T;
   coverImage?: T;
+  authors?: T;
   content?: T;
   category?: T;
   audience?: T;
@@ -986,10 +1098,12 @@ export interface ArticlesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   status?: T;
+  contentType?: T;
   publicUrl?: T;
   publishedAt?: T;
   summary?: T;
   coverImage?: T;
+  authors?: T;
   content?: T;
   category?: T;
   tags?:
@@ -999,6 +1113,24 @@ export interface ArticlesSelect<T extends boolean = true> {
         id?: T;
       };
   owner?: T;
+  aiAssist?:
+    | T
+    | {
+        brief?: T;
+        targetKeywords?:
+          | T
+          | {
+              keyword?: T;
+              id?: T;
+            };
+        questionsToAnswer?:
+          | T
+          | {
+              question?: T;
+              id?: T;
+            };
+        editorialNotes?: T;
+      };
   seo?:
     | T
     | {

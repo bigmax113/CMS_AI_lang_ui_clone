@@ -9,12 +9,14 @@ import {
   aiDocsEndpoint,
   aiFoldersEndpoint,
   askEndpoint,
+  generateArticleEndpoint,
   generateImageEndpoint,
   generateVideoEndpoint,
   translateUiEndpoint,
 } from './ai/endpoints'
 import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
 import { ArticlesCollection, articlesSlug } from './collections/Articles'
+import { AuthorsCollection, authorsSlug } from './collections/Authors'
 import { BlogPostsCollection, blogPostsSlug } from './collections/BlogPosts'
 import { BlogTemplatesCollection, blogTemplatesSlug } from './collections/BlogTemplates'
 import { Media, mediaSlug } from './collections/Media'
@@ -80,6 +82,7 @@ export default buildConfig({
     AIProjectsCollection,
     PromptTemplatesCollection,
     SitesCollection,
+    AuthorsCollection,
     BlogTemplatesCollection,
     BlogPostsCollection,
     SiteLinksCollection,
@@ -93,6 +96,7 @@ export default buildConfig({
     aiDocsEndpoint,
     aiFoldersEndpoint,
     askEndpoint,
+    generateArticleEndpoint,
     generateImageEndpoint,
     generateVideoEndpoint,
     translateUiEndpoint,
@@ -257,6 +261,34 @@ export default buildConfig({
       })
     }
 
+    const demoAuthors = await payload.find({
+      collection: authorsSlug,
+      limit: 1,
+      where: {
+        name: {
+          equals: 'ASBIS Editorial Team',
+        },
+      },
+    })
+
+    let demoAuthorID = demoAuthors.docs[0]?.id
+
+    if (!demoAuthorID) {
+      const author = await payload.create({
+        collection: authorsSlug,
+        data: {
+          name: 'ASBIS Editorial Team',
+          role: 'Content team',
+          shortDescription:
+            'Editorial owner for product guides, knowledge base materials, and AI-assisted CMS content tests.',
+          slug: 'asbis-editorial-team',
+          status: 'active',
+        },
+      })
+
+      demoAuthorID = author.id
+    }
+
     const demoArticles = await payload.find({
       collection: articlesSlug,
       limit: 1,
@@ -273,10 +305,12 @@ export default buildConfig({
       const article = await payload.create({
         collection: articlesSlug,
         data: {
+          authors: [demoAuthorID],
           category: 'knowledge-base',
           content: richTextParagraph({
             text: 'This starter article demonstrates the Payload editor, drafts, media fields, SEO fields, and related content links for a tester-friendly AI CMS workflow.',
           }),
+          contentType: 'article',
           owner: 'Content QA',
           slug: 'payload-ai-workbench-demo',
           status: 'draft',
@@ -468,6 +502,7 @@ export default buildConfig({
             ],
           },
           audience: 'internal-editor',
+          authors: [demoAuthorID],
           category: 'buying-guide',
           content: richTextParagraph({
             text: 'This demo post shows how the blog system, templates, AI briefs, and cross-site transition links work together inside the Payload admin.',

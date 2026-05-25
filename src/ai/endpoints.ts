@@ -49,6 +49,16 @@ type GenerateVideoRequestBody = {
   waitForResult?: boolean
 }
 
+type GenerateArticleRequestBody = {
+  audience?: string
+  brief?: string
+  keywords?: string[] | string
+  language?: string
+  model?: string
+  title?: string
+  tone?: string
+}
+
 type TranslateUIRequestBody = {
   locale?: string
   strings?: Record<string, string>
@@ -204,6 +214,39 @@ export const generateVideoEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/generate-video',
+}
+
+export const generateArticleEndpoint: Endpoint = {
+  handler: async (req) => {
+    let body: GenerateArticleRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as GenerateArticleRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const brief = body.brief?.trim()
+    const title = body.title?.trim()
+
+    if (!brief && !title) {
+      return Response.json({ error: 'Field "brief" or "title" is required.' }, { status: 400 })
+    }
+
+    const result = await generateGrokArticle({
+      audience: body.audience,
+      brief: brief || '',
+      keywords: body.keywords,
+      language: body.language,
+      model: body.model,
+      title: title || '',
+      tone: body.tone,
+    })
+
+    return Response.json(result, { status: result.ok ? 200 : 502 })
+  },
+  method: 'post',
+  path: '/generate-article',
 }
 
 export const translateUiEndpoint: Endpoint = {
@@ -399,6 +442,126 @@ async function expandSearchQueries(args: { baseURL: string; question: string }):
     return queries.length ? queries : fallback
   } catch (_error) {
     return fallback
+  }
+}
+
+async function generateGrokArticle(args: {
+  audience?: string
+  brief: string
+  keywords?: string[] | string
+  language?: string
+  model?: string
+  title: string
+  tone?: string
+}): Promise<{
+  baseURL: string
+  draft?: {
+    bodyMarkdown?: string
+    faq?: Array<{
+      answer: string
+      question: string
+    }>
+    outline?: string[]
+    seoDescription?: string
+    seoTitle?: string
+    slug?: string
+    summary?: string
+    title?: string
+  }
+  error?: string
+  model: string
+  ok: boolean
+  status?: number
+}> {
+  const baseURL = getXAIBaseURL()
+  const model = args.model || process.env.GROK_TEXT_MODEL || DEFAULT_GROK_TEXT_MODEL
+  const keywords = Array.isArray(args.keywords)
+    ? args.keywords.join(', ')
+    : typeof args.keywords === 'string'
+      ? args.keywords
+      : ''
+
+  try {
+    const response = await fetch(`${baseURL}/chat/completions`, {
+      body: JSON.stringify({
+        max_tokens: 2_800,
+        messages: [
+          {
+            content: [
+              'You are an editorial assistant for a Payload CMS product prototype.',
+              'Create practical, publishable CMS article copy.',
+              'Return ONLY valid JSON with keys: title, slug, summary, outline, bodyMarkdown, faq, seoTitle, seoDescription.',
+              'faq must be an array of objects with question and answer.',
+              'Do not include markdown fences around the JSON.',
+            ].join(' '),
+            role: 'system',
+          },
+          {
+            content: [
+              `Language: ${args.language || 'Russian'}`,
+              `Working title: ${args.title || '(create a title)'}`,
+              `Audience: ${args.audience || 'business reader'}`,
+              `Tone: ${args.tone || 'clear, useful, product-focused'}`,
+              `Keywords: ${keywords || '(none)'}`,
+              `Brief: ${args.brief || args.title}`,
+            ].join('\n'),
+            role: 'user',
+          },
+        ],
+        model,
+        response_format: { type: 'json_object' },
+        temperature: 0.35,
+      }),
+      headers: createXAIHeaders(),
+      method: 'POST',
+    })
+    const payloadText = await response.text()
+
+    if (!response.ok) {
+      return {
+        baseURL,
+        error: payloadText,
+        model,
+        ok: false,
+        status: response.status,
+      }
+    }
+
+    const payload = JSON.parse(payloadText) as {
+      choices?: Array<{
+        message?: {
+          content?: string
+        }
+      }>
+    }
+    const draft = JSON.parse(payload.choices?.[0]?.message?.content || '{}') as {
+      bodyMarkdown?: string
+      faq?: Array<{
+        answer: string
+        question: string
+      }>
+      outline?: string[]
+      seoDescription?: string
+      seoTitle?: string
+      slug?: string
+      summary?: string
+      title?: string
+    }
+
+    return {
+      baseURL,
+      draft,
+      model,
+      ok: true,
+      status: response.status,
+    }
+  } catch (error) {
+    return {
+      baseURL,
+      error: error instanceof Error ? error.message : String(error),
+      model,
+      ok: false,
+    }
   }
 }
 

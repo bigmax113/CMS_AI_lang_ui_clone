@@ -28,9 +28,19 @@ const quickLinks = [
     label: 'Test Runs',
   },
   {
-    description: 'Create template-driven posts with AI briefs, SEO, and link plans.',
+    description: 'Create unified materials with authors, product blocks, video, FAQ, SEO, and AI briefs.',
+    href: '/admin/collections/articles',
+    label: 'Content / Articles',
+  },
+  {
+    description: 'Manage author photos, names, roles, and public descriptions.',
+    href: '/admin/collections/authors',
+    label: 'Authors',
+  },
+  {
+    description: 'Legacy template-driven posts kept for existing blog URLs and link plans.',
     href: '/admin/collections/blog-posts',
-    label: 'Blog Posts',
+    label: 'Legacy Blog Posts',
   },
   {
     description: 'Approve anchors, transition copy, redirects, and cross-site handoffs.',

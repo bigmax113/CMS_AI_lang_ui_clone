@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { blogPostPublicPath } from '@/lib/publicURLs'
 import {
+  AuthorByline,
   PublicChrome,
   PublicImage,
   RichText,
@@ -56,6 +57,7 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
   return (
     <PublicChrome kicker={kicker || 'Blog post'} title={post.title}>
       <StructuredData
+        authors={post.authors}
         content={post.content}
         contentType="BlogPosting"
         description={post.seo?.description || post.summary}
@@ -66,6 +68,7 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
         url={blogPostPublicPath({ site, slug: post.slug })}
       />
       <article className="public-content__article">
+        <AuthorByline authors={post.authors} />
         {post.summary ? <p className="public-content__summary">{post.summary}</p> : null}
         {post.coverImage ? (
           <PublicImage alt={post.title} className="public-content__cover" media={post.coverImage} />
