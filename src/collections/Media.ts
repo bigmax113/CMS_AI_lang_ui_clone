@@ -3,7 +3,7 @@ import type { CollectionConfig } from 'payload'
 export const mediaSlug = 'media'
 
 const uploadStaticDir = process.env.PAYLOAD_UPLOAD_DIR || 'media'
-const maxEmbeddedImageBytes = Number(process.env.MEDIA_DB_IMAGE_MAX_BYTES || 3_000_000)
+const maxEmbeddedMediaBytes = Number(process.env.MEDIA_DB_IMAGE_MAX_BYTES || 3_000_000)
 
 type UploadFile = {
   buffer?: Buffer
@@ -15,6 +15,8 @@ type UploadFile = {
 
 const getUploadBuffer = (file?: UploadFile) => file?.data || file?.buffer
 const getUploadMimeType = (file?: UploadFile) => file?.mimeType || file?.mimetype
+const canEmbedInDatabase = (mimeType: string) =>
+  mimeType.startsWith('image/') || mimeType.startsWith('video/')
 
 export const Media: CollectionConfig = {
   slug: mediaSlug,
@@ -65,16 +67,16 @@ export const Media: CollectionConfig = {
       type: 'textarea',
       admin: {
         description:
-          'Prototype fallback for small images on Render free. Use object storage for production.',
+          'Prototype fallback for small images/videos on Render free. Use object storage for production.',
         readOnly: true,
       },
-      label: 'Embedded image fallback',
+      label: 'Embedded media fallback',
     },
     {
       name: 'embeddedImageStatus',
       type: 'select',
       admin: {
-        description: 'Shows whether an image copy was stored in Postgres for free-plan persistence.',
+        description: 'Shows whether a small image/video copy was stored in Postgres for free-plan persistence.',
         readOnly: true,
       },
       options: [
@@ -83,7 +85,7 @@ export const Media: CollectionConfig = {
           value: 'stored-in-db',
         },
         {
-          label: 'Not an image',
+          label: 'Not embeddable media',
           value: 'not-image',
         },
         {
@@ -104,7 +106,7 @@ export const Media: CollectionConfig = {
         const buffer = getUploadBuffer(file)
         const mimeType = getUploadMimeType(file) || data.mimeType
 
-        if (!mimeType || !String(mimeType).startsWith('image/')) {
+        if (!mimeType || !canEmbedInDatabase(String(mimeType))) {
           return {
             ...data,
             embeddedImageStatus: 'not-image',
@@ -118,7 +120,7 @@ export const Media: CollectionConfig = {
           }
         }
 
-        if (buffer.length > maxEmbeddedImageBytes) {
+        if (buffer.length > maxEmbeddedMediaBytes) {
           return {
             ...data,
             embeddedImageDataURL: undefined,
