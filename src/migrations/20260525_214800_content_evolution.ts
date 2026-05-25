@@ -81,14 +81,16 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       "_order" integer NOT NULL,
       "_parent_id" integer NOT NULL,
       "id" serial PRIMARY KEY NOT NULL,
-      "keyword" varchar
+      "keyword" varchar,
+      "_uuid" varchar
     );
 
     CREATE TABLE IF NOT EXISTS "cms_ai"."_articles_v_version_ai_assist_questions_to_answer" (
       "_order" integer NOT NULL,
       "_parent_id" integer NOT NULL,
       "id" serial PRIMARY KEY NOT NULL,
-      "question" varchar
+      "question" varchar,
+      "_uuid" varchar
     );
 
     CREATE TABLE IF NOT EXISTS "cms_ai"."_articles_v_rels" (
