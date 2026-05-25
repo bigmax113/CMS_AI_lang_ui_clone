@@ -71,6 +71,7 @@ export const Media: CollectionConfig = {
         readOnly: true,
       },
       label: 'Embedded media fallback',
+      maxLength: 8_000_000,
     },
     {
       name: 'embeddedImageStatus',
