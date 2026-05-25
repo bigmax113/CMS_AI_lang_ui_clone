@@ -245,6 +245,7 @@ const getVimeoID = (value: string) => {
 }
 
 const isDirectVideoURL = (value: string) => /\.(mp4|mov|webm)(?:[?#].*)?$/iu.test(value)
+const isPlayableVideoURL = (value: string) => value.startsWith('data:video/') || isDirectVideoURL(value)
 
 const videoFromFields = (fields: Record<string, unknown>) => {
   const upload = isMedia(fields.upload) ? fields.upload : null
@@ -477,7 +478,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
               src={video.embedURL}
               title={video.title}
             />
-          ) : isDirectVideoURL(video.sourceURL) ? (
+          ) : isPlayableVideoURL(video.sourceURL) ? (
             <video className="public-content__video-frame" controls poster={video.thumbnailURL || undefined}>
               <source src={video.sourceURL} />
             </video>
