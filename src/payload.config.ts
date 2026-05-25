@@ -13,6 +13,7 @@ import {
   generateImageEndpoint,
   generateVideoEndpoint,
   translateUiEndpoint,
+  videoStatusEndpoint,
 } from './ai/endpoints'
 import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
 import { ArticlesCollection, articlesSlug } from './collections/Articles'
@@ -100,6 +101,7 @@ export default buildConfig({
     generateImageEndpoint,
     generateVideoEndpoint,
     translateUiEndpoint,
+    videoStatusEndpoint,
   ],
   secret: payloadSecret,
   typescript: {

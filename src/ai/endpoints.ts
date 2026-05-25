@@ -49,6 +49,10 @@ type GenerateVideoRequestBody = {
   waitForResult?: boolean
 }
 
+type VideoStatusRequestBody = {
+  requestID?: string
+}
+
 type GenerateArticleRequestBody = {
   audience?: string
   brief?: string
@@ -210,10 +214,46 @@ export const generateVideoEndpoint: Endpoint = {
       waitForResult: body.waitForResult !== false,
     })
 
-    return Response.json(result, { status: result.ok ? 200 : 502 })
+    return Response.json(result, { status: result.ok ? 200 : result.status === 'running' ? 202 : 502 })
   },
   method: 'post',
   path: '/generate-video',
+}
+
+export const videoStatusEndpoint: Endpoint = {
+  handler: async (req) => {
+    let body: VideoStatusRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as VideoStatusRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const url = new URL(req.url || 'http://payload.local/api/video-status')
+    const requestID = body.requestID?.trim() || url.searchParams.get('requestID')?.trim()
+
+    if (!requestID) {
+      return Response.json({ error: 'Field "requestID" is required.' }, { status: 400 })
+    }
+
+    const result = await getGrokVideoStatus({
+      baseURL: getXAIBaseURL(),
+      requestID,
+    })
+
+    return Response.json(
+      {
+        model: process.env.GROK_VIDEO_MODEL || DEFAULT_GROK_VIDEO_MODEL,
+        ok: result.status === 'done',
+        requestID,
+        ...result,
+      },
+      { status: result.status === 'done' || result.status === 'running' ? 200 : 502 },
+    )
+  },
+  method: 'post',
+  path: '/video-status',
 }
 
 export const generateArticleEndpoint: Endpoint = {
@@ -824,34 +864,14 @@ async function pollGrokVideo(args: {
   const interval = Number(process.env.GROK_VIDEO_POLL_INTERVAL_MS || 5_000)
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const response = await fetch(`${args.baseURL}/videos/${args.requestID}`, {
-      headers: createXAIHeaders(),
-      method: 'GET',
-    })
-    const payload = (await response.json().catch(async () => ({
-      error: await response.text(),
-    }))) as {
-      error?: string | { message?: string }
-      status?: string
-      video?: {
-        url?: string
-      }
+    const status = await getGrokVideoStatus(args)
+
+    if (status.status === 'done' || status.status === 'failed' || status.status === 'expired') {
+      return status
     }
 
-    if (!response.ok) {
-      return {
-        error: extractAPIError(payload),
-        status: `http-${response.status}`,
-      }
-    }
-
-    if (payload.status === 'done' || payload.status === 'failed' || payload.status === 'expired') {
-      return {
-        error:
-          payload.status === 'done' ? undefined : extractAPIError(payload) || `Video ${payload.status}`,
-        status: payload.status,
-        video: payload.video,
-      }
+    if (status.status?.startsWith('http-')) {
+      return status
     }
 
     await sleep(interval)
@@ -860,6 +880,47 @@ async function pollGrokVideo(args: {
   return {
     error: 'Video generation is still running. Use the request ID to poll again later.',
     status: 'running',
+  }
+}
+
+async function getGrokVideoStatus(args: {
+  baseURL: string
+  requestID: string
+}): Promise<{
+  error?: string
+  status?: string
+  video?: {
+    url?: string
+  }
+}> {
+  const response = await fetch(`${args.baseURL}/videos/${args.requestID}`, {
+    headers: createXAIHeaders(),
+    method: 'GET',
+  })
+  const payload = (await response.json().catch(async () => ({
+    error: await response.text(),
+  }))) as {
+    error?: string | { message?: string }
+    status?: string
+    video?: {
+      url?: string
+    }
+  }
+
+  if (!response.ok) {
+    return {
+      error: extractAPIError(payload),
+      status: `http-${response.status}`,
+    }
+  }
+
+  return {
+    error:
+      payload.status && payload.status !== 'done' && payload.status !== 'running'
+        ? extractAPIError(payload) || `Video ${payload.status}`
+        : undefined,
+    status: payload.status || 'running',
+    video: payload.video,
   }
 }
 

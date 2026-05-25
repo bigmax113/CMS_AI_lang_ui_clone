@@ -52,6 +52,7 @@ export const baseUICopy = {
   base64ImageReturned: 'Base64 image returned',
   brandSubtitle: 'Workbench',
   chunks: 'Chunks',
+  checkVideoStatus: 'Check video status',
   content: 'Content',
   corpus: 'Corpus',
   crossLanguageSearch: 'Cross-language search',

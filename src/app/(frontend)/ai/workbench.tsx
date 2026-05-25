@@ -231,6 +231,7 @@ export function AiDocsWorkbench() {
   const [generatingArticle, setGeneratingArticle] = useState(false)
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatingVideo, setGeneratingVideo] = useState(false)
+  const [pollingVideo, setPollingVideo] = useState(false)
   const [loadingInventory, setLoadingInventory] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -495,6 +496,32 @@ export function AiDocsWorkbench() {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setGeneratingVideo(false)
+    }
+  }
+
+  async function pollVideoStatus(requestID: string) {
+    setPollingVideo(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/video-status', {
+        body: JSON.stringify({ requestID }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as GenerateVideoResponse
+
+      if (!response.ok) {
+        throw new Error(payload.error || `HTTP ${response.status}`)
+      }
+
+      setVideoResult(payload)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    } finally {
+      setPollingVideo(false)
     }
   }
 
@@ -1100,6 +1127,16 @@ export function AiDocsWorkbench() {
                     <a href={videoResult.video.url} rel="noreferrer" target="_blank">
                       {videoResult.video.url}
                     </a>
+                  ) : null}
+                  {videoResult.requestID && !videoResult.ok ? (
+                    <button
+                      className={styles.secondaryButton}
+                      disabled={pollingVideo}
+                      onClick={() => void pollVideoStatus(videoResult.requestID || '')}
+                      type="button"
+                    >
+                      {t('checkVideoStatus')}
+                    </button>
                   ) : null}
                   {videoResult.error ? <span>{videoResult.error}</span> : null}
                 </div>
