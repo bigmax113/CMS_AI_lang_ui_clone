@@ -76,6 +76,7 @@ export default buildConfig({
       titleSuffix: ' - AI Workbench',
     },
     components: {
+      beforeNavLinks: ['/admin/components/AdminNavLinks#AdminNavLinks'],
       beforeDashboard: ['/admin/components/AdminDashboard#AdminDashboard'],
     },
   },
