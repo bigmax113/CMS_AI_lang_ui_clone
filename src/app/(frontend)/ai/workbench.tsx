@@ -180,6 +180,56 @@ const adminLinks = [
   },
 ] satisfies Array<{ descriptionKey: UICopyKey; href: string; labelKey: UICopyKey }>
 
+function inferArticleOutputLanguage(title: string, brief: string): string {
+  const text = `${title}\n${brief}`
+  const cyrillicCount = (text.match(/[А-Яа-яЁёІіЇїЄєҐґ]/gu) || []).length
+  const latinCount = (text.match(/[A-Za-z]/g) || []).length
+
+  if (latinCount >= Math.max(20, cyrillicCount * 3)) {
+    return 'English'
+  }
+
+  return [
+    'Use the same primary language as the article brief and title.',
+    'Do not translate the source into another language unless the brief explicitly asks for translation.',
+  ].join(' ')
+}
+
+function toSafeText(value: unknown): string {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(toSafeText).filter(Boolean).join('\n')
+  }
+
+  if (value && typeof value === 'object') {
+    return JSON.stringify(value, null, 2)
+  }
+
+  return ''
+}
+
+function toSafeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(toSafeText).filter(Boolean)
+  }
+
+  const text = toSafeText(value)
+
+  return text
+    ? text
+        .split(/\r?\n|;/u)
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : []
+}
+
 export function AiDocsWorkbench() {
   const [activeView, setActiveView] = useState<ActiveView>('ask')
   const [uiLocale, setUiLocale] = useState<UILocale>(() => {
@@ -445,7 +495,7 @@ export function AiDocsWorkbench() {
             .split(',')
             .map((keyword) => keyword.trim())
             .filter(Boolean),
-          language: 'Russian',
+          language: inferArticleOutputLanguage(articleTitle, articleBrief),
           title: articleTitle,
         }),
         headers: {
@@ -529,6 +579,14 @@ export function AiDocsWorkbench() {
   const totalFiles = inventory?.totalFiles || folders?.totalFiles || 0
   const sourceCount = result?.sources?.length || 0
   const chunkCount = result?.chunks?.length || 0
+  const articleDraft = articleResult?.draft
+  const articleDraftBody = toSafeText(articleDraft?.bodyMarkdown)
+  const articleDraftOutline = toSafeStringArray(articleDraft?.outline)
+  const articleDraftSeoDescription = toSafeText(articleDraft?.seoDescription)
+  const articleDraftSeoTitle = toSafeText(articleDraft?.seoTitle)
+  const articleDraftSlug = toSafeText(articleDraft?.slug)
+  const articleDraftSummary = toSafeText(articleDraft?.summary)
+  const articleDraftTitle = toSafeText(articleDraft?.title) || articleTitle
 
   return (
     <main className={styles.shell}>
@@ -954,32 +1012,30 @@ export function AiDocsWorkbench() {
                 </div>
               ) : null}
 
-              {articleResult?.draft ? (
+              {articleDraft ? (
                 <div className={styles.sourceList}>
                   <article className={styles.sourceRow}>
-                    <strong>{articleResult.draft.title || articleTitle}</strong>
-                    {articleResult.draft.slug ? <small>{articleResult.draft.slug}</small> : null}
-                    {articleResult.draft.summary ? <span>{articleResult.draft.summary}</span> : null}
+                    <strong>{articleDraftTitle}</strong>
+                    {articleDraftSlug ? <small>{articleDraftSlug}</small> : null}
+                    {articleDraftSummary ? <span>{articleDraftSummary}</span> : null}
                   </article>
 
-                  {articleResult.draft.outline?.length ? (
+                  {articleDraftOutline.length ? (
                     <article className={styles.sourceRow}>
                       <strong>{t('outline')}</strong>
-                      <small>{articleResult.draft.outline.join(' / ')}</small>
+                      <small>{articleDraftOutline.join(' / ')}</small>
                     </article>
                   ) : null}
 
-                  {articleResult.draft.bodyMarkdown ? (
-                    <pre className={styles.answer}>{articleResult.draft.bodyMarkdown}</pre>
+                  {articleDraftBody ? (
+                    <pre className={styles.answer}>{articleDraftBody}</pre>
                   ) : null}
 
-                  {articleResult.draft.seoTitle || articleResult.draft.seoDescription ? (
+                  {articleDraftSeoTitle || articleDraftSeoDescription ? (
                     <article className={styles.sourceRow}>
                       <strong>SEO</strong>
-                      {articleResult.draft.seoTitle ? <span>{articleResult.draft.seoTitle}</span> : null}
-                      {articleResult.draft.seoDescription ? (
-                        <small>{articleResult.draft.seoDescription}</small>
-                      ) : null}
+                      {articleDraftSeoTitle ? <span>{articleDraftSeoTitle}</span> : null}
+                      {articleDraftSeoDescription ? <small>{articleDraftSeoDescription}</small> : null}
                     </article>
                   ) : null}
                 </div>

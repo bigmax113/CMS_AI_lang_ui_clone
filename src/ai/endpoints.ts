@@ -11,6 +11,7 @@ const DEFAULT_MAX_EMBEDDING_CANDIDATES = 5_000
 const EMBEDDING_BATCH_SIZE = 16
 const QUERY_EXPANSION_CACHE_VERSION = 'hybrid-v3'
 const LEXICAL_BOOST_LIMIT = 0.18
+const MAX_ARTICLE_BRIEF_CHARS = 24_000
 
 const embeddingCache = new Map<string, number[]>()
 const queryExpansionCache = new Map<string, string[]>()
@@ -61,6 +62,20 @@ type GenerateArticleRequestBody = {
   model?: string
   title?: string
   tone?: string
+}
+
+type ArticleDraft = {
+  bodyMarkdown?: string
+  faq?: Array<{
+    answer: string
+    question: string
+  }>
+  outline?: string[]
+  seoDescription?: string
+  seoTitle?: string
+  slug?: string
+  summary?: string
+  title?: string
 }
 
 type TranslateUIRequestBody = {
@@ -485,6 +500,112 @@ async function expandSearchQueries(args: { baseURL: string; question: string }):
   }
 }
 
+function textFromUnknown(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim()
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(textFromUnknown).filter(Boolean).join('\n')
+  }
+
+  if (value && typeof value === 'object') {
+    return JSON.stringify(value, null, 2)
+  }
+
+  return ''
+}
+
+function stringArrayFromUnknown(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map(textFromUnknown).filter(Boolean)
+  }
+
+  const text = textFromUnknown(value)
+
+  return text
+    ? text
+        .split(/\r?\n|;/u)
+        .map((item) => item.replace(/^[-*\d.)\s]+/u, '').trim())
+        .filter(Boolean)
+    : []
+}
+
+function faqFromUnknown(value: unknown): ArticleDraft['faq'] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+
+      const record = item as Record<string, unknown>
+      const question = textFromUnknown(record.question)
+      const answer = textFromUnknown(record.answer)
+
+      return question && answer ? { answer, question } : null
+    })
+    .filter((item): item is { answer: string; question: string } => Boolean(item))
+}
+
+function slugifyArticleTitle(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '')
+    .slice(0, 96)
+}
+
+function parseModelJSONObject(content: string): unknown {
+  const trimmed = content.trim().replace(/^```(?:json)?\s*|\s*```$/giu, '')
+
+  try {
+    return JSON.parse(trimmed || '{}')
+  } catch (error) {
+    const firstBrace = trimmed.indexOf('{')
+    const lastBrace = trimmed.lastIndexOf('}')
+
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1))
+    }
+
+    throw error
+  }
+}
+
+function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDraft {
+  const source: Record<string, unknown> =
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : { bodyMarkdown: value }
+  const title = textFromUnknown(source.title) || fallbackTitle || 'Generated article draft'
+  const slug = textFromUnknown(source.slug) || slugifyArticleTitle(title) || 'generated-article-draft'
+
+  return {
+    bodyMarkdown: textFromUnknown(source.bodyMarkdown),
+    faq: faqFromUnknown(source.faq),
+    outline: stringArrayFromUnknown(source.outline),
+    seoDescription: textFromUnknown(source.seoDescription),
+    seoTitle: textFromUnknown(source.seoTitle),
+    slug,
+    summary: textFromUnknown(source.summary),
+    title,
+  }
+}
+
+function clipArticleBrief(value: string): string {
+  return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
+}
+
 async function generateGrokArticle(args: {
   audience?: string
   brief: string
@@ -495,19 +616,7 @@ async function generateGrokArticle(args: {
   tone?: string
 }): Promise<{
   baseURL: string
-  draft?: {
-    bodyMarkdown?: string
-    faq?: Array<{
-      answer: string
-      question: string
-    }>
-    outline?: string[]
-    seoDescription?: string
-    seoTitle?: string
-    slug?: string
-    summary?: string
-    title?: string
-  }
+  draft?: ArticleDraft
   error?: string
   model: string
   ok: boolean
@@ -531,19 +640,23 @@ async function generateGrokArticle(args: {
               'You are an editorial assistant for a Payload CMS product prototype.',
               'Create practical, publishable CMS article copy.',
               'Return ONLY valid JSON with keys: title, slug, summary, outline, bodyMarkdown, faq, seoTitle, seoDescription.',
+              'bodyMarkdown, title, slug, summary, seoTitle, and seoDescription must be strings.',
+              'outline must be an array of short strings.',
               'faq must be an array of objects with question and answer.',
+              'Write in the requested output language. If the policy says to follow the brief, preserve the primary language of the source brief.',
+              'Never translate English source material into Russian unless the user explicitly asks for Russian.',
               'Do not include markdown fences around the JSON.',
             ].join(' '),
             role: 'system',
           },
           {
             content: [
-              `Language: ${args.language || 'Russian'}`,
+              `Output language policy: ${args.language || 'Use the same primary language as the brief and title. If the input is mostly English, output English only.'}`,
               `Working title: ${args.title || '(create a title)'}`,
               `Audience: ${args.audience || 'business reader'}`,
               `Tone: ${args.tone || 'clear, useful, product-focused'}`,
               `Keywords: ${keywords || '(none)'}`,
-              `Brief: ${args.brief || args.title}`,
+              `Brief: ${clipArticleBrief(args.brief || args.title)}`,
             ].join('\n'),
             role: 'user',
           },
@@ -574,19 +687,8 @@ async function generateGrokArticle(args: {
         }
       }>
     }
-    const draft = JSON.parse(payload.choices?.[0]?.message?.content || '{}') as {
-      bodyMarkdown?: string
-      faq?: Array<{
-        answer: string
-        question: string
-      }>
-      outline?: string[]
-      seoDescription?: string
-      seoTitle?: string
-      slug?: string
-      summary?: string
-      title?: string
-    }
+    const parsedDraft = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
+    const draft = normalizeArticleDraft(parsedDraft, args.title)
 
     return {
       baseURL,
