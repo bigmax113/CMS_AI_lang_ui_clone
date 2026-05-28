@@ -114,13 +114,39 @@ export const productCardCarouselBlock = {
   ],
 } satisfies Block
 
-export const videoBlock = {
-  slug: 'video',
+export const imageRowBlock = {
+  slug: 'imageRow',
   labels: {
-    plural: 'Videos',
-    singular: 'Video',
+    plural: 'Image rows',
+    singular: 'Image row',
   },
   fields: [
+    {
+      name: 'images',
+      type: 'array',
+      admin: {
+        description: 'Place 2-4 images in one responsive row on the public article page.',
+      },
+      fields: [
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: mediaSlug,
+          required: true,
+        },
+        {
+          name: 'caption',
+          type: 'text',
+        },
+      ],
+      maxRows: 4,
+      minRows: 2,
+      required: true,
+    },
+  ],
+} satisfies Block
+
+export const videoFields = (): Field[] => [
     {
       name: 'title',
       type: 'text',
@@ -253,7 +279,15 @@ export const videoBlock = {
       ],
       label: 'Video microdata',
     },
-  ],
+]
+
+export const videoBlock = {
+  slug: 'video',
+  labels: {
+    plural: 'Videos',
+    singular: 'Video',
+  },
+  fields: videoFields(),
 } satisfies Block
 
 export const faqBlock = {

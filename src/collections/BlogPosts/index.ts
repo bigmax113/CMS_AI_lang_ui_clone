@@ -17,6 +17,7 @@ import { sitesSlug } from '../Sites'
 import {
   faqBlock,
   htmlEmbedBlock,
+  imageRowBlock,
   productCardBlock,
   productCardCarouselBlock,
   videoBlock,
@@ -235,6 +236,7 @@ export const BlogPostsCollection: CollectionConfig = {
                     blocks: [
                       crossSiteCtaBlock,
                       htmlEmbedBlock,
+                      imageRowBlock,
                       productCardBlock,
                       productCardCarouselBlock,
                       videoBlock,

@@ -202,6 +202,16 @@ const productCardsFromCarouselFields = (fields: Record<string, unknown>) =>
     .filter((product) => product.name)
     .slice(0, 5)
 
+const imageRowFromFields = (fields: Record<string, unknown>) =>
+  (Array.isArray(fields.images) ? fields.images : [])
+    .filter(isRecord)
+    .map((item) => ({
+      caption: textField(item.caption),
+      image: isMedia(item.image) ? item.image : null,
+    }))
+    .filter((item) => item.image)
+    .slice(0, 4)
+
 const authorListFromValue = (value: unknown) =>
   (Array.isArray(value) ? value : [])
     .map((item) => (isRecord(item) && 'value' in item ? item.value : item))
@@ -280,6 +290,12 @@ const videoFromFields = (fields: Record<string, unknown>) => {
   }
 }
 
+const videosFromValue = (value: unknown) =>
+  (Array.isArray(value) ? value : [])
+    .filter(isRecord)
+    .map(videoFromFields)
+    .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
+
 const safeJSON = (value: unknown) => JSON.stringify(value).replace(/</gu, '\\u003c')
 
 const renderText = (node: LexicalNode, key: string) => {
@@ -337,6 +353,49 @@ const renderProductCard = (
       </div>
     </aside>
   )
+}
+
+const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: string) => {
+  if (!video.title || (!video.sourceURL && !video.embedURL)) {
+    return null
+  }
+
+  return (
+    <figure className="public-content__video" key={key}>
+      {video.embedURL ? (
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="public-content__video-frame"
+          src={video.embedURL}
+          title={video.title}
+        />
+      ) : isPlayableVideoURL(video.sourceURL) ? (
+        <video className="public-content__video-frame" controls poster={video.thumbnailURL || undefined}>
+          <source src={video.sourceURL} />
+        </video>
+      ) : (
+        <a className="public-content__video-link" href={video.sourceURL} rel="noreferrer" target="_blank">
+          {video.thumbnailURL ? <SafeImage alt={video.title} src={video.thumbnailURL} /> : null}
+          <span>{video.title}</span>
+        </a>
+      )}
+      <figcaption>
+        <strong>{video.title}</strong>
+        {video.description ? <span>{video.description}</span> : null}
+      </figcaption>
+    </figure>
+  )
+}
+
+export const VideoList = ({ videos }: { videos?: unknown }) => {
+  const visibleVideos = videosFromValue(videos)
+
+  if (!visibleVideos.length) {
+    return null
+  }
+
+  return <>{visibleVideos.map((video, index) => renderVideoFigure(video, `article-video-${index}`))}</>
 }
 
 const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
@@ -461,39 +520,35 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
       )
     }
 
-    if (fields.blockType === 'video') {
-      const video = videoFromFields(fields)
+    if (fields.blockType === 'imageRow') {
+      const images = imageRowFromFields(fields)
 
-      if (!video.title || (!video.sourceURL && !video.embedURL)) {
+      if (!images.length) {
         return null
       }
 
       return (
-        <figure className="public-content__video" key={key}>
-          {video.embedURL ? (
-            <iframe
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="public-content__video-frame"
-              src={video.embedURL}
-              title={video.title}
-            />
-          ) : isPlayableVideoURL(video.sourceURL) ? (
-            <video className="public-content__video-frame" controls poster={video.thumbnailURL || undefined}>
-              <source src={video.sourceURL} />
-            </video>
-          ) : (
-            <a className="public-content__video-link" href={video.sourceURL} rel="noreferrer" target="_blank">
-              {video.thumbnailURL ? <SafeImage alt={video.title} src={video.thumbnailURL} /> : null}
-              <span>{video.title}</span>
-            </a>
-          )}
-          <figcaption>
-            <strong>{video.title}</strong>
-            {video.description ? <span>{video.description}</span> : null}
-          </figcaption>
-        </figure>
+        <div className="public-content__image-row" key={key}>
+          {images.map((item, index) => (
+            <figure key={`${key}-${index}`}>
+              {item.image ? (
+                <SafeImage
+                  alt={item.image.alt || item.caption || 'Article image'}
+                  fileName={item.image.filename}
+                  src={mediaURL(item.image)}
+                />
+              ) : null}
+              {item.caption ? <figcaption>{item.caption}</figcaption> : null}
+            </figure>
+          ))}
+        </div>
       )
+    }
+
+    if (fields.blockType === 'video') {
+      const video = videoFromFields(fields)
+
+      return renderVideoFigure(video, key)
     }
 
     if (fields.blockType === 'faq') {
@@ -612,6 +667,7 @@ export const StructuredData = ({
   title,
   updatedAt,
   url,
+  videos: attachedVideos,
 }: {
   authors?: Article['authors'] | BlogPost['authors'] | null
   content?: Article['content'] | BlogPost['content'] | null
@@ -622,6 +678,7 @@ export const StructuredData = ({
   title: string
   updatedAt?: null | string
   url?: null | string
+  videos?: unknown
 }) => {
   const pageURL = absoluteURL(url)
   const authorsList = authorListFromValue(authors)
@@ -635,6 +692,7 @@ export const StructuredData = ({
   const videos = collectBlockFields(content, 'video')
     .map(videoFromFields)
     .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
+    .concat(videosFromValue(attachedVideos))
   const schemas = [
     {
       '@context': 'https://schema.org',

@@ -381,6 +381,30 @@ body {
   height: auto;
 }
 
+.public-content__image-row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 28px 0;
+}
+
+.public-content__image-row figure {
+  margin: 0;
+}
+
+.public-content__image-row img {
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.public-content__image-row figcaption {
+  color: #40546b;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
 .public-content__video {
   margin: 28px 0;
 }
@@ -508,6 +532,10 @@ iframe.public-content__video-frame {
 
   .public-content__product-carousel-track {
     grid-auto-columns: minmax(240px, 82vw);
+  }
+
+  .public-content__image-row {
+    grid-template-columns: 1fr;
   }
 
   iframe.public-content__video-frame {
