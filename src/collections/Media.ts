@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionAfterReadHook, CollectionConfig } from 'payload'
 
 export const mediaSlug = 'media'
 
@@ -36,6 +36,51 @@ const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
   }
 
   return null
+}
+const hydrateAdminThumbnail: CollectionAfterReadHook = async ({ context, doc, req }) => {
+  const thumbnail = getAdminThumbnail({ doc })
+
+  if (thumbnail) {
+    doc.thumbnailURL = thumbnail
+    return doc
+  }
+
+  const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
+
+  if (
+    context?.skipMediaThumbnailHydration ||
+    !doc.id ||
+    !mimeType.startsWith('image/') ||
+    doc.embeddedImageStatus !== 'stored-in-db'
+  ) {
+    return doc
+  }
+
+  const fullDoc = await req.payload.findByID({
+    collection: mediaSlug,
+    context: {
+      ...context,
+      skipMediaThumbnailHydration: true,
+    },
+    depth: 0,
+    id: doc.id,
+    overrideAccess: false,
+    req,
+    select: {
+      embeddedImageDataURL: true,
+      externalImageURL: true,
+      mimeType: true,
+      url: true,
+    },
+    user: req.user,
+  })
+  const hydratedThumbnail = getAdminThumbnail({ doc: fullDoc as Record<string, unknown> })
+
+  if (hydratedThumbnail) {
+    doc.thumbnailURL = hydratedThumbnail
+  }
+
+  return doc
 }
 
 export const Media: CollectionConfig = {
@@ -121,6 +166,7 @@ export const Media: CollectionConfig = {
     },
   ],
   hooks: {
+    afterRead: [hydrateAdminThumbnail],
     beforeChange: [
       ({ data, req }) => {
         const file = req.file as UploadFile | undefined
