@@ -17,9 +17,15 @@ function selectedArticleIDsFromDOM(): string[] {
   const checkedInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked'))
 
   for (const input of checkedInputs) {
-    const row = input.closest('tr, [role="row"], .collection-list__table-row, .table__row, li, div')
-    const link = row?.querySelector<HTMLAnchorElement>('a[href*="/admin/collections/articles/"]')
-    const id = link?.href.match(articleIDPattern)?.[1]
+    let element: HTMLElement | null = input
+    let id: string | undefined
+
+    for (let depth = 0; element && depth < 12 && !id; depth += 1) {
+      const link = element.querySelector<HTMLAnchorElement>('a[href*="/admin/collections/articles/"]')
+
+      id = link?.href.match(articleIDPattern)?.[1]
+      element = element.parentElement
+    }
 
     if (id && id !== 'create') {
       ids.add(decodeURIComponent(id))
