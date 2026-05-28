@@ -17,6 +17,26 @@ const getUploadBuffer = (file?: UploadFile) => file?.data || file?.buffer
 const getUploadMimeType = (file?: UploadFile) => file?.mimeType || file?.mimetype
 const canEmbedInDatabase = (mimeType: string) =>
   mimeType.startsWith('image/') || mimeType.startsWith('video/')
+const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
+  const embedded = typeof doc.embeddedImageDataURL === 'string' ? doc.embeddedImageDataURL : ''
+  const external = typeof doc.externalImageURL === 'string' ? doc.externalImageURL : ''
+  const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
+  const url = typeof doc.url === 'string' ? doc.url : ''
+
+  if (embedded.startsWith('data:image/')) {
+    return embedded
+  }
+
+  if (external) {
+    return external
+  }
+
+  if (mimeType.startsWith('image/') && url) {
+    return url
+  }
+
+  return null
+}
 
 export const Media: CollectionConfig = {
   slug: mediaSlug,
@@ -138,6 +158,9 @@ export const Media: CollectionConfig = {
     ],
   },
   upload: {
+    adminThumbnail: getAdminThumbnail,
+    cacheTags: false,
+    displayPreview: true,
     mimeTypes: [
       'image/*',
       'application/pdf',

@@ -24,6 +24,7 @@ const productCardFields = (): Field[] => [
   {
     name: 'image',
     type: 'upload',
+    displayPreview: true,
     relationTo: mediaSlug,
   },
   {
@@ -124,6 +125,7 @@ export const imageBlock = {
     {
       name: 'image',
       type: 'upload',
+      displayPreview: true,
       relationTo: mediaSlug,
       required: true,
     },
@@ -246,6 +248,7 @@ export const imageRowBlock = {
         {
           name: 'image',
           type: 'upload',
+          displayPreview: true,
           relationTo: mediaSlug,
           required: true,
         },
@@ -307,6 +310,7 @@ export const videoFields = (): Field[] => [
           admin: {
             description: 'Upload MP4/WebM/MOV in Media and use it as the video file.',
           },
+          displayPreview: true,
           relationTo: mediaSlug,
         },
       ],
@@ -317,6 +321,7 @@ export const videoFields = (): Field[] => [
         {
           name: 'thumbnail',
           type: 'upload',
+          displayPreview: true,
           relationTo: mediaSlug,
         },
         {

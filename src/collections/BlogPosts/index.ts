@@ -209,6 +209,7 @@ export const BlogPostsCollection: CollectionConfig = {
             {
               name: 'coverImage',
               type: 'upload',
+              displayPreview: true,
               relationTo: mediaSlug,
             },
             {
@@ -412,6 +413,7 @@ export const BlogPostsCollection: CollectionConfig = {
             {
               name: 'image',
               type: 'upload',
+              displayPreview: true,
               relationTo: mediaSlug,
             },
           ],

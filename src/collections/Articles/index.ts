@@ -207,6 +207,7 @@ export const ArticlesCollection: CollectionConfig = {
             {
               name: 'coverImage',
               type: 'upload',
+              displayPreview: true,
               relationTo: mediaSlug,
             },
             {
@@ -359,6 +360,7 @@ export const ArticlesCollection: CollectionConfig = {
             {
               name: 'image',
               type: 'upload',
+              displayPreview: true,
               relationTo: mediaSlug,
             },
           ],
