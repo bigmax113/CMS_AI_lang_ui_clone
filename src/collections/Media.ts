@@ -39,10 +39,12 @@ const getStoredImageSource = (doc: Record<string, unknown>) => {
 }
 const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
   const id = typeof doc.id === 'number' || typeof doc.id === 'string' ? doc.id : ''
+  const filename = typeof doc.filename === 'string' ? doc.filename : ''
   const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
+  const thumbnailKey = id || filename
 
-  if (mimeType.startsWith('image/') && id) {
-    return `/api/${mediaSlug}/${encodeURIComponent(String(id))}/thumbnail`
+  if (mimeType.startsWith('image/') && thumbnailKey) {
+    return `/api/${mediaSlug}/thumbnail/${encodeURIComponent(String(thumbnailKey))}`
   }
 
   return getStoredImageSource(doc)
@@ -73,6 +75,74 @@ export const Media: CollectionConfig = {
     useAsTitle: 'filename',
   },
   endpoints: [
+    {
+      path: '/thumbnail/:key',
+      method: 'get',
+      handler: async (req) => {
+        const routeKey = req.routeParams?.key
+        const key =
+          typeof routeKey === 'number' || typeof routeKey === 'string'
+            ? String(routeKey)
+            : Array.isArray(routeKey)
+              ? routeKey[0]
+              : undefined
+
+        if (!key) {
+          return new Response('Missing media key', { status: 400 })
+        }
+
+        const select = {
+          embeddedImageDataURL: true,
+          externalImageURL: true,
+          mimeType: true,
+          url: true,
+        } as const
+        const mediaByID = await req.payload.findByID({
+          collection: mediaSlug,
+          depth: 0,
+          disableErrors: true,
+          id: key,
+          overrideAccess: false,
+          req,
+          select,
+          user: req.user,
+        })
+        const media =
+          mediaByID ||
+          (
+            await req.payload.find({
+              collection: mediaSlug,
+              depth: 0,
+              limit: 1,
+              overrideAccess: false,
+              req,
+              select,
+              user: req.user,
+              where: {
+                filename: {
+                  equals: key,
+                },
+              },
+            })
+          ).docs[0]
+
+        if (!media) {
+          return new Response('Media not found', { status: 404 })
+        }
+
+        const source = getStoredImageSource(media as Record<string, unknown>)
+
+        if (!source) {
+          return new Response('Thumbnail unavailable', { status: 404 })
+        }
+
+        if (source.startsWith('data:')) {
+          return dataURLResponse(source) || new Response('Invalid thumbnail', { status: 422 })
+        }
+
+        return Response.redirect(source, 302)
+      },
+    },
     {
       path: '/:id/thumbnail',
       method: 'get',
