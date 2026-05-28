@@ -15,6 +15,7 @@ import { mediaSlug } from '../Media'
 import {
   faqBlock,
   htmlEmbedBlock,
+  imageBlock,
   imageRowBlock,
   productCardBlock,
   productCardCarouselBlock,
@@ -235,6 +236,7 @@ export const ArticlesCollection: CollectionConfig = {
                     blocks: [
                       calloutBlock,
                       htmlEmbedBlock,
+                      imageBlock,
                       imageRowBlock,
                       productCardBlock,
                       productCardCarouselBlock,

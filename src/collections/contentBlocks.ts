@@ -114,6 +114,121 @@ export const productCardCarouselBlock = {
   ],
 } satisfies Block
 
+export const imageBlock = {
+  slug: 'imageBlock',
+  labels: {
+    plural: 'Images',
+    singular: 'Image',
+  },
+  fields: [
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: mediaSlug,
+      required: true,
+    },
+    {
+      name: 'caption',
+      type: 'text',
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'width',
+          type: 'select',
+          admin: {
+            description: 'Controls how wide the image is on the public article page.',
+          },
+          defaultValue: 'medium',
+          options: [
+            {
+              label: 'Full width',
+              value: 'full',
+            },
+            {
+              label: 'Large',
+              value: 'large',
+            },
+            {
+              label: 'Medium',
+              value: 'medium',
+            },
+            {
+              label: 'Small',
+              value: 'small',
+            },
+            {
+              label: 'Custom px',
+              value: 'custom',
+            },
+          ],
+        },
+        {
+          name: 'customWidth',
+          type: 'number',
+          admin: {
+            description: 'Used when Width is Custom px. Allowed range: 160-1200.',
+          },
+          label: 'Custom width',
+          max: 1200,
+          min: 160,
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'align',
+          type: 'select',
+          defaultValue: 'center',
+          options: [
+            {
+              label: 'Left',
+              value: 'left',
+            },
+            {
+              label: 'Center',
+              value: 'center',
+            },
+            {
+              label: 'Right',
+              value: 'right',
+            },
+          ],
+        },
+        {
+          name: 'aspectRatio',
+          type: 'select',
+          admin: {
+            description: 'Optional crop ratio. Natural keeps the original image proportions.',
+          },
+          defaultValue: 'natural',
+          options: [
+            {
+              label: 'Natural',
+              value: 'natural',
+            },
+            {
+              label: '16:9',
+              value: '16-9',
+            },
+            {
+              label: '4:3',
+              value: '4-3',
+            },
+            {
+              label: '1:1',
+              value: '1-1',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+} satisfies Block
+
 export const imageRowBlock = {
   slug: 'imageRow',
   labels: {

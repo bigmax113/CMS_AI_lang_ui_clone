@@ -202,6 +202,24 @@ const productCardsFromCarouselFields = (fields: Record<string, unknown>) =>
     .filter((product) => product.name)
     .slice(0, 5)
 
+const numberField = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : null)
+
+const imageBlockFromFields = (fields: Record<string, unknown>) => {
+  const width = textField(fields.width) || 'medium'
+  const align = textField(fields.align) || 'center'
+  const aspectRatio = textField(fields.aspectRatio) || 'natural'
+  const customWidth = numberField(fields.customWidth)
+
+  return {
+    align: ['left', 'center', 'right'].includes(align) ? align : 'center',
+    aspectRatio: ['natural', '16-9', '4-3', '1-1'].includes(aspectRatio) ? aspectRatio : 'natural',
+    caption: textField(fields.caption),
+    customWidth,
+    image: isMedia(fields.image) ? fields.image : null,
+    width: ['full', 'large', 'medium', 'small', 'custom'].includes(width) ? width : 'medium',
+  }
+}
+
 const imageRowFromFields = (fields: Record<string, unknown>) =>
   (Array.isArray(fields.images) ? fields.images : [])
     .filter(isRecord)
@@ -388,6 +406,37 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
   )
 }
 
+const renderImageBlock = (imageBlock: ReturnType<typeof imageBlockFromFields>, key: string) => {
+  if (!imageBlock.image) {
+    return null
+  }
+
+  const safeCustomWidth =
+    imageBlock.width === 'custom' && imageBlock.customWidth
+      ? `${Math.min(Math.max(imageBlock.customWidth, 160), 1200)}px`
+      : undefined
+
+  return (
+    <figure
+      className={[
+        'public-content__image-block',
+        `public-content__image-block--${imageBlock.width}`,
+        `public-content__image-block--${imageBlock.align}`,
+        `public-content__image-block--${imageBlock.aspectRatio}`,
+      ].join(' ')}
+      key={key}
+      style={safeCustomWidth ? ({ '--image-max-width': safeCustomWidth } as React.CSSProperties) : undefined}
+    >
+      <SafeImage
+        alt={imageBlock.image.alt || imageBlock.caption || 'Article image'}
+        fileName={imageBlock.image.filename}
+        src={mediaURL(imageBlock.image)}
+      />
+      {imageBlock.caption ? <figcaption>{imageBlock.caption}</figcaption> : null}
+    </figure>
+  )
+}
+
 export const VideoList = ({ videos }: { videos?: unknown }) => {
   const visibleVideos = videosFromValue(videos)
 
@@ -518,6 +567,10 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
           </div>
         </section>
       )
+    }
+
+    if (fields.blockType === 'imageBlock') {
+      return renderImageBlock(imageBlockFromFields(fields), key)
     }
 
     if (fields.blockType === 'imageRow') {
