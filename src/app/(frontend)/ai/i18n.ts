@@ -44,6 +44,7 @@ export const baseUICopy = {
   articleBrief: 'Article brief',
   articleDraft: 'Article draft',
   articleDraftHint: 'Generated copy appears here before an editor moves it into Payload.',
+  articleDraftSaved: 'Saved to Content / Articles:',
   articleGeneration: 'Article generation',
   articleGenerationHint:
     'Generate a structured article draft, SEO fields, outline, and FAQ ideas from a business brief.',
@@ -123,6 +124,8 @@ export const baseUICopy = {
   retrievingContext: 'Retrieving context and waiting for Grok...',
   rootFolder: '(root)',
   safeDefaults: 'Safe defaults',
+  saveArticleDraft: 'Save to Articles',
+  savingArticleDraft: 'Saving draft to Content / Articles...',
   score: 'score',
   selectedScope: 'Selected scope',
   sourceImagePlaceholder: 'https://...',

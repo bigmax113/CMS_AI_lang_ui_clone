@@ -62,6 +62,9 @@ const calloutBlock = {
 export const ArticlesCollection: CollectionConfig = {
   slug: articlesSlug,
   admin: {
+    components: {
+      beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
+    },
     defaultColumns: ['title', 'status', 'category', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => {

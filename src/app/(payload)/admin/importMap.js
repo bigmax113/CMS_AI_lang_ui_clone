@@ -29,6 +29,7 @@ import { CodeBlockBlockComponent as CodeBlockBlockComponent_e70f5e05f09f93e00b99
 import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { AdminNavLinks as AdminNavLinks_2f4709be4d356ac8bb0e6b945fe38150 } from '../../../admin/components/AdminNavLinks'
 import { AdminDashboard as AdminDashboard_6950a6aa00299c00221d843ec832bd56 } from '../../../admin/components/AdminDashboard'
+import { ArticleTranslationToolbar as ArticleTranslationToolbar_a9c1f8f0ad9e4adf9b6cb4fd890f0a45 } from '../../../admin/components/ArticleTranslationToolbar'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -63,5 +64,6 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/admin/components/AdminNavLinks#AdminNavLinks": AdminNavLinks_2f4709be4d356ac8bb0e6b945fe38150,
   "/admin/components/AdminDashboard#AdminDashboard": AdminDashboard_6950a6aa00299c00221d843ec832bd56,
+  "/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar": ArticleTranslationToolbar_a9c1f8f0ad9e4adf9b6cb4fd890f0a45,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

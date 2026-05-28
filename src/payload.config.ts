@@ -12,6 +12,8 @@ import {
   generateArticleEndpoint,
   generateImageEndpoint,
   generateVideoEndpoint,
+  saveArticleDraftEndpoint,
+  translateArticlesEndpoint,
   translateUiEndpoint,
   videoStatusEndpoint,
 } from './ai/endpoints'
@@ -101,6 +103,8 @@ export default buildConfig({
     generateArticleEndpoint,
     generateImageEndpoint,
     generateVideoEndpoint,
+    saveArticleDraftEndpoint,
+    translateArticlesEndpoint,
     translateUiEndpoint,
     videoStatusEndpoint,
   ],

@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+import type { Endpoint, Payload } from 'payload'
 import type { ContextChunk, ContextChunkRanker } from './localDocs'
 
 import { buildLocalDocContext, getLocalDocFolders, getLocalDocInventory } from './localDocs'
@@ -64,6 +64,12 @@ type GenerateArticleRequestBody = {
   tone?: string
 }
 
+type SaveArticleDraftRequestBody = {
+  draft?: ArticleDraft
+  languageCode?: string
+  status?: 'draft' | 'published' | 'review'
+}
+
 type ArticleDraft = {
   bodyMarkdown?: string
   faq?: Array<{
@@ -78,6 +84,29 @@ type ArticleDraft = {
   title?: string
 }
 
+type TranslateArticlesRequestBody = {
+  ids?: Array<number | string>
+  locales?: string[]
+}
+
+type LexicalChild = {
+  type: string
+  version: number
+  [key: string]: unknown
+}
+
+type LexicalContent = {
+  root: {
+    children: LexicalChild[]
+    direction: 'ltr' | 'rtl' | null
+    format: '' | 'center' | 'end' | 'justify' | 'left' | 'right' | 'start'
+    indent: number
+    type: string
+    version: number
+  }
+  [key: string]: unknown
+}
+
 type TranslateUIRequestBody = {
   locale?: string
   strings?: Record<string, string>
@@ -89,6 +118,14 @@ const UI_TRANSLATION_LANGUAGES: Record<string, string> = {
   ro: 'Romanian',
   ru: 'Russian',
   uk: 'Ukrainian',
+}
+
+const ARTICLE_TRANSLATION_LANGUAGES: Record<string, { code: string; language: string }> = {
+  en: { code: 'EN', language: 'English' },
+  pl: { code: 'PL', language: 'Polish' },
+  ro: { code: 'RO', language: 'Romanian' },
+  ru: { code: 'RU', language: 'Russian' },
+  uk: { code: 'UK', language: 'Ukrainian' },
 }
 
 const uiTranslationCache = new Map<string, Record<string, string>>()
@@ -302,6 +339,154 @@ export const generateArticleEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/generate-article',
+}
+
+export const saveArticleDraftEndpoint: Endpoint = {
+  handler: async (req) => {
+    let body: SaveArticleDraftRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as SaveArticleDraftRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const draft = normalizeArticleDraft(body.draft || {}, '')
+    const title = draft.title?.trim()
+
+    if (!title || !draft.bodyMarkdown?.trim()) {
+      return Response.json({ error: 'A generated article title and body are required.' }, { status: 400 })
+    }
+
+    const language = resolveArticleLanguage(body.languageCode)
+    const slug = await createUniqueArticleSlug(req.payload, withLanguageSlugPrefix(language.code, draft.slug || title))
+    const article = await req.payload.create({
+      collection: 'articles',
+      data: {
+        aiAssist: {
+          brief: draft.summary || title,
+          editorialNotes: `Saved from AI Workbench as ${language.code}.`,
+        },
+        content: markdownToLexical(draft.bodyMarkdown),
+        contentType: 'article',
+        seo: {
+          description: draft.seoDescription,
+          title: draft.seoTitle,
+        },
+        slug,
+        status: body.status || 'draft',
+        summary: draft.summary,
+        title: withLanguageTitlePrefix(language.code, title),
+      },
+      overrideAccess: false,
+      user: req.user,
+    })
+
+    return Response.json({
+      article,
+      adminURL: `/admin/collections/articles/${article.id}`,
+      ok: true,
+      publicURL: `/articles/${encodeURIComponent(article.slug)}`,
+    })
+  },
+  method: 'post',
+  path: '/save-article-draft',
+}
+
+export const translateArticlesEndpoint: Endpoint = {
+  handler: async (req) => {
+    let body: TranslateArticlesRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as TranslateArticlesRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const ids = uniqueStrings((body.ids || []).map((id) => String(id).trim()).filter(Boolean)).slice(0, 10)
+    const locales = uniqueStrings((body.locales || []).map((locale) => locale.toLowerCase().trim()))
+      .map(resolveArticleLanguage)
+      .filter(Boolean)
+
+    if (!ids.length) {
+      return Response.json({ error: 'Select at least one article.' }, { status: 400 })
+    }
+
+    if (!locales.length) {
+      return Response.json({ error: 'Select at least one target language.' }, { status: 400 })
+    }
+
+    const created = []
+
+    for (const id of ids) {
+      const source = await req.payload.findByID({
+        collection: 'articles',
+        depth: 0,
+        id,
+        overrideAccess: false,
+        user: req.user,
+      })
+
+      const sourceBody = lexicalToMarkdown(source.content)
+
+      for (const locale of locales) {
+        const translated = await translateArticleFields({
+          bodyMarkdown: sourceBody,
+          language: locale.language,
+          seoDescription: source.seo?.description || '',
+          seoTitle: source.seo?.title || '',
+          summary: source.summary || '',
+          title: stripLanguageTitlePrefix(source.title),
+        })
+        const slug = await createUniqueArticleSlug(
+          req.payload,
+          withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || source.title),
+        )
+        const article = await req.payload.create({
+          collection: 'articles',
+          data: {
+            aiAssist: {
+              brief: `Translated from article ${source.id} to ${locale.language}.`,
+              editorialNotes: `AI translation generated with LORGAR product-content prompt.`,
+            },
+            authors: source.authors,
+            category: source.category,
+            content: markdownToLexical(translated.bodyMarkdown || sourceBody),
+            contentType: source.contentType || 'article',
+            coverImage: source.coverImage,
+            owner: source.owner,
+            seo: {
+              description: translated.seoDescription || source.seo?.description,
+              image: source.seo?.image,
+              title: translated.seoTitle || source.seo?.title,
+            },
+            slug,
+            status: 'draft',
+            summary: translated.summary || source.summary,
+            tags: source.tags,
+            title: withLanguageTitlePrefix(locale.code, translated.title || source.title),
+          },
+          overrideAccess: false,
+          user: req.user,
+        })
+
+        created.push({
+          id: article.id,
+          language: locale.language,
+          title: article.title,
+          url: `/admin/collections/articles/${article.id}`,
+        })
+      }
+    }
+
+    return Response.json({
+      created,
+      ok: true,
+      total: created.length,
+    })
+  },
+  method: 'post',
+  path: '/translate-articles',
 }
 
 export const translateUiEndpoint: Endpoint = {
@@ -604,6 +789,256 @@ function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDr
 
 function clipArticleBrief(value: string): string {
   return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
+}
+
+function resolveArticleLanguage(value?: string): { code: string; language: string } {
+  const normalized = (value || 'en').trim().replace(/[\[\]()]/gu, '').toLowerCase()
+  const byCode = Object.values(ARTICLE_TRANSLATION_LANGUAGES).find(
+    (language) => language.code.toLowerCase() === normalized,
+  )
+
+  return ARTICLE_TRANSLATION_LANGUAGES[normalized] || byCode || ARTICLE_TRANSLATION_LANGUAGES.en
+}
+
+function stripLanguageTitlePrefix(value: string): string {
+  return value.replace(/^\s*(?:\[[a-z]{2}\]|\([a-z]{2}\)|[a-z]{2}[:_-])\s*/iu, '').trim()
+}
+
+function withLanguageTitlePrefix(code: string, title: string): string {
+  const cleanTitle = stripLanguageTitlePrefix(title) || 'Untitled article'
+
+  return `[${code.toUpperCase()}] ${cleanTitle}`
+}
+
+function withLanguageSlugPrefix(code: string, value: string): string {
+  const prefix = code.toLowerCase()
+  const base = slugifyArticleTitle(stripLanguageTitlePrefix(value)) || 'article'
+  const withoutLanguagePrefix = base.replace(/^(en|pl|ro|ru|uk)-/u, '')
+
+  return `${prefix}-${withoutLanguagePrefix}`
+}
+
+function markdownToLexical(markdown: string): LexicalContent {
+  const children: LexicalChild[] = []
+  const paragraphLines: string[] = []
+  const flushParagraph = () => {
+    const text = paragraphLines.join(' ').trim()
+
+    if (text) {
+      children.push(createLexicalParagraph(text))
+    }
+
+    paragraphLines.length = 0
+  }
+
+  for (const rawLine of markdown.replace(/\r\n/gu, '\n').split('\n')) {
+    const line = rawLine.trim()
+
+    if (!line) {
+      flushParagraph()
+      continue
+    }
+
+    const heading = line.match(/^(#{1,4})\s+(.+)$/u)
+
+    if (heading) {
+      flushParagraph()
+      children.push(createLexicalHeading(heading[2] || '', heading[1]?.length || 2))
+      continue
+    }
+
+    paragraphLines.push(line.replace(/^[-*]\s+/u, '• '))
+  }
+
+  flushParagraph()
+
+  return {
+    root: {
+      children: children.length ? children : [createLexicalParagraph('Draft content is empty.')],
+      direction: null,
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  }
+}
+
+function createLexicalText(text: string): LexicalChild {
+  return {
+    detail: 0,
+    format: 0,
+    mode: 'normal',
+    style: '',
+    text,
+    type: 'text',
+    version: 1,
+  }
+}
+
+function createLexicalParagraph(text: string): LexicalChild {
+  return {
+    children: [createLexicalText(text)],
+    direction: null,
+    format: '',
+    indent: 0,
+    type: 'paragraph',
+    version: 1,
+  }
+}
+
+function createLexicalHeading(text: string, level: number): LexicalChild {
+  return {
+    children: [createLexicalText(text)],
+    direction: null,
+    format: '',
+    indent: 0,
+    tag: `h${Math.min(Math.max(level, 2), 4)}`,
+    type: 'heading',
+    version: 1,
+  }
+}
+
+function lexicalToMarkdown(content: unknown): string {
+  const root = content && typeof content === 'object' ? (content as { root?: unknown }).root : null
+  const lines: string[] = []
+
+  collectLexicalMarkdown(root, lines)
+
+  return lines.join('\n\n').trim()
+}
+
+function collectLexicalMarkdown(node: unknown, lines: string[]): string {
+  if (!node || typeof node !== 'object') {
+    return ''
+  }
+
+  const record = node as Record<string, unknown>
+  const children = Array.isArray(record.children) ? record.children : []
+
+  if (record.type === 'text') {
+    return textFromUnknown(record.text)
+  }
+
+  const childText = children.map((child) => collectLexicalMarkdown(child, lines)).join('').trim()
+
+  if (record.type === 'heading' && childText) {
+    const tag = typeof record.tag === 'string' ? record.tag : 'h2'
+    const level = Number(tag.replace(/^h/u, '')) || 2
+
+    lines.push(`${'#'.repeat(Math.min(Math.max(level, 2), 4))} ${childText}`)
+    return ''
+  }
+
+  if ((record.type === 'paragraph' || record.type === 'quote' || record.type === 'listitem') && childText) {
+    lines.push(childText)
+    return ''
+  }
+
+  if (record.type === 'block' && record.fields && typeof record.fields === 'object') {
+    const fields = record.fields as Record<string, unknown>
+    const blockText = Object.entries(fields)
+      .filter(([key]) => !['blockType', 'id'].includes(key))
+      .map(([, value]) => textFromUnknown(value))
+      .filter(Boolean)
+      .join('\n')
+
+    if (blockText) {
+      lines.push(blockText)
+    }
+  }
+
+  return childText
+}
+
+async function createUniqueArticleSlug(payload: Pick<Payload, 'find'>, baseSlug: string) {
+  const base = slugifyArticleTitle(baseSlug) || 'article'
+  let candidate = base
+  let suffix = 2
+
+  while (true) {
+    const existing = await payload.find({
+      collection: 'articles',
+      limit: 1,
+      where: {
+        slug: {
+          equals: candidate,
+        },
+      },
+    })
+
+    if (!existing.totalDocs) {
+      return candidate
+    }
+
+    candidate = `${base}-${suffix}`
+    suffix += 1
+  }
+}
+
+async function translateArticleFields(args: {
+  bodyMarkdown: string
+  language: string
+  seoDescription: string
+  seoTitle: string
+  summary: string
+  title: string
+}): Promise<ArticleDraft> {
+  const baseURL = getXAIBaseURL()
+  const model = process.env.GROK_TEXT_MODEL || DEFAULT_GROK_TEXT_MODEL
+  const source = {
+    bodyMarkdown: args.bodyMarkdown,
+    seoDescription: args.seoDescription,
+    seoTitle: args.seoTitle,
+    summary: args.summary,
+    title: args.title,
+  }
+  const prompt = [
+    'Ты — профессиональный переводчик и редактор контента для бренда игрового оборудования LORGAR.',
+    `Нужно перевести описание продукта на ${args.language}.`,
+    '',
+    'ВАЖНО: – Сохраняй структуру текста, абзацы и заголовки. – Не сокращай текст и не добавляй информацию от себя. – Перевод должен звучать естественно для носителя языка, а не как дословный перевод. – Стиль: современный, технологичный, игровой, уверенный, но не слишком пафосный. – Это описание gaming-продукта, поэтому допускается использование привычных англоязычных игровых терминов, если они обычно не переводятся локально. – Избегай слишком формального или «корпоративного» звучания. – Сохраняй названия продуктов, технологий и моделей без перевода. – Не переводи бренд LORGAR. – Если в тексте встречаются слоганы — адаптируй их так, чтобы они звучали естественно и маркетингово сильно на целевом языке. – Не используй длинные тире — предпочитай короткие тире или обычную пунктуацию. – Сохраняй SEO-ключи, если они есть. – Если какой-то фрагмент звучит неестественно для локального рынка — адаптируй его, сохранив смысл.',
+    '',
+    'Дополнительно: – Проверь, чтобы текст хорошо подходил для размещения на сайте бренда игровой периферии. – Избегай кальки с русского или английского. – Перевод должен выглядеть как оригинально написанный текст для этого рынка.',
+    '',
+    'Вот текст для перевода:',
+    JSON.stringify(source, null, 2),
+    '',
+    'Верни только валидный JSON с теми же ключами: title, summary, bodyMarkdown, seoTitle, seoDescription. Не добавляй markdown fences.',
+  ].join('\n')
+
+  const response = await fetch(`${baseURL}/chat/completions`, {
+    body: JSON.stringify({
+      max_tokens: 4_000,
+      messages: [
+        {
+          content: prompt,
+          role: 'user',
+        },
+      ],
+      model,
+      response_format: { type: 'json_object' },
+      temperature: 0.25,
+    }),
+    headers: createXAIHeaders(),
+    method: 'POST',
+  })
+  const payloadText = await response.text()
+
+  if (!response.ok) {
+    throw new Error(payloadText)
+  }
+
+  const payload = JSON.parse(payloadText) as {
+    choices?: Array<{
+      message?: {
+        content?: string
+      }
+    }>
+  }
+  const parsed = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
+
+  return normalizeArticleDraft(parsed, args.title)
 }
 
 async function generateGrokArticle(args: {

@@ -113,6 +113,18 @@ type GenerateArticleResponse = {
   ok: boolean
 }
 
+type SaveArticleDraftResponse = {
+  adminURL?: string
+  article?: {
+    id: number | string
+    slug?: string
+    title?: string
+  }
+  error?: string
+  ok: boolean
+  publicURL?: string
+}
+
 const presets = [
   {
     labelKey: 'presetQuickInventory',
@@ -195,6 +207,22 @@ function inferArticleOutputLanguage(title: string, brief: string): string {
   ].join(' ')
 }
 
+function inferArticleLanguageCode(title: string, content: string): string {
+  const text = `${title}\n${content}`
+  const cyrillicCount = (text.match(/[А-Яа-яЁёІіЇїЄєҐґ]/gu) || []).length
+  const latinCount = (text.match(/[A-Za-z]/g) || []).length
+
+  if (latinCount >= Math.max(20, cyrillicCount * 3)) {
+    return 'EN'
+  }
+
+  if (/[ЇїЄєІіҐґ]/u.test(text)) {
+    return 'UK'
+  }
+
+  return cyrillicCount ? 'RU' : 'EN'
+}
+
 function toSafeText(value: unknown): string {
   if (typeof value === 'string') {
     return value
@@ -271,6 +299,7 @@ export function AiDocsWorkbench() {
   )
   const [articleKeywords, setArticleKeywords] = useState('Payload CMS, AI content workflow, product cards, SEO')
   const [articleResult, setArticleResult] = useState<GenerateArticleResponse | null>(null)
+  const [saveArticleResult, setSaveArticleResult] = useState<SaveArticleDraftResponse | null>(null)
   const [videoPrompt, setVideoPrompt] = useState(
     'Animate an editorial CMS dashboard preview with subtle camera motion and polished product energy.',
   )
@@ -279,6 +308,7 @@ export function AiDocsWorkbench() {
   const [videoResult, setVideoResult] = useState<GenerateVideoResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [generatingArticle, setGeneratingArticle] = useState(false)
+  const [savingArticle, setSavingArticle] = useState(false)
   const [generatingImage, setGeneratingImage] = useState(false)
   const [generatingVideo, setGeneratingVideo] = useState(false)
   const [pollingVideo, setPollingVideo] = useState(false)
@@ -485,6 +515,7 @@ export function AiDocsWorkbench() {
     setGeneratingArticle(true)
     setError(null)
     setArticleResult(null)
+    setSaveArticleResult(null)
 
     try {
       const response = await fetch('/api/generate-article', {
@@ -514,6 +545,45 @@ export function AiDocsWorkbench() {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setGeneratingArticle(false)
+    }
+  }
+
+  async function runSaveArticleDraft() {
+    setSavingArticle(true)
+    setError(null)
+    setSaveArticleResult(null)
+
+    try {
+      const response = await fetch('/api/save-article-draft', {
+        body: JSON.stringify({
+          draft: {
+            bodyMarkdown: articleDraftBody,
+            outline: articleDraftOutline,
+            seoDescription: articleDraftSeoDescription,
+            seoTitle: articleDraftSeoTitle,
+            slug: articleDraftSlug,
+            summary: articleDraftSummary,
+            title: articleDraftTitle,
+          },
+          languageCode: inferArticleLanguageCode(articleDraftTitle, articleDraftBody || articleBrief),
+          status: 'draft',
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as SaveArticleDraftResponse
+
+      if (!response.ok) {
+        throw new Error(payload.error || `HTTP ${response.status}`)
+      }
+
+      setSaveArticleResult(payload)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught))
+    } finally {
+      setSavingArticle(false)
     }
   }
 
@@ -1037,6 +1107,26 @@ export function AiDocsWorkbench() {
                       {articleDraftSeoTitle ? <span>{articleDraftSeoTitle}</span> : null}
                       {articleDraftSeoDescription ? <small>{articleDraftSeoDescription}</small> : null}
                     </article>
+                  ) : null}
+
+                  <div className={styles.actionRow}>
+                    <button
+                      className={styles.primaryButton}
+                      disabled={savingArticle || !articleDraftBody}
+                      onClick={() => void runSaveArticleDraft()}
+                      type="button"
+                    >
+                      {t('saveArticleDraft')}
+                    </button>
+                  </div>
+
+                  {savingArticle ? <div className={styles.running}>{t('savingArticleDraft')}</div> : null}
+
+                  {saveArticleResult?.adminURL ? (
+                    <div className={styles.running}>
+                      {t('articleDraftSaved')}{' '}
+                      <a href={saveArticleResult.adminURL}>{saveArticleResult.article?.title || t('openArticles')}</a>
+                    </div>
                   ) : null}
                 </div>
               ) : null}
