@@ -1102,8 +1102,83 @@ async function translateArticleFields(args: {
     }>
   }
   const parsed = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
+  const translated = normalizeArticleDraft(parsed, args.title)
 
-  return normalizeArticleDraft(parsed, args.title)
+  return reviewTranslatedArticleFields({
+    baseURL,
+    language: args.language,
+    model,
+    source,
+    translated,
+  })
+}
+
+async function reviewTranslatedArticleFields(args: {
+  baseURL: string
+  language: string
+  model: string
+  source: {
+    bodyMarkdown: string
+    seoDescription: string
+    seoTitle: string
+    summary: string
+    title: string
+  }
+  translated: ArticleDraft
+}): Promise<ArticleDraft> {
+  const reviewPrompt = [
+    `You are a senior native ${args.language} editor and localization QA specialist.`,
+    'Review the translated article JSON against the source JSON. Return the same JSON keys only: title, summary, bodyMarkdown, seoTitle, seoDescription.',
+    '',
+    'Fix grammar, agreement, case, number, gender, word order, punctuation, awkward literal translations, and unnatural marketing phrasing.',
+    'For Russian, Ukrainian, Polish, and Romanian, pay special attention to adjective-noun agreement and inflection in headings.',
+    'Example of an error to avoid in Russian: "Более быстрый интерактивная карта". Correct it as "Более быстрая интерактивная карта" or rewrite naturally as "Интерактивная карта стала быстрее".',
+    'Do not shorten the article body and do not add new facts. Preserve headings, paragraphs, product names, model names, brands, and SEO keywords.',
+    'Keep LORGAR untranslated. Keep common gaming terms in English when that sounds natural locally.',
+    'Do not use long dashes. Prefer short hyphens or normal punctuation.',
+    'Hard field limits: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
+    '',
+    'Source JSON:',
+    JSON.stringify(args.source, null, 2),
+    '',
+    'Translated JSON to proofread:',
+    JSON.stringify(args.translated, null, 2),
+    '',
+    'Return only valid JSON. Do not add markdown fences.',
+  ].join('\n')
+
+  const response = await fetch(`${args.baseURL}/chat/completions`, {
+    body: JSON.stringify({
+      max_tokens: 4_000,
+      messages: [
+        {
+          content: reviewPrompt,
+          role: 'user',
+        },
+      ],
+      model: args.model,
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+    }),
+    headers: createXAIHeaders(),
+    method: 'POST',
+  })
+  const payloadText = await response.text()
+
+  if (!response.ok) {
+    throw new Error(payloadText)
+  }
+
+  const payload = JSON.parse(payloadText) as {
+    choices?: Array<{
+      message?: {
+        content?: string
+      }
+    }>
+  }
+  const parsed = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
+
+  return normalizeArticleDraft(parsed, args.translated.title || args.source.title)
 }
 
 async function generateGrokArticle(args: {
