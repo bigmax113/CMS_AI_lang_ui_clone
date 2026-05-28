@@ -14,18 +14,16 @@ const articleIDPattern = /\/admin\/collections\/articles\/([^/?#]+)/u
 
 function selectedArticleIDsFromDOM(): string[] {
   const ids = new Set<string>()
-  const checkedInputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked'))
+  const checkedInputs = Array.from(
+    document.querySelectorAll<HTMLInputElement>(
+      'tbody tr .select-row input[type="checkbox"]:checked, tbody tr .checkbox-input--checked input[type="checkbox"]',
+    ),
+  )
 
   for (const input of checkedInputs) {
-    let element: HTMLElement | null = input
-    let id: string | undefined
-
-    for (let depth = 0; element && depth < 12 && !id; depth += 1) {
-      const link = element.querySelector<HTMLAnchorElement>('a[href*="/admin/collections/articles/"]')
-
-      id = link?.href.match(articleIDPattern)?.[1]
-      element = element.parentElement
-    }
+    const row = input.closest('tbody tr')
+    const link = row?.querySelector<HTMLAnchorElement>('a[href*="/admin/collections/articles/"]')
+    const id = link?.href.match(articleIDPattern)?.[1]
 
     if (id && id !== 'create') {
       ids.add(decodeURIComponent(id))
