@@ -13,9 +13,20 @@ const languages = [
 const articleIDPattern = /\/admin\/collections\/articles\/([^/?#]+)/u
 
 type APIResponse = {
+  created?: Array<{
+    id?: string | number
+    language?: string
+    title?: string
+    url?: string
+  }>
   error?: string
   errors?: Array<{
     message?: string
+  }>
+  failed?: Array<{
+    error?: string
+    id?: string
+    language?: string
   }>
   total?: number
 }
@@ -78,6 +89,9 @@ export const ArticleTranslationToolbar: React.FC = () => {
     setRunning(true)
     setMessage(`Translating ${ids.length} article(s) to ${selectedLabels}...`)
 
+    const controller = new AbortController()
+    const timeoutID = window.setTimeout(() => controller.abort(), 240_000)
+
     try {
       const response = await fetch('/api/translate-articles', {
         body: JSON.stringify({
@@ -88,6 +102,7 @@ export const ArticleTranslationToolbar: React.FC = () => {
           'Content-Type': 'application/json',
         },
         method: 'POST',
+        signal: controller.signal,
       })
       const payload = (await response.json()) as APIResponse
 
@@ -95,11 +110,33 @@ export const ArticleTranslationToolbar: React.FC = () => {
         throw new Error(errorMessageFromAPI(payload, response.status))
       }
 
-      setMessage(`Created ${payload.total || 0} translated draft(s). Refreshing list...`)
-      window.setTimeout(() => window.location.reload(), 900)
+      const failed = payload.failed || []
+      const total = payload.total || payload.created?.length || 0
+
+      if (failed.length) {
+        const failedSummary = failed
+          .slice(0, 2)
+          .map((item) => `${item.language || item.id || 'item'}: ${item.error || 'failed'}`)
+          .join('; ')
+
+        setMessage(`Created ${total} draft(s), failed ${failed.length}. ${failedSummary}`)
+      } else {
+        setMessage(`Created ${total} translated draft(s). Refreshing list...`)
+      }
+
+      if (total) {
+        window.setTimeout(() => window.location.reload(), 900)
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
+      setMessage(
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'Translation timed out. Try one language at a time or shorten the source article.'
+          : error instanceof Error
+            ? error.message
+            : String(error),
+      )
     } finally {
+      window.clearTimeout(timeoutID)
       setRunning(false)
     }
   }

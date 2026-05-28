@@ -1,5 +1,6 @@
 import type { Endpoint, Payload } from 'payload'
 import type { ContextChunk, ContextChunkRanker } from './localDocs'
+import type { Article } from '../payload-types'
 
 import { buildLocalDocContext, getLocalDocFolders, getLocalDocInventory } from './localDocs'
 
@@ -12,6 +13,9 @@ const EMBEDDING_BATCH_SIZE = 16
 const QUERY_EXPANSION_CACHE_VERSION = 'hybrid-v3'
 const LEXICAL_BOOST_LIMIT = 0.18
 const MAX_ARTICLE_BRIEF_CHARS = 24_000
+const MAX_ARTICLE_TRANSLATION_CHARS = 26_000
+const MAX_ARTICLE_TRANSLATION_SEGMENTS = 160
+const MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS = 4_000
 const ARTICLE_SEO_TITLE_MAX_CHARS = 70
 const ARTICLE_SEO_DESCRIPTION_MAX_CHARS = 160
 const ARTICLE_SUMMARY_MAX_CHARS = 320
@@ -73,6 +77,12 @@ type SaveArticleDraftRequestBody = {
   status?: 'draft' | 'published' | 'review'
 }
 
+type ArticleTranslationSegment = {
+  id: string
+  kind?: string
+  text: string
+}
+
 type ArticleDraft = {
   bodyMarkdown?: string
   faq?: Array<{
@@ -82,6 +92,7 @@ type ArticleDraft = {
   outline?: string[]
   seoDescription?: string
   seoTitle?: string
+  segments?: ArticleTranslationSegment[]
   slug?: string
   summary?: string
   title?: string
@@ -269,7 +280,9 @@ export const generateVideoEndpoint: Endpoint = {
       waitForResult: body.waitForResult !== false,
     })
 
-    return Response.json(result, { status: result.ok ? 200 : result.status === 'running' ? 202 : 502 })
+    return Response.json(result, {
+      status: result.ok ? 200 : result.status === 'running' ? 202 : 502,
+    })
   },
   method: 'post',
   path: '/generate-video',
@@ -316,7 +329,8 @@ export const generateArticleEndpoint: Endpoint = {
     let body: GenerateArticleRequestBody
 
     try {
-      body = typeof req.json === 'function' ? ((await req.json()) as GenerateArticleRequestBody) : {}
+      body =
+        typeof req.json === 'function' ? ((await req.json()) as GenerateArticleRequestBody) : {}
     } catch (_error) {
       body = {}
     }
@@ -349,7 +363,8 @@ export const saveArticleDraftEndpoint: Endpoint = {
     let body: SaveArticleDraftRequestBody
 
     try {
-      body = typeof req.json === 'function' ? ((await req.json()) as SaveArticleDraftRequestBody) : {}
+      body =
+        typeof req.json === 'function' ? ((await req.json()) as SaveArticleDraftRequestBody) : {}
     } catch (_error) {
       body = {}
     }
@@ -358,12 +373,18 @@ export const saveArticleDraftEndpoint: Endpoint = {
     const title = draft.title?.trim()
 
     if (!title || !draft.bodyMarkdown?.trim()) {
-      return Response.json({ error: 'A generated article title and body are required.' }, { status: 400 })
+      return Response.json(
+        { error: 'A generated article title and body are required.' },
+        { status: 400 },
+      )
     }
 
     try {
       const language = resolveArticleLanguage(body.languageCode)
-      const slug = await createUniqueArticleSlug(req.payload, withLanguageSlugPrefix(language.code, draft.slug || title))
+      const slug = await createUniqueArticleSlug(
+        req.payload,
+        withLanguageSlugPrefix(language.code, draft.slug || title),
+      )
       const article = await req.payload.create({
         collection: 'articles',
         data: {
@@ -405,12 +426,15 @@ export const translateArticlesEndpoint: Endpoint = {
     let body: TranslateArticlesRequestBody
 
     try {
-      body = typeof req.json === 'function' ? ((await req.json()) as TranslateArticlesRequestBody) : {}
+      body =
+        typeof req.json === 'function' ? ((await req.json()) as TranslateArticlesRequestBody) : {}
     } catch (_error) {
       body = {}
     }
 
-    const ids = uniqueStrings((body.ids || []).map((id) => String(id).trim()).filter(Boolean)).slice(0, 10)
+    const ids = uniqueStrings(
+      (body.ids || []).map((id) => String(id).trim()).filter(Boolean),
+    ).slice(0, 10)
     const locales = uniqueStrings((body.locales || []).map((locale) => locale.toLowerCase().trim()))
       .map(resolveArticleLanguage)
       .filter(Boolean)
@@ -423,37 +447,66 @@ export const translateArticlesEndpoint: Endpoint = {
       return Response.json({ error: 'Select at least one target language.' }, { status: 400 })
     }
 
-    try {
-      const created = []
+    const created = []
+    const failed: Array<{ error: string; id: string; language: string }> = []
 
-      for (const id of ids) {
-        const source = await req.payload.findByID({
+    for (const id of ids) {
+      let source: Article
+
+      try {
+        source = await req.payload.findByID({
           collection: 'articles',
           depth: 0,
           id,
           overrideAccess: false,
           user: req.user,
         })
-
-        const sourceTitle = textFromUnknown(source.title) || textFromUnknown(source.slug) || `Article ${source.id}`
-        const sourceBody =
-          lexicalToMarkdown(source.content) ||
-          textFromUnknown(source.summary) ||
-          textFromUnknown(source.aiAssist?.brief) ||
-          sourceTitle
-
+      } catch (error) {
         for (const locale of locales) {
+          failed.push({
+            error: errorMessageFromUnknown(error),
+            id,
+            language: locale.language,
+          })
+        }
+        continue
+      }
+
+      const sourceTitle =
+        textFromUnknown(source.title) || textFromUnknown(source.slug) || `Article ${source.id}`
+      const sourceAIAssist = source.aiAssist || {}
+      const sourceSEO = source.seo || {}
+
+      for (const locale of locales) {
+        try {
+          const contentPlan = createArticleContentTranslationPlan(source.content)
+          const sourceBody =
+            contentPlan?.segments
+              .map((segment) => segment.text)
+              .filter(Boolean)
+              .join('\n\n') ||
+            lexicalToMarkdown(source.content) ||
+            textFromUnknown(source.summary) ||
+            textFromUnknown(sourceAIAssist.brief) ||
+            sourceTitle
           const translated = await translateArticleFields({
             bodyMarkdown: sourceBody,
             language: locale.language,
-            seoDescription: source.seo?.description || '',
-            seoTitle: source.seo?.title || '',
-            summary: source.summary || '',
+            seoDescription: textFromUnknown(sourceSEO.description),
+            seoTitle: textFromUnknown(sourceSEO.title),
+            segments: contentPlan?.segments || [],
+            summary: textFromUnknown(source.summary),
             title: stripLanguageTitlePrefix(sourceTitle),
           })
+          const translatedContent = contentPlan?.segments.length
+            ? contentPlan.apply(translated.segments || [])
+            : markdownToLexical(translated.bodyMarkdown || sourceBody)
           const slug = await createUniqueArticleSlug(
             req.payload,
-            withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || sourceTitle),
+            withLanguageSlugPrefix(
+              locale.code,
+              source.slug || translated.slug || translated.title || sourceTitle,
+            ),
           )
           const article = await req.payload.create({
             collection: 'articles',
@@ -464,21 +517,27 @@ export const translateArticlesEndpoint: Endpoint = {
               },
               authors: source.authors || [],
               category: source.category,
-              content: markdownToLexical(translated.bodyMarkdown || sourceBody),
+              content: translatedContent,
               contentType: source.contentType || 'article',
               coverImage: source.coverImage,
               owner: source.owner,
               seo: {
                 description: limitArticleField(
-                  translated.seoDescription || source.seo?.description,
+                  translated.seoDescription || sourceSEO.description,
                   ARTICLE_SEO_DESCRIPTION_MAX_CHARS,
                 ),
-                image: source.seo?.image,
-                title: limitArticleField(translated.seoTitle || source.seo?.title, ARTICLE_SEO_TITLE_MAX_CHARS),
+                image: sourceSEO.image,
+                title: limitArticleField(
+                  translated.seoTitle || sourceSEO.title,
+                  ARTICLE_SEO_TITLE_MAX_CHARS,
+                ),
               },
               slug,
               status: 'draft',
-              summary: limitArticleField(translated.summary || source.summary, ARTICLE_SUMMARY_MAX_CHARS),
+              summary: limitArticleField(
+                translated.summary || source.summary,
+                ARTICLE_SUMMARY_MAX_CHARS,
+              ),
               tags: source.tags || [],
               title: withLanguageTitlePrefix(locale.code, translated.title || sourceTitle),
             },
@@ -492,17 +551,25 @@ export const translateArticlesEndpoint: Endpoint = {
             title: article.title,
             url: `/admin/collections/articles/${article.id}`,
           })
+        } catch (error) {
+          failed.push({
+            error: errorMessageFromUnknown(error),
+            id,
+            language: locale.language,
+          })
         }
       }
-
-      return Response.json({
-        created,
-        ok: true,
-        total: created.length,
-      })
-    } catch (error) {
-      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 400 })
     }
+
+    return Response.json(
+      {
+        created,
+        failed,
+        ok: failed.length === 0,
+        total: created.length,
+      },
+      { status: created.length || !failed.length ? 200 : 400 },
+    )
   },
   method: 'post',
   path: '/translate-articles',
@@ -759,6 +826,35 @@ function faqFromUnknown(value: unknown): ArticleDraft['faq'] {
     .filter((item): item is { answer: string; question: string } => Boolean(item))
 }
 
+function translationSegmentsFromUnknown(value: unknown): ArticleTranslationSegment[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const segments: ArticleTranslationSegment[] = []
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue
+    }
+
+    const record = item as Record<string, unknown>
+    const id = textFromUnknown(record.id)
+    const text = textFromUnknown(record.text)
+    const kind = textFromUnknown(record.kind)
+
+    if (id && text) {
+      segments.push({
+        id,
+        ...(kind ? { kind } : {}),
+        text,
+      })
+    }
+  }
+
+  return segments
+}
+
 function slugifyArticleTitle(value: string): string {
   return value
     .toLowerCase()
@@ -792,7 +888,8 @@ function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDr
       ? (value as Record<string, unknown>)
       : { bodyMarkdown: value }
   const title = textFromUnknown(source.title) || fallbackTitle || 'Generated article draft'
-  const slug = textFromUnknown(source.slug) || slugifyArticleTitle(title) || 'generated-article-draft'
+  const slug =
+    textFromUnknown(source.slug) || slugifyArticleTitle(title) || 'generated-article-draft'
 
   return {
     bodyMarkdown: textFromUnknown(source.bodyMarkdown),
@@ -800,6 +897,7 @@ function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDr
     outline: stringArrayFromUnknown(source.outline),
     seoDescription: textFromUnknown(source.seoDescription),
     seoTitle: textFromUnknown(source.seoTitle),
+    segments: translationSegmentsFromUnknown(source.segments),
     slug,
     summary: textFromUnknown(source.summary),
     title,
@@ -808,6 +906,12 @@ function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDr
 
 function clipArticleBrief(value: string): string {
   return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
+}
+
+function clipArticleTranslationText(value: string): string {
+  return value.length > MAX_ARTICLE_TRANSLATION_CHARS
+    ? value.slice(0, MAX_ARTICLE_TRANSLATION_CHARS).trim()
+    : value
 }
 
 function limitArticleField(value: unknown, maxChars: number): string | undefined {
@@ -834,8 +938,15 @@ function errorMessageFromUnknown(error: unknown): string {
 
   if (error && typeof error === 'object') {
     const record = error as Record<string, unknown>
-    const data = record.data && typeof record.data === 'object' ? (record.data as Record<string, unknown>) : null
-    const errors = Array.isArray(record.errors) ? record.errors : Array.isArray(data?.errors) ? data?.errors : []
+    const data =
+      record.data && typeof record.data === 'object'
+        ? (record.data as Record<string, unknown>)
+        : null
+    const errors = Array.isArray(record.errors)
+      ? record.errors
+      : Array.isArray(data?.errors)
+        ? data?.errors
+        : []
     const messages = errors
       .map((item) => {
         if (item && typeof item === 'object') {
@@ -859,7 +970,10 @@ function errorMessageFromUnknown(error: unknown): string {
 }
 
 function resolveArticleLanguage(value?: string): { code: string; language: string } {
-  const normalized = (value || 'en').trim().replace(/[\[\]()]/gu, '').toLowerCase()
+  const normalized = (value || 'en')
+    .trim()
+    .replace(/[\[\]()]/gu, '')
+    .toLowerCase()
   const byCode = Object.values(ARTICLE_TRANSLATION_LANGUAGES).find(
     (language) => language.code.toLowerCase() === normalized,
   )
@@ -869,7 +983,10 @@ function resolveArticleLanguage(value?: string): { code: string; language: strin
 
 function stripLanguageTitlePrefix(value: unknown): string {
   return textFromUnknown(value)
-    .replace(/^\s*(?:\[(?:en|pl|ro|ru|uk)\]|\((?:en|pl|ro|ru|uk)\)|(?:en|pl|ro|ru|uk)[:_-])\s*/iu, '')
+    .replace(
+      /^\s*(?:\[(?:en|pl|ro|ru|uk)\]|\((?:en|pl|ro|ru|uk)\)|(?:en|pl|ro|ru|uk)[:_-])\s*/iu,
+      '',
+    )
     .trim()
 }
 
@@ -978,6 +1095,261 @@ function lexicalToMarkdown(content: unknown): string {
   return lines.join('\n\n').trim()
 }
 
+function createArticleContentTranslationPlan(content: unknown): {
+  apply: (segments: ArticleTranslationSegment[]) => LexicalContent
+  content: LexicalContent
+  segments: ArticleTranslationSegment[]
+} | null {
+  const source = cloneLexicalContent(content)
+
+  if (!source?.root) {
+    return null
+  }
+
+  const targets: Array<{
+    apply: (text: string) => void
+    segment: ArticleTranslationSegment
+  }> = []
+  let totalChars = 0
+
+  const addTarget = (kind: string, value: unknown, apply: (text: string) => void) => {
+    if (
+      targets.length >= MAX_ARTICLE_TRANSLATION_SEGMENTS ||
+      totalChars >= MAX_ARTICLE_TRANSLATION_CHARS
+    ) {
+      return
+    }
+
+    const text = textFromUnknown(value)
+
+    if (!text || looksLikeNonTranslatableToken(text)) {
+      return
+    }
+
+    const clippedText =
+      text.length > MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS
+        ? text.slice(0, MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS).trim()
+        : text
+
+    totalChars += clippedText.length
+    targets.push({
+      apply,
+      segment: {
+        id: `s${targets.length + 1}`,
+        kind,
+        text: clippedText,
+      },
+    })
+  }
+
+  const visit = (node: unknown) => {
+    if (!node || typeof node !== 'object') {
+      return
+    }
+
+    const record = node as Record<string, unknown>
+    const children = Array.isArray(record.children) ? record.children : []
+
+    if (
+      (record.type === 'heading' ||
+        record.type === 'paragraph' ||
+        record.type === 'quote' ||
+        record.type === 'listitem') &&
+      children.length
+    ) {
+      const text = inlineTextFromChildren(children)
+
+      addTarget(String(record.type), text, (translatedText) => {
+        record.children = [createLexicalText(translatedText)]
+      })
+
+      return
+    }
+
+    if (record.type === 'block' && record.fields && typeof record.fields === 'object') {
+      collectBlockTranslationTargets(record.fields as Record<string, unknown>, addTarget)
+    }
+
+    children.forEach(visit)
+  }
+
+  visit(source.root)
+
+  if (!targets.length) {
+    return null
+  }
+
+  return {
+    apply: (translatedSegments) => {
+      const translatedByID = new Map(
+        translatedSegments.map((segment) => [segment.id, segment.text]),
+      )
+
+      for (const target of targets) {
+        const translatedText = translatedByID.get(target.segment.id)
+
+        if (translatedText) {
+          target.apply(translatedText)
+        }
+      }
+
+      return source
+    },
+    content: source,
+    segments: targets.map((target) => target.segment),
+  }
+}
+
+function cloneLexicalContent(content: unknown): LexicalContent | null {
+  if (!content || typeof content !== 'object') {
+    return null
+  }
+
+  try {
+    const clone = JSON.parse(JSON.stringify(content)) as LexicalContent
+
+    return clone?.root ? clone : null
+  } catch (_error) {
+    return null
+  }
+}
+
+function inlineTextFromChildren(children: unknown[]): string {
+  return children
+    .map((child) => {
+      if (!child || typeof child !== 'object') {
+        return ''
+      }
+
+      const record = child as Record<string, unknown>
+
+      if (record.type === 'text') {
+        return textFromUnknown(record.text)
+      }
+
+      return Array.isArray(record.children) ? inlineTextFromChildren(record.children) : ''
+    })
+    .join('')
+    .trim()
+}
+
+function collectBlockTranslationTargets(
+  fields: Record<string, unknown>,
+  addTarget: (kind: string, value: unknown, apply: (text: string) => void) => void,
+) {
+  const blockType = textFromUnknown(fields.blockType)
+  const addField = (key: string, kind = `${blockType}.${key}`) => {
+    addTarget(kind, fields[key], (translatedText) => {
+      fields[key] = translatedText
+    })
+  }
+
+  if (blockType === 'imageBlock') {
+    addField('caption')
+    return
+  }
+
+  if (blockType === 'imageRow') {
+    const images = Array.isArray(fields.images) ? fields.images : []
+
+    images.forEach((item, index) => {
+      if (item && typeof item === 'object') {
+        const record = item as Record<string, unknown>
+
+        addTarget(`imageRow.images.${index}.caption`, record.caption, (translatedText) => {
+          record.caption = translatedText
+        })
+      }
+    })
+    return
+  }
+
+  if (blockType === 'productCard') {
+    addProductCardTargets(fields, addTarget, blockType)
+    return
+  }
+
+  if (blockType === 'productCardCarousel') {
+    addField('heading')
+
+    const products = Array.isArray(fields.products) ? fields.products : []
+
+    products.forEach((item, index) => {
+      if (item && typeof item === 'object') {
+        addProductCardTargets(
+          item as Record<string, unknown>,
+          addTarget,
+          `${blockType}.products.${index}`,
+        )
+      }
+    })
+    return
+  }
+
+  if (blockType === 'video') {
+    ;['title', 'description'].forEach((key) => addField(key))
+
+    if (fields.schema && typeof fields.schema === 'object') {
+      const schema = fields.schema as Record<string, unknown>
+
+      ;['name', 'description'].forEach((key) => {
+        addTarget(`video.schema.${key}`, schema[key], (translatedText) => {
+          schema[key] = translatedText
+        })
+      })
+    }
+    return
+  }
+
+  if (blockType === 'faq') {
+    addField('heading')
+
+    const items = Array.isArray(fields.items) ? fields.items : []
+
+    items.forEach((item, index) => {
+      if (item && typeof item === 'object') {
+        const record = item as Record<string, unknown>
+
+        ;['question', 'answer'].forEach((key) => {
+          addTarget(`faq.items.${index}.${key}`, record[key], (translatedText) => {
+            record[key] = translatedText
+          })
+        })
+      }
+    })
+    return
+  }
+
+  ;['title', 'heading', 'label', 'body', 'description', 'caption'].forEach((key) => {
+    if (typeof fields[key] === 'string') {
+      addField(key)
+    }
+  })
+}
+
+function addProductCardTargets(
+  fields: Record<string, unknown>,
+  addTarget: (kind: string, value: unknown, apply: (text: string) => void) => void,
+  prefix: string,
+) {
+  ;['description', 'ctaLabel', 'priceLabel'].forEach((key) => {
+    addTarget(`${prefix}.${key}`, fields[key], (translatedText) => {
+      fields[key] = translatedText
+    })
+  })
+}
+
+function looksLikeNonTranslatableToken(value: string): boolean {
+  const trimmed = value.trim()
+
+  return (
+    /^https?:\/\//iu.test(trimmed) ||
+    /^data:/iu.test(trimmed) ||
+    /^[A-Z0-9_-]{2,}$/u.test(trimmed) ||
+    /^[\d\s.,:/-]+$/u.test(trimmed)
+  )
+}
+
 function collectLexicalMarkdown(node: unknown, lines: string[]): string {
   if (!node || typeof node !== 'object') {
     return ''
@@ -990,7 +1362,10 @@ function collectLexicalMarkdown(node: unknown, lines: string[]): string {
     return textFromUnknown(record.text)
   }
 
-  const childText = children.map((child) => collectLexicalMarkdown(child, lines)).join('').trim()
+  const childText = children
+    .map((child) => collectLexicalMarkdown(child, lines))
+    .join('')
+    .trim()
 
   if (record.type === 'heading' && childText) {
     const tag = typeof record.tag === 'string' ? record.tag : 'h2'
@@ -1000,18 +1375,16 @@ function collectLexicalMarkdown(node: unknown, lines: string[]): string {
     return ''
   }
 
-  if ((record.type === 'paragraph' || record.type === 'quote' || record.type === 'listitem') && childText) {
+  if (
+    (record.type === 'paragraph' || record.type === 'quote' || record.type === 'listitem') &&
+    childText
+  ) {
     lines.push(childText)
     return ''
   }
 
   if (record.type === 'block' && record.fields && typeof record.fields === 'object') {
-    const fields = record.fields as Record<string, unknown>
-    const blockText = Object.entries(fields)
-      .filter(([key]) => !['blockType', 'id'].includes(key))
-      .map(([, value]) => textFromUnknown(value))
-      .filter(Boolean)
-      .join('\n')
+    const blockText = blockFieldsToMarkdown(record.fields as Record<string, unknown>)
 
     if (blockText) {
       lines.push(blockText)
@@ -1019,6 +1392,62 @@ function collectLexicalMarkdown(node: unknown, lines: string[]): string {
   }
 
   return childText
+}
+
+function blockFieldsToMarkdown(fields: Record<string, unknown>): string {
+  const lines: string[] = []
+  const add = (value: unknown) => {
+    const text = textFromUnknown(value)
+
+    if (text && !looksLikeNonTranslatableToken(text)) {
+      lines.push(text)
+    }
+  }
+  const blockType = textFromUnknown(fields.blockType)
+
+  if (blockType === 'imageBlock') {
+    add(fields.caption)
+  } else if (blockType === 'imageRow') {
+    ;(Array.isArray(fields.images) ? fields.images : []).forEach((item) => {
+      if (item && typeof item === 'object') {
+        add((item as Record<string, unknown>).caption)
+      }
+    })
+  } else if (blockType === 'productCard') {
+    ;['description', 'ctaLabel', 'priceLabel'].forEach((key) => add(fields[key]))
+  } else if (blockType === 'productCardCarousel') {
+    add(fields.heading)
+    ;(Array.isArray(fields.products) ? fields.products : []).forEach((item) => {
+      if (item && typeof item === 'object') {
+        const product = item as Record<string, unknown>
+
+        ;['description', 'ctaLabel', 'priceLabel'].forEach((key) => add(product[key]))
+      }
+    })
+  } else if (blockType === 'video') {
+    ;['title', 'description'].forEach((key) => add(fields[key]))
+    if (fields.schema && typeof fields.schema === 'object') {
+      const schema = fields.schema as Record<string, unknown>
+
+      ;['name', 'description'].forEach((key) => add(schema[key]))
+    }
+  } else if (blockType === 'faq') {
+    add(fields.heading)
+    ;(Array.isArray(fields.items) ? fields.items : []).forEach((item) => {
+      if (item && typeof item === 'object') {
+        const faq = item as Record<string, unknown>
+
+        add(faq.question)
+        add(faq.answer)
+      }
+    })
+  } else {
+    ;['title', 'heading', 'label', 'body', 'description', 'caption'].forEach((key) =>
+      add(fields[key]),
+    )
+  }
+
+  return lines.join('\n')
 }
 
 async function createUniqueArticleSlug(payload: Pick<Payload, 'find'>, baseSlug: string) {
@@ -1051,19 +1480,34 @@ async function translateArticleFields(args: {
   language: string
   seoDescription: string
   seoTitle: string
+  segments?: ArticleTranslationSegment[]
   summary: string
   title: string
 }): Promise<ArticleDraft> {
   const baseURL = getXAIBaseURL()
   const model = process.env.GROK_TEXT_MODEL || DEFAULT_GROK_TEXT_MODEL
+  const segments = args.segments || []
   const source = {
-    bodyMarkdown: args.bodyMarkdown,
+    bodyMarkdown: segments.length ? '' : clipArticleTranslationText(args.bodyMarkdown),
     seoDescription: args.seoDescription,
     seoTitle: args.seoTitle,
+    segments,
     summary: args.summary,
     title: args.title,
   }
   const prompt = [
+    'SYSTEM OVERRIDE FOR TRANSLATION QUALITY:',
+    `Translate the provided LORGAR product/article content to ${args.language}.`,
+    'Return ONLY valid JSON with keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
+    'If source.segments is present, return segments as an array of {id, text} with the same ids and order.',
+    'Translate every human-readable segment, including H2/H3 headings, image captions, FAQ questions and answers, video titles/descriptions, CTA labels, summaries, SEO titles, and SEO descriptions.',
+    'Do not leave English headings untranslated unless the heading is only a brand, product name, model, technology name, event name, URL, or SKU.',
+    'Keep LORGAR, product names, technology names, model names, URLs, and SKUs unchanged.',
+    'Preserve structure, paragraph order, heading levels, and segment IDs. Do not shorten the text or add facts.',
+    'Style: natural native marketing copy for gaming products; modern, technological, confident, not overblown.',
+    'Do not use long dashes. Prefer short hyphens or normal punctuation.',
+    'Hard field limits: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
+    '',
     'Ты — профессиональный переводчик и редактор контента для бренда игрового оборудования LORGAR.',
     `Нужно перевести описание продукта на ${args.language}.`,
     '',
@@ -1075,12 +1519,12 @@ async function translateArticleFields(args: {
     JSON.stringify(source, null, 2),
     '',
     'Hard field limits for the returned JSON: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
-    'Верни только валидный JSON с теми же ключами: title, summary, bodyMarkdown, seoTitle, seoDescription. Не добавляй markdown fences.',
+    'Верни только валидный JSON с ключами: title, summary, bodyMarkdown, seoTitle, seoDescription, segments. Не добавляй markdown fences.',
   ].join('\n')
 
   const response = await fetch(`${baseURL}/chat/completions`, {
     body: JSON.stringify({
-      max_tokens: 4_000,
+      max_tokens: segments.length ? 6_000 : 4_000,
       messages: [
         {
           content: prompt,
@@ -1127,6 +1571,7 @@ async function reviewTranslatedArticleFields(args: {
     bodyMarkdown: string
     seoDescription: string
     seoTitle: string
+    segments: ArticleTranslationSegment[]
     summary: string
     title: string
   }
@@ -1134,10 +1579,12 @@ async function reviewTranslatedArticleFields(args: {
 }): Promise<ArticleDraft> {
   const reviewPrompt = [
     `You are a senior native ${args.language} editor and localization QA specialist.`,
-    'Review the translated article JSON against the source JSON. Return the same JSON keys only: title, summary, bodyMarkdown, seoTitle, seoDescription.',
+    'Review the translated article JSON against the source JSON. Return only these JSON keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
+    'If source.segments is present, also return segments as {id, text} objects with the same ids and order.',
     '',
     'Fix grammar, agreement, case, number, gender, word order, punctuation, awkward literal translations, and unnatural marketing phrasing.',
     'For Russian, Ukrainian, Polish, and Romanian, pay special attention to adjective-noun agreement and inflection in headings.',
+    `Ensure all human-readable headings, including H2/H3 headings, are translated to ${args.language}. Do not leave English headings unless they are only brand/product/model/event names, URLs, or SKUs.`,
     'Example of an error to avoid in Russian: "Более быстрый интерактивная карта". Correct it as "Более быстрая интерактивная карта" or rewrite naturally as "Интерактивная карта стала быстрее".',
     'Do not shorten the article body and do not add new facts. Preserve headings, paragraphs, product names, model names, brands, and SEO keywords.',
     'Keep LORGAR untranslated. Keep common gaming terms in English when that sounds natural locally.',
@@ -1155,7 +1602,7 @@ async function reviewTranslatedArticleFields(args: {
 
   const response = await fetch(`${args.baseURL}/chat/completions`, {
     body: JSON.stringify({
-      max_tokens: 4_000,
+      max_tokens: args.source.segments.length ? 6_000 : 4_000,
       messages: [
         {
           content: reviewPrompt,
@@ -1533,10 +1980,7 @@ async function translateUIStrings(args: {
   }
 }
 
-async function pollGrokVideo(args: {
-  baseURL: string
-  requestID: string
-}): Promise<{
+async function pollGrokVideo(args: { baseURL: string; requestID: string }): Promise<{
   error?: string
   status?: string
   video?: {
@@ -1566,10 +2010,7 @@ async function pollGrokVideo(args: {
   }
 }
 
-async function getGrokVideoStatus(args: {
-  baseURL: string
-  requestID: string
-}): Promise<{
+async function getGrokVideoStatus(args: { baseURL: string; requestID: string }): Promise<{
   error?: string
   status?: string
   video?: {
