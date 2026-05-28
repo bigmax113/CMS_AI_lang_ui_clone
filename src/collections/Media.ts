@@ -1,4 +1,4 @@
-import type { CollectionAfterReadHook, CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
 export const mediaSlug = 'media'
 
@@ -17,7 +17,7 @@ const getUploadBuffer = (file?: UploadFile) => file?.data || file?.buffer
 const getUploadMimeType = (file?: UploadFile) => file?.mimeType || file?.mimetype
 const canEmbedInDatabase = (mimeType: string) =>
   mimeType.startsWith('image/') || mimeType.startsWith('video/')
-const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
+const getStoredImageSource = (doc: Record<string, unknown>) => {
   const embedded = typeof doc.embeddedImageDataURL === 'string' ? doc.embeddedImageDataURL : ''
   const external = typeof doc.externalImageURL === 'string' ? doc.externalImageURL : ''
   const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
@@ -37,50 +37,29 @@ const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
 
   return null
 }
-const hydrateAdminThumbnail: CollectionAfterReadHook = async ({ context, doc, req }) => {
-  const thumbnail = getAdminThumbnail({ doc })
-
-  if (thumbnail) {
-    doc.thumbnailURL = thumbnail
-    return doc
-  }
-
+const getAdminThumbnail = ({ doc }: { doc: Record<string, unknown> }) => {
+  const id = typeof doc.id === 'number' || typeof doc.id === 'string' ? doc.id : ''
   const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
 
-  if (
-    context?.skipMediaThumbnailHydration ||
-    !doc.id ||
-    !mimeType.startsWith('image/') ||
-    doc.embeddedImageStatus !== 'stored-in-db'
-  ) {
-    return doc
+  if (mimeType.startsWith('image/') && id) {
+    return `/api/${mediaSlug}/${encodeURIComponent(String(id))}/thumbnail`
   }
 
-  const fullDoc = await req.payload.findByID({
-    collection: mediaSlug,
-    context: {
-      ...context,
-      skipMediaThumbnailHydration: true,
+  return getStoredImageSource(doc)
+}
+const dataURLResponse = (source: string) => {
+  const match = /^data:([^;,]+);base64,(.+)$/u.exec(source)
+
+  if (!match) {
+    return null
+  }
+
+  return new Response(Buffer.from(match[2], 'base64'), {
+    headers: {
+      'Cache-Control': 'public, max-age=300',
+      'Content-Type': match[1],
     },
-    depth: 0,
-    id: doc.id,
-    overrideAccess: false,
-    req,
-    select: {
-      embeddedImageDataURL: true,
-      externalImageURL: true,
-      mimeType: true,
-      url: true,
-    },
-    user: req.user,
   })
-  const hydratedThumbnail = getAdminThumbnail({ doc: fullDoc as Record<string, unknown> })
-
-  if (hydratedThumbnail) {
-    doc.thumbnailURL = hydratedThumbnail
-  }
-
-  return doc
 }
 
 export const Media: CollectionConfig = {
@@ -93,6 +72,57 @@ export const Media: CollectionConfig = {
     group: 'Library',
     useAsTitle: 'filename',
   },
+  endpoints: [
+    {
+      path: '/:id/thumbnail',
+      method: 'get',
+      handler: async (req) => {
+        const routeID = req.routeParams?.id
+        const id =
+          typeof routeID === 'number' || typeof routeID === 'string'
+            ? routeID
+            : Array.isArray(routeID)
+              ? routeID[0]
+              : undefined
+
+        if (!id) {
+          return new Response('Missing media ID', { status: 400 })
+        }
+
+        const media = await req.payload.findByID({
+          collection: mediaSlug,
+          depth: 0,
+          disableErrors: true,
+          id,
+          overrideAccess: false,
+          req,
+          select: {
+            embeddedImageDataURL: true,
+            externalImageURL: true,
+            mimeType: true,
+            url: true,
+          },
+          user: req.user,
+        })
+
+        if (!media) {
+          return new Response('Media not found', { status: 404 })
+        }
+
+        const source = getStoredImageSource(media as Record<string, unknown>)
+
+        if (!source) {
+          return new Response('Thumbnail unavailable', { status: 404 })
+        }
+
+        if (source.startsWith('data:')) {
+          return dataURLResponse(source) || new Response('Invalid thumbnail', { status: 422 })
+        }
+
+        return Response.redirect(source, 302)
+      },
+    },
+  ],
   fields: [
     {
       name: 'alt',
@@ -166,7 +196,6 @@ export const Media: CollectionConfig = {
     },
   ],
   hooks: {
-    afterRead: [hydrateAdminThumbnail],
     beforeChange: [
       ({ data, req }) => {
         const file = req.file as UploadFile | undefined
