@@ -435,7 +435,12 @@ export const translateArticlesEndpoint: Endpoint = {
           user: req.user,
         })
 
-        const sourceBody = lexicalToMarkdown(source.content)
+        const sourceTitle = textFromUnknown(source.title) || textFromUnknown(source.slug) || `Article ${source.id}`
+        const sourceBody =
+          lexicalToMarkdown(source.content) ||
+          textFromUnknown(source.summary) ||
+          textFromUnknown(source.aiAssist?.brief) ||
+          sourceTitle
 
         for (const locale of locales) {
           const translated = await translateArticleFields({
@@ -444,11 +449,11 @@ export const translateArticlesEndpoint: Endpoint = {
             seoDescription: source.seo?.description || '',
             seoTitle: source.seo?.title || '',
             summary: source.summary || '',
-            title: stripLanguageTitlePrefix(source.title),
+            title: stripLanguageTitlePrefix(sourceTitle),
           })
           const slug = await createUniqueArticleSlug(
             req.payload,
-            withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || source.title),
+            withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || sourceTitle),
           )
           const article = await req.payload.create({
             collection: 'articles',
@@ -457,7 +462,7 @@ export const translateArticlesEndpoint: Endpoint = {
                 brief: `Translated from article ${source.id} to ${locale.language}.`,
                 editorialNotes: `AI translation generated with LORGAR product-content prompt.`,
               },
-              authors: source.authors,
+              authors: source.authors || [],
               category: source.category,
               content: markdownToLexical(translated.bodyMarkdown || sourceBody),
               contentType: source.contentType || 'article',
@@ -474,8 +479,8 @@ export const translateArticlesEndpoint: Endpoint = {
               slug,
               status: 'draft',
               summary: limitArticleField(translated.summary || source.summary, ARTICLE_SUMMARY_MAX_CHARS),
-              tags: source.tags,
-              title: withLanguageTitlePrefix(locale.code, translated.title || source.title),
+              tags: source.tags || [],
+              title: withLanguageTitlePrefix(locale.code, translated.title || sourceTitle),
             },
             overrideAccess: false,
             user: req.user,
@@ -862,19 +867,19 @@ function resolveArticleLanguage(value?: string): { code: string; language: strin
   return ARTICLE_TRANSLATION_LANGUAGES[normalized] || byCode || ARTICLE_TRANSLATION_LANGUAGES.en
 }
 
-function stripLanguageTitlePrefix(value: string): string {
-  return value
+function stripLanguageTitlePrefix(value: unknown): string {
+  return textFromUnknown(value)
     .replace(/^\s*(?:\[(?:en|pl|ro|ru|uk)\]|\((?:en|pl|ro|ru|uk)\)|(?:en|pl|ro|ru|uk)[:_-])\s*/iu, '')
     .trim()
 }
 
-function withLanguageTitlePrefix(code: string, title: string): string {
+function withLanguageTitlePrefix(code: string, title: unknown): string {
   const cleanTitle = stripLanguageTitlePrefix(title) || 'Untitled article'
 
   return `[${code.toUpperCase()}] ${cleanTitle}`
 }
 
-function withLanguageSlugPrefix(code: string, value: string): string {
+function withLanguageSlugPrefix(code: string, value: unknown): string {
   const prefix = code.toLowerCase()
   const base = slugifyArticleTitle(stripLanguageTitlePrefix(value)) || 'article'
   const withoutLanguagePrefix = base.replace(/^(en|pl|ro|ru|uk)-/u, '')
@@ -882,7 +887,8 @@ function withLanguageSlugPrefix(code: string, value: string): string {
   return `${prefix}-${withoutLanguagePrefix}`
 }
 
-function markdownToLexical(markdown: string): LexicalContent {
+function markdownToLexical(markdown: unknown): LexicalContent {
+  const markdownText = textFromUnknown(markdown)
   const children: LexicalChild[] = []
   const paragraphLines: string[] = []
   const flushParagraph = () => {
@@ -895,7 +901,7 @@ function markdownToLexical(markdown: string): LexicalContent {
     paragraphLines.length = 0
   }
 
-  for (const rawLine of markdown.replace(/\r\n/gu, '\n').split('\n')) {
+  for (const rawLine of markdownText.replace(/\r\n/gu, '\n').split('\n')) {
     const line = rawLine.trim()
 
     if (!line) {
