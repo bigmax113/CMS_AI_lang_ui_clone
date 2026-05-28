@@ -7,7 +7,6 @@ import {
   PublicImage,
   RichText,
   StructuredData,
-  VideoList,
   createSEOPageMetadata,
   findPublishedArticleBySlug,
   formatDate,
@@ -62,7 +61,6 @@ export default async function ArticlePage({ params }: PageProps) {
         title={article.seo?.title || article.title}
         updatedAt={article.updatedAt}
         url={articlePublicPath(article.slug)}
-        videos={(article as { videos?: unknown }).videos}
       />
       <article className="public-content__article">
         <AuthorByline authors={article.authors} />
@@ -71,7 +69,6 @@ export default async function ArticlePage({ params }: PageProps) {
           <PublicImage alt={article.title} className="public-content__cover" media={article.coverImage} />
         ) : null}
         <RichText content={article.content} />
-        <VideoList videos={(article as { videos?: unknown }).videos} />
       </article>
     </PublicChrome>
   )

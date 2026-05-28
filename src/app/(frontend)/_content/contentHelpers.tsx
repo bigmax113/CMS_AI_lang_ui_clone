@@ -308,12 +308,6 @@ const videoFromFields = (fields: Record<string, unknown>) => {
   }
 }
 
-const videosFromValue = (value: unknown) =>
-  (Array.isArray(value) ? value : [])
-    .filter(isRecord)
-    .map(videoFromFields)
-    .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
-
 const safeJSON = (value: unknown) => JSON.stringify(value).replace(/</gu, '\\u003c')
 
 const renderText = (node: LexicalNode, key: string) => {
@@ -435,16 +429,6 @@ const renderImageBlock = (imageBlock: ReturnType<typeof imageBlockFromFields>, k
       {imageBlock.caption ? <figcaption>{imageBlock.caption}</figcaption> : null}
     </figure>
   )
-}
-
-export const VideoList = ({ videos }: { videos?: unknown }) => {
-  const visibleVideos = videosFromValue(videos)
-
-  if (!visibleVideos.length) {
-    return null
-  }
-
-  return <>{visibleVideos.map((video, index) => renderVideoFigure(video, `article-video-${index}`))}</>
 }
 
 const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
@@ -720,7 +704,6 @@ export const StructuredData = ({
   title,
   updatedAt,
   url,
-  videos: attachedVideos,
 }: {
   authors?: Article['authors'] | BlogPost['authors'] | null
   content?: Article['content'] | BlogPost['content'] | null
@@ -731,7 +714,6 @@ export const StructuredData = ({
   title: string
   updatedAt?: null | string
   url?: null | string
-  videos?: unknown
 }) => {
   const pageURL = absoluteURL(url)
   const authorsList = authorListFromValue(authors)
@@ -745,7 +727,6 @@ export const StructuredData = ({
   const videos = collectBlockFields(content, 'video')
     .map(videoFromFields)
     .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
-    .concat(videosFromValue(attachedVideos))
   const schemas = [
     {
       '@context': 'https://schema.org',

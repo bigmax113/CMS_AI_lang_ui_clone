@@ -20,7 +20,6 @@ import {
   productCardBlock,
   productCardCarouselBlock,
   videoBlock,
-  videoFields,
 } from '../contentBlocks'
 
 export const articlesSlug = 'articles'
@@ -255,20 +254,6 @@ export const ArticlesCollection: CollectionConfig = {
                 ],
               }),
               required: true,
-            },
-            {
-              name: 'videos',
-              type: 'array',
-              admin: {
-                description:
-                  'Add article videos here when inserting video inside the rich-text editor is inconvenient. Supports YouTube/Vimeo/direct URLs and uploaded MP4/WebM/MOV files.',
-              },
-              fields: videoFields(),
-              label: 'Article videos',
-              labels: {
-                plural: 'Article videos',
-                singular: 'Article video',
-              },
             },
           ],
           label: 'Content',

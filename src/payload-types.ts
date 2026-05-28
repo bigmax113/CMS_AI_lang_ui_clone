@@ -315,11 +315,11 @@ export interface Media {
       }[]
     | null;
   /**
-   * Prototype fallback for small images on Render free. Use object storage for production.
+   * Prototype fallback for small images/videos on Render free. Use object storage for production.
    */
   embeddedImageDataURL?: string | null;
   /**
-   * Shows whether an image copy was stored in Postgres for free-plan persistence.
+   * Shows whether a small image/video copy was stored in Postgres for free-plan persistence.
    */
   embeddedImageStatus?: ('stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
   updatedAt: string;
