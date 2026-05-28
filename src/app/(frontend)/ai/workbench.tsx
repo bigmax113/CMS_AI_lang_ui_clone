@@ -121,6 +121,9 @@ type SaveArticleDraftResponse = {
     title?: string
   }
   error?: string
+  errors?: Array<{
+    message?: string
+  }>
   ok: boolean
   publicURL?: string
 }
@@ -256,6 +259,10 @@ function toSafeStringArray(value: unknown): string[] {
         .map((item) => item.trim())
         .filter(Boolean)
     : []
+}
+
+function extractResponseError(payload: { error?: string; errors?: Array<{ message?: string }> }, status: number): string {
+  return payload.error || payload.errors?.map((error) => error.message).filter(Boolean).join('; ') || `HTTP ${status}`
 }
 
 export function AiDocsWorkbench() {
@@ -576,7 +583,7 @@ export function AiDocsWorkbench() {
       const payload = (await response.json()) as SaveArticleDraftResponse
 
       if (!response.ok) {
-        throw new Error(payload.error || `HTTP ${response.status}`)
+        throw new Error(extractResponseError(payload, response.status))
       }
 
       setSaveArticleResult(payload)

@@ -358,36 +358,40 @@ export const saveArticleDraftEndpoint: Endpoint = {
       return Response.json({ error: 'A generated article title and body are required.' }, { status: 400 })
     }
 
-    const language = resolveArticleLanguage(body.languageCode)
-    const slug = await createUniqueArticleSlug(req.payload, withLanguageSlugPrefix(language.code, draft.slug || title))
-    const article = await req.payload.create({
-      collection: 'articles',
-      data: {
-        aiAssist: {
-          brief: draft.summary || title,
-          editorialNotes: `Saved from AI Workbench as ${language.code}.`,
+    try {
+      const language = resolveArticleLanguage(body.languageCode)
+      const slug = await createUniqueArticleSlug(req.payload, withLanguageSlugPrefix(language.code, draft.slug || title))
+      const article = await req.payload.create({
+        collection: 'articles',
+        data: {
+          aiAssist: {
+            brief: draft.summary || title,
+            editorialNotes: `Saved from AI Workbench as ${language.code}.`,
+          },
+          content: markdownToLexical(draft.bodyMarkdown),
+          contentType: 'article',
+          seo: {
+            description: draft.seoDescription,
+            title: draft.seoTitle,
+          },
+          slug,
+          status: body.status || 'draft',
+          summary: draft.summary,
+          title: withLanguageTitlePrefix(language.code, title),
         },
-        content: markdownToLexical(draft.bodyMarkdown),
-        contentType: 'article',
-        seo: {
-          description: draft.seoDescription,
-          title: draft.seoTitle,
-        },
-        slug,
-        status: body.status || 'draft',
-        summary: draft.summary,
-        title: withLanguageTitlePrefix(language.code, title),
-      },
-      overrideAccess: false,
-      user: req.user,
-    })
+        overrideAccess: false,
+        user: req.user,
+      })
 
-    return Response.json({
-      article,
-      adminURL: `/admin/collections/articles/${article.id}`,
-      ok: true,
-      publicURL: `/articles/${encodeURIComponent(article.slug)}`,
-    })
+      return Response.json({
+        article,
+        adminURL: `/admin/collections/articles/${article.id}`,
+        ok: true,
+        publicURL: `/articles/${encodeURIComponent(article.slug)}`,
+      })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 400 })
+    }
   },
   method: 'post',
   path: '/save-article-draft',
@@ -791,6 +795,37 @@ function clipArticleBrief(value: string): string {
   return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
 }
 
+function errorMessageFromUnknown(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>
+    const data = record.data && typeof record.data === 'object' ? (record.data as Record<string, unknown>) : null
+    const errors = Array.isArray(record.errors) ? record.errors : Array.isArray(data?.errors) ? data?.errors : []
+    const messages = errors
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          const itemRecord = item as Record<string, unknown>
+
+          return textFromUnknown(itemRecord.message || itemRecord.label || itemRecord.path)
+        }
+
+        return textFromUnknown(item)
+      })
+      .filter(Boolean)
+
+    if (messages.length) {
+      return messages.join('; ')
+    }
+
+    return textFromUnknown(record.message) || JSON.stringify(record)
+  }
+
+  return String(error)
+}
+
 function resolveArticleLanguage(value?: string): { code: string; language: string } {
   const normalized = (value || 'en').trim().replace(/[\[\]()]/gu, '').toLowerCase()
   const byCode = Object.values(ARTICLE_TRANSLATION_LANGUAGES).find(
@@ -801,7 +836,9 @@ function resolveArticleLanguage(value?: string): { code: string; language: strin
 }
 
 function stripLanguageTitlePrefix(value: string): string {
-  return value.replace(/^\s*(?:\[[a-z]{2}\]|\([a-z]{2}\)|[a-z]{2}[:_-])\s*/iu, '').trim()
+  return value
+    .replace(/^\s*(?:\[(?:en|pl|ro|ru|uk)\]|\((?:en|pl|ro|ru|uk)\)|(?:en|pl|ro|ru|uk)[:_-])\s*/iu, '')
+    .trim()
 }
 
 function withLanguageTitlePrefix(code: string, title: string): string {
