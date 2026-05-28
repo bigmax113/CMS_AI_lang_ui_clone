@@ -12,6 +12,9 @@ const EMBEDDING_BATCH_SIZE = 16
 const QUERY_EXPANSION_CACHE_VERSION = 'hybrid-v3'
 const LEXICAL_BOOST_LIMIT = 0.18
 const MAX_ARTICLE_BRIEF_CHARS = 24_000
+const ARTICLE_SEO_TITLE_MAX_CHARS = 70
+const ARTICLE_SEO_DESCRIPTION_MAX_CHARS = 160
+const ARTICLE_SUMMARY_MAX_CHARS = 320
 
 const embeddingCache = new Map<string, number[]>()
 const queryExpansionCache = new Map<string, string[]>()
@@ -371,12 +374,12 @@ export const saveArticleDraftEndpoint: Endpoint = {
           content: markdownToLexical(draft.bodyMarkdown),
           contentType: 'article',
           seo: {
-            description: draft.seoDescription,
-            title: draft.seoTitle,
+            description: limitArticleField(draft.seoDescription, ARTICLE_SEO_DESCRIPTION_MAX_CHARS),
+            title: limitArticleField(draft.seoTitle, ARTICLE_SEO_TITLE_MAX_CHARS),
           },
           slug,
           status: body.status || 'draft',
-          summary: draft.summary,
+          summary: limitArticleField(draft.summary, ARTICLE_SUMMARY_MAX_CHARS),
           title: withLanguageTitlePrefix(language.code, title),
         },
         overrideAccess: false,
@@ -420,74 +423,81 @@ export const translateArticlesEndpoint: Endpoint = {
       return Response.json({ error: 'Select at least one target language.' }, { status: 400 })
     }
 
-    const created = []
+    try {
+      const created = []
 
-    for (const id of ids) {
-      const source = await req.payload.findByID({
-        collection: 'articles',
-        depth: 0,
-        id,
-        overrideAccess: false,
-        user: req.user,
-      })
-
-      const sourceBody = lexicalToMarkdown(source.content)
-
-      for (const locale of locales) {
-        const translated = await translateArticleFields({
-          bodyMarkdown: sourceBody,
-          language: locale.language,
-          seoDescription: source.seo?.description || '',
-          seoTitle: source.seo?.title || '',
-          summary: source.summary || '',
-          title: stripLanguageTitlePrefix(source.title),
-        })
-        const slug = await createUniqueArticleSlug(
-          req.payload,
-          withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || source.title),
-        )
-        const article = await req.payload.create({
+      for (const id of ids) {
+        const source = await req.payload.findByID({
           collection: 'articles',
-          data: {
-            aiAssist: {
-              brief: `Translated from article ${source.id} to ${locale.language}.`,
-              editorialNotes: `AI translation generated with LORGAR product-content prompt.`,
-            },
-            authors: source.authors,
-            category: source.category,
-            content: markdownToLexical(translated.bodyMarkdown || sourceBody),
-            contentType: source.contentType || 'article',
-            coverImage: source.coverImage,
-            owner: source.owner,
-            seo: {
-              description: translated.seoDescription || source.seo?.description,
-              image: source.seo?.image,
-              title: translated.seoTitle || source.seo?.title,
-            },
-            slug,
-            status: 'draft',
-            summary: translated.summary || source.summary,
-            tags: source.tags,
-            title: withLanguageTitlePrefix(locale.code, translated.title || source.title),
-          },
+          depth: 0,
+          id,
           overrideAccess: false,
           user: req.user,
         })
 
-        created.push({
-          id: article.id,
-          language: locale.language,
-          title: article.title,
-          url: `/admin/collections/articles/${article.id}`,
-        })
-      }
-    }
+        const sourceBody = lexicalToMarkdown(source.content)
 
-    return Response.json({
-      created,
-      ok: true,
-      total: created.length,
-    })
+        for (const locale of locales) {
+          const translated = await translateArticleFields({
+            bodyMarkdown: sourceBody,
+            language: locale.language,
+            seoDescription: source.seo?.description || '',
+            seoTitle: source.seo?.title || '',
+            summary: source.summary || '',
+            title: stripLanguageTitlePrefix(source.title),
+          })
+          const slug = await createUniqueArticleSlug(
+            req.payload,
+            withLanguageSlugPrefix(locale.code, source.slug || translated.slug || translated.title || source.title),
+          )
+          const article = await req.payload.create({
+            collection: 'articles',
+            data: {
+              aiAssist: {
+                brief: `Translated from article ${source.id} to ${locale.language}.`,
+                editorialNotes: `AI translation generated with LORGAR product-content prompt.`,
+              },
+              authors: source.authors,
+              category: source.category,
+              content: markdownToLexical(translated.bodyMarkdown || sourceBody),
+              contentType: source.contentType || 'article',
+              coverImage: source.coverImage,
+              owner: source.owner,
+              seo: {
+                description: limitArticleField(
+                  translated.seoDescription || source.seo?.description,
+                  ARTICLE_SEO_DESCRIPTION_MAX_CHARS,
+                ),
+                image: source.seo?.image,
+                title: limitArticleField(translated.seoTitle || source.seo?.title, ARTICLE_SEO_TITLE_MAX_CHARS),
+              },
+              slug,
+              status: 'draft',
+              summary: limitArticleField(translated.summary || source.summary, ARTICLE_SUMMARY_MAX_CHARS),
+              tags: source.tags,
+              title: withLanguageTitlePrefix(locale.code, translated.title || source.title),
+            },
+            overrideAccess: false,
+            user: req.user,
+          })
+
+          created.push({
+            id: article.id,
+            language: locale.language,
+            title: article.title,
+            url: `/admin/collections/articles/${article.id}`,
+          })
+        }
+      }
+
+      return Response.json({
+        created,
+        ok: true,
+        total: created.length,
+      })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 400 })
+    }
   },
   method: 'post',
   path: '/translate-articles',
@@ -795,6 +805,23 @@ function clipArticleBrief(value: string): string {
   return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
 }
 
+function limitArticleField(value: unknown, maxChars: number): string | undefined {
+  const text = textFromUnknown(value)
+
+  if (!text) {
+    return undefined
+  }
+
+  if (text.length <= maxChars) {
+    return text
+  }
+
+  const clipped = text.slice(0, maxChars).trim()
+  const withoutPartialWord = clipped.replace(/\s+\S*$/u, '').trim()
+
+  return withoutPartialWord || clipped
+}
+
 function errorMessageFromUnknown(error: unknown): string {
   if (error instanceof Error) {
     return error.message
@@ -1041,6 +1068,7 @@ async function translateArticleFields(args: {
     'Вот текст для перевода:',
     JSON.stringify(source, null, 2),
     '',
+    'Hard field limits for the returned JSON: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
     'Верни только валидный JSON с теми же ключами: title, summary, bodyMarkdown, seoTitle, seoDescription. Не добавляй markdown fences.',
   ].join('\n')
 

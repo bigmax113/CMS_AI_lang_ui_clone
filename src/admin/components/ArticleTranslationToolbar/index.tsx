@@ -12,6 +12,14 @@ const languages = [
 
 const articleIDPattern = /\/admin\/collections\/articles\/([^/?#]+)/u
 
+type APIResponse = {
+  error?: string
+  errors?: Array<{
+    message?: string
+  }>
+  total?: number
+}
+
 function selectedArticleIDsFromDOM(): string[] {
   const ids = new Set<string>()
   const checkedInputs = Array.from(
@@ -81,10 +89,10 @@ export const ArticleTranslationToolbar: React.FC = () => {
         },
         method: 'POST',
       })
-      const payload = (await response.json()) as { error?: string; total?: number }
+      const payload = (await response.json()) as APIResponse
 
       if (!response.ok) {
-        throw new Error(payload.error || `HTTP ${response.status}`)
+        throw new Error(errorMessageFromAPI(payload, response.status))
       }
 
       setMessage(`Created ${payload.total || 0} translated draft(s). Refreshing list...`)
@@ -119,6 +127,20 @@ export const ArticleTranslationToolbar: React.FC = () => {
       {message ? <span>{message}</span> : null}
     </div>
   )
+}
+
+function errorMessageFromAPI(payload: APIResponse, status: number): string {
+  const validationMessages = payload.errors?.map((error) => error.message).filter(Boolean)
+
+  if (payload.error) {
+    return payload.error
+  }
+
+  if (validationMessages?.length) {
+    return validationMessages.join('; ')
+  }
+
+  return `HTTP ${status}`
 }
 
 export default ArticleTranslationToolbar
