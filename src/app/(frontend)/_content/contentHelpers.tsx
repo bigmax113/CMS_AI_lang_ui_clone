@@ -30,6 +30,11 @@ export const isSite = (value: unknown): value is Site => isRecord(value) && type
 export const isMedia = (value: unknown): value is Media =>
   isRecord(value) && (typeof value.url === 'string' || typeof value.filename === 'string')
 
+type PersistedMedia = Media & {
+  driveFileID?: null | string
+  externalFileURL?: null | string
+}
+
 export const isAuthor = (value: unknown): value is Author =>
   isRecord(value) && typeof value.name === 'string'
 
@@ -53,12 +58,22 @@ export const mediaURL = (media?: Media | null | number) => {
     return null
   }
 
-  if (media.embeddedImageDataURL) {
-    return media.embeddedImageDataURL
+  const persistedMedia = media as PersistedMedia
+
+  if (persistedMedia.driveFileID && typeof persistedMedia.id !== 'undefined') {
+    return `/api/media/${encodeURIComponent(String(persistedMedia.id))}/asset`
+  }
+
+  if (persistedMedia.externalFileURL) {
+    return persistedMedia.externalFileURL
   }
 
   if (media.externalImageURL) {
     return media.externalImageURL
+  }
+
+  if (media.embeddedImageDataURL) {
+    return media.embeddedImageDataURL
   }
 
   if (media.url && !isLocalPayloadMediaURL(media.url)) {

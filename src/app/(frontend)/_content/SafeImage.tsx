@@ -28,8 +28,8 @@ export const SafeImage = ({
         <strong>Image unavailable</strong>
         <span>{fileName || alt || 'The Media file is missing from storage.'}</span>
         <p>
-          On Render free, uploaded files can disappear after redeploy, restart, or spin down. Re-upload
-          this image or connect persistent object storage.
+          The media file is missing from persistent storage or from a legacy local upload. Re-upload
+          this file or run the Google Drive media migration.
         </p>
       </div>
     )

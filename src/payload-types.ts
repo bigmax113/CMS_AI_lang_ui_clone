@@ -305,9 +305,29 @@ export interface Media {
    */
   caption?: string | null;
   /**
-   * Stable external image URL. Use this when Render free storage lost the uploaded local file.
+   * Legacy stable external image URL. Existing articles can keep using this fallback.
    */
   externalImageURL?: string | null;
+  /**
+   * Generated direct file URL from persistent storage. Kept for compatibility and recovery.
+   */
+  externalFileURL?: string | null;
+  /**
+   * Google Drive file ID used by the public media proxy.
+   */
+  driveFileID?: string | null;
+  /**
+   * Google Drive web preview URL for editors and recovery.
+   */
+  driveWebViewURL?: string | null;
+  /**
+   * Shows whether this upload has been copied to persistent Google Drive storage.
+   */
+  driveStorageStatus?: ('stored-in-drive' | 'drive-disabled' | 'drive-failed') | null;
+  /**
+   * Last Google Drive storage error. Empty means the latest storage attempt succeeded.
+   */
+  driveStorageError?: string | null;
   tags?:
     | {
         tag?: string | null;
@@ -1150,6 +1170,11 @@ export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
   externalImageURL?: T;
+  externalFileURL?: T;
+  driveFileID?: T;
+  driveWebViewURL?: T;
+  driveStorageStatus?: T;
+  driveStorageError?: T;
   tags?:
     | T
     | {

@@ -30,6 +30,18 @@ services:
         value: /app/media
       - key: MEDIA_DB_IMAGE_MAX_BYTES
         value: '3000000'
+      - key: GOOGLE_DRIVE_STORAGE_ENABLED
+        value: 'true'
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        value: 1WGbLfKoL8bYEi6fIXI2ktBPZmwAe86Pj
+      - key: GOOGLE_DRIVE_OAUTH_CLIENT_JSON_B64
+        sync: false
+      - key: GOOGLE_DRIVE_OAUTH_TOKEN_JSON_B64
+        sync: false
+      - key: GOOGLE_DRIVE_PUBLIC_READ
+        value: 'false'
+      - key: MEDIA_EXTERNAL_STORAGE_REQUIRED
+        value: 'false'
       - key: XAI_API_KEY
         sync: false
       - key: XAI_BASE_URL
