@@ -33,14 +33,15 @@ export const inferArticleLanguageCode = (article: {
   slug?: null | string
   title?: null | string
 }): ArticleLanguageCode => {
-  if (article.languageCode) {
-    return normalizeArticleLanguageCode(article.languageCode)
-  }
-
   const source = `${article.title || ''} ${article.slug || ''}`
   const match = source.match(languagePrefixPattern) || article.slug?.match(slugLanguagePrefixPattern)
+  const matchedCode = match?.slice(1).find(Boolean)
 
-  return normalizeArticleLanguageCode(match?.find(Boolean))
+  if (matchedCode) {
+    return normalizeArticleLanguageCode(matchedCode)
+  }
+
+  return normalizeArticleLanguageCode(article.languageCode)
 }
 
 export const stripArticleLanguagePrefix = (value: unknown): string =>
