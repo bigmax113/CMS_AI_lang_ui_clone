@@ -209,6 +209,16 @@ export const ArticlesCollection: CollectionConfig = {
       label: 'Translation group',
     },
     {
+      name: 'translationLinks',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/admin/components/ArticleTranslationLinks#ArticleTranslationLinks',
+        },
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'publicUrl',
       type: 'text',
       admin: {
