@@ -158,6 +158,49 @@ body {
   max-width: 880px;
 }
 
+.public-content__language-switcher {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.public-content__language-switcher span {
+  color: #5c7089;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.public-content__language-switcher div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.public-content__language-switcher a,
+.public-content__language-switcher strong {
+  border: 1px solid #cad7e5;
+  border-radius: 6px;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.public-content__language-switcher a {
+  color: #0f766e;
+}
+
+.public-content__language-switcher strong {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #ffffff;
+}
+
 .public-content__authors {
   display: grid;
   gap: 12px;

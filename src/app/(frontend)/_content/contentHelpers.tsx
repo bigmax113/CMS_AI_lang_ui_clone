@@ -5,6 +5,11 @@ import React from 'react'
 import { getPayload } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
+import {
+  articleLanguageLabelByCode,
+  articleTranslationGroupFromArticle,
+  inferArticleLanguageCode,
+} from '@/lib/articleTranslations'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { SafeImage } from './SafeImage'
 
@@ -902,6 +907,90 @@ export const listPublishedArticles = async () => {
   })
 
   return result.docs
+}
+
+export type ArticleLanguageAlternate = {
+  code: string
+  href: string
+  isCurrent: boolean
+  label: string
+  title: string
+}
+
+export const listPublishedArticleTranslations = async (
+  article: Article,
+): Promise<ArticleLanguageAlternate[]> => {
+  const group = articleTranslationGroupFromArticle(article)
+  const currentID = String(article.id)
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'articles',
+    depth: 0,
+    limit: 200,
+    overrideAccess: true,
+    sort: 'languageCode',
+    where: {
+      status: {
+        equals: 'published',
+      },
+    },
+  })
+
+  const alternatesByCode = new Map<string, ArticleLanguageAlternate>()
+
+  for (const candidate of result.docs) {
+    if (articleTranslationGroupFromArticle(candidate) !== group && String(candidate.id) !== currentID) {
+      continue
+    }
+
+    const code = inferArticleLanguageCode(candidate)
+    const href = articlePublicPath(candidate.slug)
+
+    if (!href || alternatesByCode.has(code)) {
+      continue
+    }
+
+    alternatesByCode.set(code, {
+      code,
+      href,
+      isCurrent: String(candidate.id) === currentID,
+      label: articleLanguageLabelByCode[code] || code.toUpperCase(),
+      title: candidate.title,
+    })
+  }
+
+  return [...alternatesByCode.values()].sort((left, right) =>
+    left.code.localeCompare(right.code),
+  )
+}
+
+export const ArticleLanguageSwitcher = ({
+  alternates,
+}: {
+  alternates: ArticleLanguageAlternate[]
+}) => {
+  if (alternates.length <= 1) {
+    return null
+  }
+
+  return (
+    <nav aria-label="Article language versions" className="public-content__language-switcher">
+      <span>Language</span>
+      <div>
+        {alternates.map((alternate) =>
+          alternate.isCurrent ? (
+            <strong aria-current="page" key={alternate.code}>
+              {alternate.code.toUpperCase()}
+            </strong>
+          ) : (
+            <Link href={alternate.href} key={alternate.code} title={alternate.title}>
+              {alternate.code.toUpperCase()}
+            </Link>
+          ),
+        )}
+      </div>
+    </nav>
+  )
 }
 
 export const findPublishedBlogPostBySlug = async (slug: string) => {

@@ -542,6 +542,14 @@ export interface Article {
    */
   contentType: 'article' | 'blog-post' | 'news' | 'guide' | 'case-study' | 'knowledge-base';
   /**
+   * Language of this article. Used by public language switching and AI translation grouping.
+   */
+  languageCode: 'en' | 'ru' | 'uk' | 'ro' | 'pl';
+  /**
+   * Same value links all language versions of one article. AI translations inherit it automatically.
+   */
+  translationGroup?: string | null;
+  /**
    * Frontend link. It works after status is Published.
    */
   publicUrl?: string | null;
@@ -1119,6 +1127,8 @@ export interface ArticlesSelect<T extends boolean = true> {
   slug?: T;
   status?: T;
   contentType?: T;
+  languageCode?: T;
+  translationGroup?: T;
   publicUrl?: T;
   publishedAt?: T;
   summary?: T;

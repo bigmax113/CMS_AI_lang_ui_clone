@@ -3,6 +3,11 @@ import type { ContextChunk, ContextChunkRanker } from './localDocs'
 import type { Article } from '../payload-types'
 
 import { buildLocalDocContext, getLocalDocFolders, getLocalDocInventory } from './localDocs'
+import {
+  articleTranslationGroupFromArticle,
+  inferArticleLanguageCode,
+  normalizeArticleLanguageCode,
+} from '../lib/articleTranslations'
 
 const DEFAULT_XAI_BASE_URL = 'https://api.x.ai/v1'
 const DEFAULT_GROK_TEXT_MODEL = 'grok-4.3'
@@ -385,6 +390,11 @@ export const saveArticleDraftEndpoint: Endpoint = {
         req.payload,
         withLanguageSlugPrefix(language.code, draft.slug || title),
       )
+      const languageCode = normalizeArticleLanguageCode(language.code)
+      const translationGroup = articleTranslationGroupFromArticle({
+        slug,
+        title,
+      })
       const article = await req.payload.create({
         collection: 'articles',
         data: {
@@ -394,6 +404,7 @@ export const saveArticleDraftEndpoint: Endpoint = {
           },
           content: markdownToLexical(draft.bodyMarkdown),
           contentType: 'article',
+          languageCode,
           seo: {
             description: limitArticleField(draft.seoDescription, ARTICLE_SEO_DESCRIPTION_MAX_CHARS),
             title: limitArticleField(draft.seoTitle, ARTICLE_SEO_TITLE_MAX_CHARS),
@@ -402,6 +413,7 @@ export const saveArticleDraftEndpoint: Endpoint = {
           status: body.status || 'draft',
           summary: limitArticleField(draft.summary, ARTICLE_SUMMARY_MAX_CHARS),
           title: withLanguageTitlePrefix(language.code, title),
+          translationGroup,
         },
         overrideAccess: false,
         user: req.user,
@@ -476,9 +488,28 @@ export const translateArticlesEndpoint: Endpoint = {
         textFromUnknown(source.title) || textFromUnknown(source.slug) || `Article ${source.id}`
       const sourceAIAssist = source.aiAssist || {}
       const sourceSEO = source.seo || {}
+      const sourceLanguageCode = inferArticleLanguageCode(source)
+      const sourceTranslationGroup = articleTranslationGroupFromArticle(source)
+
+      if (
+        source.languageCode !== sourceLanguageCode ||
+        source.translationGroup !== sourceTranslationGroup
+      ) {
+        await req.payload.update({
+          collection: 'articles',
+          data: {
+            languageCode: sourceLanguageCode,
+            translationGroup: sourceTranslationGroup,
+          },
+          id: source.id,
+          overrideAccess: false,
+          user: req.user,
+        })
+      }
 
       for (const locale of locales) {
         try {
+          const targetLanguageCode = normalizeArticleLanguageCode(locale.code)
           const contentPlan = createArticleContentTranslationPlan(source.content)
           const sourceBody =
             contentPlan?.segments
@@ -520,6 +551,7 @@ export const translateArticlesEndpoint: Endpoint = {
               content: translatedContent,
               contentType: source.contentType || 'article',
               coverImage: source.coverImage,
+              languageCode: targetLanguageCode,
               owner: source.owner,
               seo: {
                 description: limitArticleField(
@@ -540,6 +572,7 @@ export const translateArticlesEndpoint: Endpoint = {
               ),
               tags: source.tags || [],
               title: withLanguageTitlePrefix(locale.code, translated.title || sourceTitle),
+              translationGroup: sourceTranslationGroup,
             },
             overrideAccess: false,
             user: req.user,

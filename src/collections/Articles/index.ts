@@ -10,6 +10,11 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { absolutePublicURL, articlePublicPath } from '../../lib/publicURLs'
+import {
+  articleLanguageOptions,
+  articleTranslationGroupFromArticle,
+  inferArticleLanguageCode,
+} from '../../lib/articleTranslations'
 import { authorsSlug } from '../Authors'
 import { mediaSlug } from '../Media'
 import {
@@ -67,7 +72,7 @@ export const ArticlesCollection: CollectionConfig = {
     components: {
       beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
     },
-    defaultColumns: ['title', 'status', 'category', 'updatedAt'],
+    defaultColumns: ['title', 'languageCode', 'status', 'category', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => {
       if (doc.status !== 'published' || typeof doc.slug !== 'string') {
@@ -81,6 +86,26 @@ export const ArticlesCollection: CollectionConfig = {
   labels: {
     plural: 'Content / Articles',
     singular: 'Content item',
+  },
+  hooks: {
+    beforeValidate: [
+      ({ data, originalDoc }) => {
+        if (!data) {
+          return data
+        }
+
+        const currentArticle = {
+          ...originalDoc,
+          ...data,
+        }
+
+        return {
+          ...data,
+          languageCode: inferArticleLanguageCode(currentArticle),
+          translationGroup: articleTranslationGroupFromArticle(currentArticle),
+        }
+      },
+    ],
   },
   fields: [
     {
@@ -158,6 +183,30 @@ export const ArticlesCollection: CollectionConfig = {
         },
       ],
       required: true,
+    },
+    {
+      name: 'languageCode',
+      type: 'select',
+      admin: {
+        description: 'Language of this article. Used by public language switching and AI translation grouping.',
+        position: 'sidebar',
+      },
+      defaultValue: 'en',
+      index: true,
+      label: 'Language',
+      options: [...articleLanguageOptions],
+      required: true,
+    },
+    {
+      name: 'translationGroup',
+      type: 'text',
+      admin: {
+        description:
+          'Same value links all language versions of one article. AI translations inherit it automatically.',
+        position: 'sidebar',
+      },
+      index: true,
+      label: 'Translation group',
     },
     {
       name: 'publicUrl',

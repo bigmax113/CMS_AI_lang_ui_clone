@@ -318,11 +318,13 @@ export default buildConfig({
             text: 'This starter article demonstrates the Payload editor, drafts, media fields, SEO fields, and related content links for a tester-friendly AI CMS workflow.',
           }),
           contentType: 'article',
+          languageCode: 'en',
           owner: 'Content QA',
           slug: 'payload-ai-workbench-demo',
           status: 'draft',
           summary: 'A ready-made article for testing the Payload admin editor.',
           title: 'Payload AI Workbench demo article',
+          translationGroup: 'payload-ai-workbench-demo',
         },
       })
 

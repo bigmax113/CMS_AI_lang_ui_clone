@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { articlePublicPath } from '@/lib/publicURLs'
 import {
   AuthorByline,
+  ArticleLanguageSwitcher,
   PublicChrome,
   PublicImage,
   RichText,
@@ -10,6 +11,7 @@ import {
   createSEOPageMetadata,
   findPublishedArticleBySlug,
   formatDate,
+  listPublishedArticleTranslations,
 } from '../../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -46,6 +48,8 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound()
   }
 
+  const translations = await listPublishedArticleTranslations(article)
+
   return (
     <PublicChrome
       kicker={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
@@ -64,6 +68,7 @@ export default async function ArticlePage({ params }: PageProps) {
       />
       <article className="public-content__article">
         <AuthorByline authors={article.authors} />
+        <ArticleLanguageSwitcher alternates={translations} />
         {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}
         {article.coverImage ? (
           <PublicImage alt={article.title} className="public-content__cover" media={article.coverImage} />
