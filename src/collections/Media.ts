@@ -172,7 +172,7 @@ const getGoogleAccessToken = async () => {
   const token = getInitialGoogleOAuthToken()
   const now = Date.now()
 
-  if (token.access_token && (!token.expiry_date || token.expiry_date - now > 60_000)) {
+  if (token.access_token && token.expiry_date && token.expiry_date - now > 60_000) {
     return token.access_token
   }
 

@@ -129,6 +129,7 @@ function qaArticle({ article, baselineByURL, wpByURL }) {
   const wpMetrics = metrics(wpHTML)
   const blockTypes = contentBlockTypes(article.content)
   const structuredVideoBlocks = blockTypes.filter((type) => type === 'video').length
+  const cmsVideoCoverage = cmsMetrics.videoLikeCount + structuredVideoBlocks
 
   cmsMetrics.blockVideoCount = structuredVideoBlocks
 
@@ -190,15 +191,15 @@ function qaArticle({ article, baselineByURL, wpByURL }) {
     issues.push('image-count-lower-than-wp-export')
   }
 
-  if (wpMetrics.iframeCount && cmsMetrics.iframeCount < wpMetrics.iframeCount) {
+  if (wpMetrics.iframeCount && cmsMetrics.iframeCount + structuredVideoBlocks < wpMetrics.iframeCount) {
     issues.push('iframe-count-lower-than-wp-export')
   }
 
-  if (wpMetrics.mp4LikeCount && cmsMetrics.mp4LikeCount < wpMetrics.mp4LikeCount) {
+  if (wpMetrics.mp4LikeCount && cmsVideoCoverage < wpMetrics.mp4LikeCount) {
     issues.push('mp4-video-count-lower-than-wp-export')
   }
 
-  if (cmsMetrics.videoLikeCount && !structuredVideoBlocks) {
+  if (cmsMetrics.videoLikeCount) {
     issues.push('videoobject-not-ready-html-embed-video')
   }
 
@@ -211,6 +212,7 @@ function qaArticle({ article, baselineByURL, wpByURL }) {
       seoImage: Boolean(article.seo?.image),
       seoTitle: Boolean(article.seo?.title),
       structuredVideoBlocks,
+      videoCoverage: cmsVideoCoverage,
       summary: Boolean(article.summary),
     },
     id: article.id,
@@ -252,6 +254,7 @@ function summarizeContent(articles) {
     totalIframes: sum(articles, (article) => article.cms.metrics.iframeCount),
     totalMP4Links: sum(articles, (article) => article.cms.metrics.mp4LinkCount),
     totalSourceTags: sum(articles, (article) => article.cms.metrics.sourceTagCount),
+    totalStructuredVideoBlocks: sum(articles, (article) => article.cms.structuredVideoBlocks),
     totalVideoTags: sum(articles, (article) => article.cms.metrics.videoTagCount),
     totalVimeoIframes: sum(articles, (article) => article.cms.metrics.vimeoCount),
     totalYouTubeIframes: sum(articles, (article) => article.cms.metrics.youtubeCount),
@@ -321,6 +324,7 @@ function renderMarkdown(report) {
     `Cover/SEO images ready for OG: ${summary.seoReadiness.cmsOgImageReady}/${summary.cmsArticles}`,
     `Content images: ${summary.content.totalCMSImages} across ${summary.content.articlesWithImages} articles`,
     `HTML videos/iframes: ${summary.content.articlesWithHTMLVideo} articles`,
+    `Structured video blocks: ${summary.content.totalStructuredVideoBlocks}`,
     `YouTube iframes: ${summary.content.totalYouTubeIframes}`,
     `Vimeo iframes: ${summary.content.totalVimeoIframes}`,
     `MP4/video-tag articles: ${summary.content.articlesWithMP4OrVideoTags}`,
@@ -399,9 +403,10 @@ function metrics(html) {
   const sourceTags = tags(html, 'source')
   const links = [...String(html || '').matchAll(/https?:\/\/[^\s"'<>]+/giu)].map((match) => match[0])
   const mp4Links = links.filter((url) => /\.(mp4|mov|webm)(\?|$)/iu.test(url))
+  const uniqueMP4Links = [...new Set(mp4Links.map((url) => url.replace(/[?#].*$/u, '')))]
   const youtube = iframeTags.filter((iframe) => /youtube\.com|youtu\.be/iu.test(iframe.src || ''))
   const vimeo = iframeTags.filter((iframe) => /vimeo\.com/iu.test(iframe.src || ''))
-  const mp4LikeCount = videoTags.length + sourceTags.length + mp4Links.length
+  const mp4LikeCount = Math.max(videoTags.length, uniqueMP4Links.length)
 
   return {
     blockVideoCount: 0,
