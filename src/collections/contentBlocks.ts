@@ -280,10 +280,22 @@ export const videoFields = (): Field[] => [
     {
       name: 'sourceType',
       type: 'select',
-      defaultValue: 'url',
+      admin: {
+        description: 'Choose YouTube/Vimeo embed, uploaded video file, or direct external MP4/WebM/MOV.',
+      },
+      defaultValue: 'youtube',
+      label: 'Video source',
       options: [
         {
-          label: 'External URL',
+          label: 'YouTube / Vimeo URL',
+          value: 'youtube',
+        },
+        {
+          label: 'External MP4 / WebM / MOV',
+          value: 'externalMP4',
+        },
+        {
+          label: 'Auto URL (legacy)',
           value: 'url',
         },
         {
@@ -300,7 +312,7 @@ export const videoFields = (): Field[] => [
           name: 'url',
           type: 'text',
           admin: {
-            description: 'YouTube, Vimeo, direct MP4/WebM, or external landing URL.',
+            description: 'YouTube/Vimeo URL or direct external MP4/WebM/MOV URL.',
           },
           label: 'Video URL',
         },
@@ -321,7 +333,11 @@ export const videoFields = (): Field[] => [
         {
           name: 'thumbnail',
           type: 'upload',
+          admin: {
+            description: 'Poster image shown before playback and used as VideoObject thumbnail.',
+          },
           displayPreview: true,
+          label: 'Poster image',
           relationTo: mediaSlug,
         },
         {
@@ -329,9 +345,108 @@ export const videoFields = (): Field[] => [
           type: 'text',
           admin: {
             description:
-              'Optional external thumbnail. YouTube previews are detected automatically from the Video URL.',
+              'Optional external poster URL. YouTube previews are detected automatically from the Video URL.',
           },
-          label: 'Thumbnail URL',
+          label: 'Poster URL',
+        },
+      ],
+    },
+    {
+      name: 'caption',
+      type: 'text',
+      admin: {
+        description: 'Visible caption under the video. Leave empty to show title and description.',
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'orientation',
+          type: 'select',
+          defaultValue: 'horizontal',
+          label: 'Orientation',
+          options: [
+            {
+              label: 'Horizontal',
+              value: 'horizontal',
+            },
+            {
+              label: 'Vertical',
+              value: 'vertical',
+            },
+            {
+              label: 'Square',
+              value: 'square',
+            },
+          ],
+          required: true,
+        },
+        {
+          name: 'size',
+          type: 'select',
+          defaultValue: 'full',
+          options: [
+            {
+              label: 'Small',
+              value: 'small',
+            },
+            {
+              label: 'Medium',
+              value: 'medium',
+            },
+            {
+              label: 'Full',
+              value: 'full',
+            },
+          ],
+          required: true,
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'maxWidth',
+          type: 'select',
+          defaultValue: '720',
+          label: 'Maximum width',
+          options: [
+            {
+              label: '360 px',
+              value: '360',
+            },
+            {
+              label: '480 px',
+              value: '480',
+            },
+            {
+              label: '720 px',
+              value: '720',
+            },
+          ],
+          required: true,
+        },
+        {
+          name: 'align',
+          type: 'select',
+          defaultValue: 'center',
+          options: [
+            {
+              label: 'Left',
+              value: 'left',
+            },
+            {
+              label: 'Center',
+              value: 'center',
+            },
+            {
+              label: 'Right',
+              value: 'right',
+            },
+          ],
+          required: true,
         },
       ],
     },

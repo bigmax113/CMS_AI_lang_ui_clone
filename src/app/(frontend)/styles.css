@@ -514,12 +514,53 @@ body {
 }
 
 .public-content__video {
+  --video-user-max-width: 720px;
+  --video-max-width: var(--video-user-max-width);
   margin: 28px 0;
+  max-width: var(--video-max-width);
+  width: 100%;
+}
+
+.public-content__video--small {
+  --video-max-width: min(var(--video-user-max-width), 360px);
+}
+
+.public-content__video--medium {
+  --video-max-width: min(var(--video-user-max-width), 480px);
+}
+
+.public-content__video--full {
+  max-width: var(--video-max-width);
+}
+
+.public-content__video--left {
+  margin-right: auto;
+}
+
+.public-content__video--center {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.public-content__video--right {
+  margin-left: auto;
+}
+
+.public-content__video--horizontal {
+  --video-aspect-ratio: 16 / 9;
+}
+
+.public-content__video--vertical {
+  --video-aspect-ratio: 9 / 16;
+}
+
+.public-content__video--square {
+  --video-aspect-ratio: 1 / 1;
 }
 
 .public-content__video-frame,
 .public-content__video-link {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--video-aspect-ratio, 16 / 9);
   background: #0f1724;
   border: 1px solid #d9e2ec;
   border-radius: 8px;
@@ -534,7 +575,7 @@ body {
 }
 
 iframe.public-content__video-frame {
-  height: 480px;
+  height: auto;
 }
 
 .public-content__video-link {

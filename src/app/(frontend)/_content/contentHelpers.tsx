@@ -307,6 +307,11 @@ const getVimeoID = (value: string) => {
 
 const isDirectVideoURL = (value: string) => /\.(mp4|mov|webm)(?:[?#].*)?$/iu.test(value)
 const isPlayableVideoURL = (value: string) => value.startsWith('data:video/') || isDirectVideoURL(value)
+const optionField = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T => {
+  const text = textField(value) as T
+
+  return allowed.includes(text) ? text : fallback
+}
 
 const videoFromFields = (fields: Record<string, unknown>) => {
   const upload = isMedia(fields.upload) ? fields.upload : null
@@ -323,15 +328,21 @@ const videoFromFields = (fields: Record<string, unknown>) => {
     (vimeoID ? `https://vumbnail.com/${vimeoID}.jpg` : '')
   const embedURL =
     textField(fields.embedURL) ||
-    (youtubeID ? `https://www.youtube.com/embed/${youtubeID}` : '') ||
+    (youtubeID ? `https://www.youtube-nocookie.com/embed/${youtubeID}` : '') ||
     (vimeoID ? `https://player.vimeo.com/video/${vimeoID}` : '')
   const contentURL = textField(fields.contentURL) || uploadedURL || (isDirectVideoURL(url) ? url : '')
 
   return {
+    align: optionField(fields.align, ['left', 'center', 'right'] as const, 'center'),
+    caption: textField(fields.caption),
     contentURL,
     description: textField(fields.description),
     duration: textField(fields.duration),
     embedURL,
+    maxWidth: optionField(fields.maxWidth, ['360', '480', '720'] as const, '720'),
+    orientation: optionField(fields.orientation, ['horizontal', 'vertical', 'square'] as const, 'horizontal'),
+    size: optionField(fields.size, ['small', 'medium', 'full'] as const, 'full'),
+    sourceType: optionField(fields.sourceType, ['youtube', 'externalMP4', 'upload', 'url'] as const, 'url'),
     sourceURL: uploadedURL || url,
     thumbnailURL,
     title: textField(fields.title),
@@ -406,17 +417,28 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
   }
 
   return (
-    <figure className="public-content__video" key={key}>
+    <figure
+      className={[
+        'public-content__video',
+        `public-content__video--${video.orientation}`,
+        `public-content__video--${video.size}`,
+        `public-content__video--${video.align}`,
+      ].join(' ')}
+      key={key}
+      style={{ '--video-user-max-width': `${video.maxWidth}px` } as React.CSSProperties}
+    >
       {video.embedURL ? (
         <iframe
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
           className="public-content__video-frame"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
           src={video.embedURL}
           title={video.title}
         />
       ) : isPlayableVideoURL(video.sourceURL) ? (
-        <video className="public-content__video-frame" controls poster={video.thumbnailURL || undefined}>
+        <video className="public-content__video-frame" controls playsInline poster={video.thumbnailURL || undefined}>
           <source src={video.sourceURL} />
         </video>
       ) : (
@@ -426,8 +448,14 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
         </a>
       )}
       <figcaption>
-        <strong>{video.title}</strong>
-        {video.description ? <span>{video.description}</span> : null}
+        {video.caption ? (
+          <span>{video.caption}</span>
+        ) : (
+          <>
+            <strong>{video.title}</strong>
+            {video.description ? <span>{video.description}</span> : null}
+          </>
+        )}
       </figcaption>
     </figure>
   )
@@ -813,7 +841,8 @@ export const StructuredData = ({
     ...videos.map((video) => ({
       '@context': 'https://schema.org',
       '@type': 'VideoObject',
-      contentUrl: absoluteURL(video.contentURL || video.sourceURL),
+      caption: video.caption || undefined,
+      contentUrl: video.contentURL ? absoluteURL(video.contentURL) : undefined,
       description: video.schemaDescription || video.description || undefined,
       duration: video.duration || undefined,
       embedUrl: absoluteURL(video.embedURL),
