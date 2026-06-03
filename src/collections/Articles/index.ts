@@ -68,6 +68,19 @@ const calloutBlock = {
 
 export const ArticlesCollection: CollectionConfig = {
   slug: articlesSlug,
+  access: {
+    read: ({ req }) => {
+      if (req.user) {
+        return true
+      }
+
+      return {
+        status: {
+          equals: 'published',
+        },
+      }
+    },
+  },
   admin: {
     components: {
       beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
@@ -354,6 +367,9 @@ export const ArticlesCollection: CollectionConfig = {
             {
               name: 'owner',
               type: 'text',
+              access: {
+                read: ({ req }) => Boolean(req.user),
+              },
               admin: {
                 description: 'Business owner or department responsible for this article.',
               },
@@ -361,6 +377,9 @@ export const ArticlesCollection: CollectionConfig = {
             {
               name: 'legacySource',
               type: 'group',
+              access: {
+                read: ({ req }) => Boolean(req.user),
+              },
               admin: {
                 description: 'Read-only migration metadata from the source publishing system.',
               },
@@ -414,6 +433,9 @@ export const ArticlesCollection: CollectionConfig = {
         },
         {
           name: 'aiAssist',
+          access: {
+            read: ({ req }) => Boolean(req.user),
+          },
           fields: [
             {
               name: 'brief',

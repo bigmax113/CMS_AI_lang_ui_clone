@@ -23,8 +23,10 @@ if (!cms.email || !cms.password) {
 try {
   const wpPosts = await readWPPosts()
   const wpBaseline = await readWPBaseline()
-  const cmsArticles = await fetchCMSArticles()
-  const report = buildQAReport({ cmsArticles, wpBaseline, wpPosts })
+  const cmsSession = await loginCMS()
+  const apiAccess = await checkAPIAccess({ token: cmsSession.token })
+  const cmsArticles = await fetchCMSArticles({ token: cmsSession.token })
+  const report = buildQAReport({ apiAccess, cmsArticles, wpBaseline, wpPosts })
 
   await fs.mkdir(outputDir, { recursive: true })
   await fs.writeFile(path.join(outputDir, 'qa-report.json'), `${JSON.stringify(report, null, 2)}\n`, 'utf8')
@@ -67,8 +69,8 @@ async function readWPBaseline() {
   return pages
 }
 
-async function fetchCMSArticles() {
-  const login = await payloadRequest({
+async function loginCMS() {
+  return payloadRequest({
     body: {
       email: cms.email,
       password: cms.password,
@@ -76,7 +78,38 @@ async function fetchCMSArticles() {
     method: 'POST',
     pathname: '/api/users/login',
   })
-  const token = login.token
+}
+
+async function checkAPIAccess({ token }) {
+  const anonymousArticles = await payloadRequestRaw({
+    method: 'GET',
+    pathname: '/api/articles?depth=0&limit=10',
+  })
+  const anonymousDrafts = await payloadRequestRaw({
+    method: 'GET',
+    pathname: '/api/articles?depth=0&limit=10&where%5Bstatus%5D%5Bequals%5D=draft',
+  })
+  const authenticatedArticles = await payloadRequestRaw({
+    method: 'GET',
+    pathname: '/api/articles?depth=0&limit=1',
+    token,
+  })
+  const anonymousDocs = Array.isArray(anonymousArticles.data?.docs) ? anonymousArticles.data.docs : []
+  const anonymousDraftDocs = Array.isArray(anonymousDrafts.data?.docs) ? anonymousDrafts.data.docs : []
+
+  return {
+    anonymousArticles: summarizeAPIResponse(anonymousArticles),
+    anonymousDrafts: summarizeAPIResponse(anonymousDrafts),
+    anonymousDraftDocsReturned: anonymousDraftDocs.length,
+    anonymousInternalFieldLeaks: anonymousDocs.filter(
+      (doc) => 'aiAssist' in doc || 'legacySource' in doc || 'owner' in doc,
+    ).length,
+    anonymousNonPublishedInSample: anonymousDocs.filter((doc) => doc.status !== 'published').length,
+    authenticatedArticles: summarizeAPIResponse(authenticatedArticles),
+  }
+}
+
+async function fetchCMSArticles({ token }) {
   const docs = []
 
   for (let page = 1; page <= 20; page += 1) {
@@ -96,7 +129,7 @@ async function fetchCMSArticles() {
   return docs
 }
 
-function buildQAReport({ cmsArticles, wpBaseline, wpPosts }) {
+function buildQAReport({ apiAccess, cmsArticles, wpBaseline, wpPosts }) {
   const wpByURL = new Map(wpPosts.map((post) => [post.link, post]))
   const baselineByURL = new Map(wpBaseline.map((page) => [page.url, page]))
   const articles = cmsArticles.map((article) => qaArticle({ article, baselineByURL, wpByURL }))
@@ -109,6 +142,7 @@ function buildQAReport({ cmsArticles, wpBaseline, wpPosts }) {
       content: summarizeContent(articles),
       generatedAt: new Date().toISOString(),
       headings: summarizeHeadings({ articles, wpBaseline }),
+      apiAccess,
       issueCounts,
       missing: summarizeMissing(articles),
       seoReadiness: summarizeSEOReadiness({ articles, wpBaseline }),
@@ -331,6 +365,13 @@ function renderMarkdown(report) {
     `VideoObject not ready for HTML embedded videos: ${summary.content.videoObjectNotReadyHTMLVideos}`,
     `CMS H2-H6 tags in imported HTML: ${summary.headings.totalCMSH2H6} across ${summary.headings.articlesWithH2H6InCMSHTML} articles`,
     '',
+    '## API Access',
+    `Anonymous /api/articles: HTTP ${summary.apiAccess.anonymousArticles.status}, totalDocs ${summary.apiAccess.anonymousArticles.totalDocs}`,
+    `Anonymous draft filter: HTTP ${summary.apiAccess.anonymousDrafts.status}, returned docs ${summary.apiAccess.anonymousDraftDocsReturned}`,
+    `Anonymous non-published documents in sample: ${summary.apiAccess.anonymousNonPublishedInSample}`,
+    `Anonymous internal field leaks in sample: ${summary.apiAccess.anonymousInternalFieldLeaks}`,
+    `Authenticated /api/articles: HTTP ${summary.apiAccess.authenticatedArticles.status}, totalDocs ${summary.apiAccess.authenticatedArticles.totalDocs}`,
+    '',
     '## Issue Counts',
     ...issueLines,
     '',
@@ -368,6 +409,18 @@ function sum(items, getValue) {
 }
 
 async function payloadRequest({ body, method, pathname, token }) {
+  const result = await payloadRequestRaw({ body, method, pathname, token })
+
+  if (!result.ok) {
+    throw new Error(
+      `Payload ${method} ${pathname} failed: HTTP ${result.status} ${String(result.text || '').slice(0, 500)}`,
+    )
+  }
+
+  return result.data
+}
+
+async function payloadRequestRaw({ body, method, pathname, token }) {
   const response = await fetch(`${cms.baseURL}${pathname}`, {
     body: body ? JSON.stringify(body) : undefined,
     headers: {
@@ -378,12 +431,30 @@ async function payloadRequest({ body, method, pathname, token }) {
     method,
   })
   const text = await response.text()
+  const data = text
+    ? (() => {
+        try {
+          return JSON.parse(text)
+        } catch {
+          return null
+        }
+      })()
+    : null
 
-  if (!response.ok) {
-    throw new Error(`Payload ${method} ${pathname} failed: HTTP ${response.status} ${text.slice(0, 500)}`)
+  return {
+    data,
+    ok: response.ok,
+    status: response.status,
+    text,
   }
+}
 
-  return text ? JSON.parse(text) : null
+function summarizeAPIResponse(response) {
+  return {
+    ok: response.ok,
+    status: response.status,
+    totalDocs: typeof response.data?.totalDocs === 'number' ? response.data.totalDocs : null,
+  }
 }
 
 function htmlFromContent(content) {
