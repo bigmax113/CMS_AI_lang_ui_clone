@@ -592,6 +592,16 @@ export interface Article {
    * Business owner or department responsible for this article.
    */
   owner?: string | null;
+  /**
+   * Read-only migration metadata from the source publishing system.
+   */
+  legacySource?: {
+    platform?: string | null;
+    site?: string | null;
+    wpPostID?: number | null;
+    wpURL?: string | null;
+    importedAt?: string | null;
+  };
   aiAssist?: {
     /**
      * Business brief for AI article generation.
@@ -1143,6 +1153,15 @@ export interface ArticlesSelect<T extends boolean = true> {
         id?: T;
       };
   owner?: T;
+  legacySource?:
+    | T
+    | {
+        platform?: T;
+        site?: T;
+        wpPostID?: T;
+        wpURL?: T;
+        importedAt?: T;
+      };
   aiAssist?:
     | T
     | {

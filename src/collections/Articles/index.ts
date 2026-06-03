@@ -122,7 +122,6 @@ export const ArticlesCollection: CollectionConfig = {
       },
       index: true,
       required: true,
-      unique: true,
     },
     {
       name: 'status',
@@ -358,6 +357,57 @@ export const ArticlesCollection: CollectionConfig = {
               admin: {
                 description: 'Business owner or department responsible for this article.',
               },
+            },
+            {
+              name: 'legacySource',
+              type: 'group',
+              admin: {
+                description: 'Read-only migration metadata from the source publishing system.',
+              },
+              fields: [
+                {
+                  name: 'platform',
+                  type: 'text',
+                  admin: {
+                    readOnly: true,
+                  },
+                  label: 'Source platform',
+                },
+                {
+                  name: 'site',
+                  type: 'text',
+                  admin: {
+                    readOnly: true,
+                  },
+                  label: 'Source site',
+                },
+                {
+                  name: 'wpPostID',
+                  type: 'number',
+                  admin: {
+                    readOnly: true,
+                  },
+                  label: 'WP post ID',
+                },
+                {
+                  name: 'wpURL',
+                  type: 'text',
+                  admin: {
+                    readOnly: true,
+                  },
+                  index: true,
+                  label: 'WP URL',
+                },
+                {
+                  name: 'importedAt',
+                  type: 'date',
+                  admin: {
+                    readOnly: true,
+                  },
+                  label: 'Imported at',
+                },
+              ],
+              label: 'Legacy source',
             },
           ],
           label: 'Settings',
