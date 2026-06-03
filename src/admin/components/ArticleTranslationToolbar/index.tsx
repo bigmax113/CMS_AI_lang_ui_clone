@@ -2,13 +2,13 @@
 
 import React, { useMemo, useState } from 'react'
 
-const languages = [
-  { code: 'en', label: 'EN English' },
-  { code: 'ru', label: 'RU Russian' },
-  { code: 'uk', label: 'UK Ukrainian' },
-  { code: 'ro', label: 'RO Romanian' },
-  { code: 'pl', label: 'PL Polish' },
-]
+import { articleLanguageDefinitions } from '../../../lib/articleTranslations'
+
+const languages = articleLanguageDefinitions.map((language) => ({
+  code: language.value,
+  displayCode: language.displayCode,
+  label: language.label,
+}))
 
 const articleIDPattern = /\/admin\/collections\/articles\/([^/?#]+)/u
 
@@ -61,7 +61,7 @@ export const ArticleTranslationToolbar: React.FC = () => {
       selectedLocales.length
         ? languages
             .filter((language) => selectedLocales.includes(language.code))
-            .map((language) => language.code.toUpperCase())
+            .map((language) => language.displayCode)
             .join(', ')
         : 'Choose languages',
     [selectedLocales],

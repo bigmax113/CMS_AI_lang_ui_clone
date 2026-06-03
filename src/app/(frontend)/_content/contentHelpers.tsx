@@ -6,6 +6,8 @@ import { getPayload } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
 import {
+  articleLanguageDisplayCodeByCode,
+  articleLanguageHreflangByCode,
   articleLanguageLabelByCode,
   articleTranslationGroupFromArticle,
   inferArticleLanguageCode,
@@ -126,6 +128,7 @@ export const createSEOPageMetadata = ({
   canonicalURL,
   description,
   image,
+  languageAlternates,
   path,
   title,
   type = 'article',
@@ -133,12 +136,21 @@ export const createSEOPageMetadata = ({
   canonicalURL?: null | string
   description?: null | string
   image?: Media | null | number
+  languageAlternates?: Record<string, string>
   path?: null | string
   title: string
   type?: 'article' | 'website'
 }): Metadata => {
   const canonical = canonicalURL || absoluteURL(path) || publicBaseURL()
   const imageURL = seoImageURL(image)
+  const alternateLanguages = languageAlternates
+    ? Object.fromEntries(
+        Object.entries(languageAlternates).map(([language, url]) => [
+          language,
+          absoluteURL(url) || url,
+        ]),
+      )
+    : undefined
   const images = imageURL
     ? [
         {
@@ -153,6 +165,7 @@ export const createSEOPageMetadata = ({
   return {
     alternates: {
       canonical,
+      languages: alternateLanguages,
     },
     description: description || undefined,
     openGraph: {
@@ -911,7 +924,9 @@ export const listPublishedArticles = async () => {
 
 export type ArticleLanguageAlternate = {
   code: string
+  displayCode: string
   href: string
+  hreflang: string
   isCurrent: boolean
   label: string
   title: string
@@ -952,7 +967,9 @@ export const listPublishedArticleTranslations = async (
 
     alternatesByCode.set(code, {
       code,
+      displayCode: articleLanguageDisplayCodeByCode[code] || code.toUpperCase(),
       href,
+      hreflang: articleLanguageHreflangByCode[code] || code,
       isCurrent: String(candidate.id) === currentID,
       label: articleLanguageLabelByCode[code] || code.toUpperCase(),
       title: candidate.title,
@@ -980,11 +997,11 @@ export const ArticleLanguageSwitcher = ({
         {alternates.map((alternate) =>
           alternate.isCurrent ? (
             <strong aria-current="page" key={alternate.code}>
-              {alternate.code.toUpperCase()}
+              {alternate.displayCode}
             </strong>
           ) : (
             <Link href={alternate.href} key={alternate.code} title={alternate.title}>
-              {alternate.code.toUpperCase()}
+              {alternate.displayCode}
             </Link>
           ),
         )}

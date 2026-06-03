@@ -544,7 +544,7 @@ export interface Article {
   /**
    * Language of this article. Used by public language switching and AI translation grouping.
    */
-  languageCode: 'en' | 'ru' | 'uk' | 'ro' | 'pl';
+  languageCode: 'en' | 'bg' | 'cs' | 'uk' | 'ro' | 'sk' | 'hu' | 'kz' | 'pl' | 'rs' | 'lv' | 'ee' | 'lt' | 'ru';
   /**
    * Same value links all language versions of one article. AI translations inherit it automatically.
    */

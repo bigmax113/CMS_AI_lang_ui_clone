@@ -32,9 +32,15 @@ export const generateMetadata = async ({ params }: PageProps) => {
     }
   }
 
+  const translations = await listPublishedArticleTranslations(article)
+  const languageAlternates = Object.fromEntries(
+    translations.map((translation) => [translation.hreflang, translation.href]),
+  )
+
   return createSEOPageMetadata({
     description: article.seo?.description || article.summary,
     image: article.seo?.image || article.coverImage,
+    languageAlternates,
     path: articlePublicPath(article.slug),
     title: `${article.seo?.title || article.title} - CMS AI`,
   })

@@ -4,9 +4,12 @@ import type { Article } from '../payload-types'
 
 import { buildLocalDocContext, getLocalDocFolders, getLocalDocInventory } from './localDocs'
 import {
+  articleLanguageDefinitions,
+  articleLanguageDisplayCode,
   articleTranslationGroupFromArticle,
   inferArticleLanguageCode,
   normalizeArticleLanguageCode,
+  stripArticleLanguagePrefix,
 } from '../lib/articleTranslations'
 
 const DEFAULT_XAI_BASE_URL = 'https://api.x.ai/v1'
@@ -139,13 +142,16 @@ const UI_TRANSLATION_LANGUAGES: Record<string, string> = {
   uk: 'Ukrainian',
 }
 
-const ARTICLE_TRANSLATION_LANGUAGES: Record<string, { code: string; language: string }> = {
-  en: { code: 'EN', language: 'English' },
-  pl: { code: 'PL', language: 'Polish' },
-  ro: { code: 'RO', language: 'Romanian' },
-  ru: { code: 'RU', language: 'Russian' },
-  uk: { code: 'UK', language: 'Ukrainian' },
-}
+const ARTICLE_TRANSLATION_LANGUAGES: Record<string, { code: string; language: string }> =
+  Object.fromEntries(
+    articleLanguageDefinitions.map((language) => [
+      language.value,
+      {
+        code: language.displayCode,
+        language: language.language,
+      },
+    ]),
+  )
 
 const uiTranslationCache = new Map<string, Record<string, string>>()
 
@@ -1003,36 +1009,28 @@ function errorMessageFromUnknown(error: unknown): string {
 }
 
 function resolveArticleLanguage(value?: string): { code: string; language: string } {
-  const normalized = (value || 'en')
-    .trim()
-    .replace(/[\[\]()]/gu, '')
-    .toLowerCase()
+  const normalized = normalizeArticleLanguageCode(value)
   const byCode = Object.values(ARTICLE_TRANSLATION_LANGUAGES).find(
-    (language) => language.code.toLowerCase() === normalized,
+    (language) => language.code.toLowerCase() === String(value || '').trim().toLowerCase(),
   )
 
   return ARTICLE_TRANSLATION_LANGUAGES[normalized] || byCode || ARTICLE_TRANSLATION_LANGUAGES.en
 }
 
 function stripLanguageTitlePrefix(value: unknown): string {
-  return textFromUnknown(value)
-    .replace(
-      /^\s*(?:\[(?:en|pl|ro|ru|uk)\]|\((?:en|pl|ro|ru|uk)\)|(?:en|pl|ro|ru|uk)[:_-])\s*/iu,
-      '',
-    )
-    .trim()
+  return stripArticleLanguagePrefix(textFromUnknown(value))
 }
 
 function withLanguageTitlePrefix(code: string, title: unknown): string {
   const cleanTitle = stripLanguageTitlePrefix(title) || 'Untitled article'
 
-  return `[${code.toUpperCase()}] ${cleanTitle}`
+  return `[${articleLanguageDisplayCode(code)}] ${cleanTitle}`
 }
 
 function withLanguageSlugPrefix(code: string, value: unknown): string {
-  const prefix = code.toLowerCase()
+  const prefix = articleLanguageDisplayCode(code).toLowerCase()
   const base = slugifyArticleTitle(stripLanguageTitlePrefix(value)) || 'article'
-  const withoutLanguagePrefix = base.replace(/^(en|pl|ro|ru|uk)-/u, '')
+  const withoutLanguagePrefix = slugifyArticleTitle(stripLanguageTitlePrefix(base)) || 'article'
 
   return `${prefix}-${withoutLanguagePrefix}`
 }
@@ -1541,18 +1539,26 @@ async function translateArticleFields(args: {
     'Do not use long dashes. Prefer short hyphens or normal punctuation.',
     'Hard field limits: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
     '',
-    'Ты — профессиональный переводчик и редактор контента для бренда игрового оборудования LORGAR.',
-    `Нужно перевести описание продукта на ${args.language}.`,
+    'Translation brief:',
+    'You are a professional translator and content editor for the LORGAR gaming-equipment brand.',
+    `Translate the product/article content to ${args.language}.`,
+    'Keep the text structure, paragraphs, headings, and block order.',
+    'Do not shorten the text. Do not add facts or marketing claims that are not in the source.',
+    'The translation must sound natural to a native speaker, not literal.',
+    'Style: modern, technological, gaming-oriented, confident, but not too pompous.',
+    'Use common English gaming terms when they are normally used in the target market.',
+    'Avoid overly formal or corporate wording.',
+    'Keep product names, technology names, model names, SKUs, URLs, and the LORGAR brand unchanged.',
+    'Adapt slogans so they sound natural and strong in the target language.',
+    'Do not use long dashes. Prefer short hyphens or normal punctuation.',
+    'Preserve SEO keywords when they are present.',
+    'If a fragment sounds unnatural for the local market, adapt it while preserving the meaning.',
+    'The final text must feel like original website copy for a gaming-peripherals brand in this market.',
     '',
-    'ВАЖНО: – Сохраняй структуру текста, абзацы и заголовки. – Не сокращай текст и не добавляй информацию от себя. – Перевод должен звучать естественно для носителя языка, а не как дословный перевод. – Стиль: современный, технологичный, игровой, уверенный, но не слишком пафосный. – Это описание gaming-продукта, поэтому допускается использование привычных англоязычных игровых терминов, если они обычно не переводятся локально. – Избегай слишком формального или «корпоративного» звучания. – Сохраняй названия продуктов, технологий и моделей без перевода. – Не переводи бренд LORGAR. – Если в тексте встречаются слоганы — адаптируй их так, чтобы они звучали естественно и маркетингово сильно на целевом языке. – Не используй длинные тире — предпочитай короткие тире или обычную пунктуацию. – Сохраняй SEO-ключи, если они есть. – Если какой-то фрагмент звучит неестественно для локального рынка — адаптируй его, сохранив смысл.',
-    '',
-    'Дополнительно: – Проверь, чтобы текст хорошо подходил для размещения на сайте бренда игровой периферии. – Избегай кальки с русского или английского. – Перевод должен выглядеть как оригинально написанный текст для этого рынка.',
-    '',
-    'Вот текст для перевода:',
+    'Text to translate:',
     JSON.stringify(source, null, 2),
     '',
-    'Hard field limits for the returned JSON: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
-    'Верни только валидный JSON с ключами: title, summary, bodyMarkdown, seoTitle, seoDescription, segments. Не добавляй markdown fences.',
+    'Return only valid JSON with keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments. Do not add markdown fences.',
   ].join('\n')
 
   const response = await fetch(`${baseURL}/chat/completions`, {

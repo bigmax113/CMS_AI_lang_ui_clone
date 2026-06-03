@@ -5,6 +5,7 @@ import * as migration_20260525_214800_content_evolution from './20260525_214800_
 import * as migration_20260525_221200_content_evolution_uuid from './20260525_221200_content_evolution_uuid';
 import * as migration_20260529_062900_media_google_drive_storage from './20260529_062900_media_google_drive_storage';
 import * as migration_20260529_073000_article_translation_groups from './20260529_073000_article_translation_groups';
+import * as migration_20260603_083000_expand_article_languages from './20260603_083000_expand_article_languages';
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20260529_073000_article_translation_groups.up,
     down: migration_20260529_073000_article_translation_groups.down,
     name: '20260529_073000_article_translation_groups'
+  },
+  {
+    up: migration_20260603_083000_expand_article_languages.up,
+    down: migration_20260603_083000_expand_article_languages.down,
+    name: '20260603_083000_expand_article_languages'
   },
 ];
