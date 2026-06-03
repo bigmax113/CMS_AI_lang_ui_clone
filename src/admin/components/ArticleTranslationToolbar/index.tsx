@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from 'react'
 
-import { articleLanguageDefinitions } from '../../../lib/articleTranslations'
+import { articleTranslationTargetDefinitions } from '../../../lib/articleTranslations'
 
-const languages = articleLanguageDefinitions.map((language) => ({
+const languages = articleTranslationTargetDefinitions.map((language) => ({
   code: language.value,
   displayCode: language.displayCode,
   label: language.label,

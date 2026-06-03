@@ -108,6 +108,31 @@ export const articleLanguageOptions = articleLanguageDefinitions.map(({ label, v
   value,
 }))
 
+const articleTranslationTargetCodes = [
+  'cs',
+  'uk',
+  'ro',
+  'bg',
+  'sk',
+  'hu',
+  'kz',
+  'pl',
+  'rs',
+  'lv',
+  'ee',
+  'lt',
+] as const
+
+export const articleTranslationTargetDefinitions = articleTranslationTargetCodes.map((code) => {
+  const language = articleLanguageDefinitions.find((definition) => definition.value === code)
+
+  if (!language) {
+    throw new Error(`Missing article language definition for ${code}`)
+  }
+
+  return language
+})
+
 export type ArticleLanguageCode = (typeof articleLanguageDefinitions)[number]['value']
 
 const articleLanguageCodes = articleLanguageDefinitions.map((language) => language.value)
