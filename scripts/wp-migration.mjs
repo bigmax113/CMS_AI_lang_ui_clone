@@ -517,7 +517,7 @@ function mapPostToArticle({ post, site, statusMode }) {
       editorialNotes: `Imported from WordPress ${site.displayCode}. Source URL: ${post.link || ''}`,
     },
     category: 'product-content',
-    content: lexicalHTMLBlock({
+    content: lexicalHTMLBlocks({
       html: rewriteWPHTMLForImport(post.contentHTML || ''),
       id: `wp-${site.code}-${post.id}-html`,
       label: `Imported WP body ${site.displayCode} #${post.id}`,
@@ -567,23 +567,23 @@ function inferTranslationGroup(post, site) {
   return slugify(candidate).slice(0, 120) || `wp-${site.code}-${post.id}`
 }
 
-function lexicalHTMLBlock({ html, id, label }) {
+function lexicalHTMLBlocks({ html, id, label }) {
+  const chunks = splitHTMLIntoBlocks(html || '<p></p>')
+
   return {
     root: {
-      children: [
-        {
-          fields: {
-            blockName: label,
-            blockType: 'htmlEmbed',
-            html: html || '<p></p>',
-            id,
-            label,
-          },
-          format: '',
-          type: 'block',
-          version: 2,
+      children: chunks.map((chunk, index) => ({
+        fields: {
+          blockName: chunks.length === 1 ? label : `${label} part ${index + 1}`,
+          blockType: 'htmlEmbed',
+          html: chunk,
+          id: chunks.length === 1 ? id : `${id}-${index + 1}`,
+          label: chunks.length === 1 ? label : `${label} part ${index + 1}`,
         },
-      ],
+        format: '',
+        type: 'block',
+        version: 2,
+      })),
       direction: null,
       format: '',
       indent: 0,
@@ -591,6 +591,51 @@ function lexicalHTMLBlock({ html, id, label }) {
       version: 1,
     },
   }
+}
+
+function splitHTMLIntoBlocks(html) {
+  const maxLength = 38_000
+  const source = String(html || '<p></p>').trim() || '<p></p>'
+
+  if (source.length <= maxLength) {
+    return [source]
+  }
+
+  const boundaryMarked = source.replace(
+    /(<\/(?:blockquote|div|figure|h[1-6]|li|ol|p|section|table|tbody|td|th|thead|tr|ul)>)/giu,
+    '$1\n<!--WP_IMPORT_SPLIT-->',
+  )
+  const pieces = boundaryMarked.split('<!--WP_IMPORT_SPLIT-->').filter((piece) => piece.trim())
+  const chunks = []
+  let current = ''
+
+  for (const piece of pieces.length ? pieces : [source]) {
+    if (piece.length > maxLength) {
+      if (current.trim()) {
+        chunks.push(current.trim())
+        current = ''
+      }
+
+      for (let index = 0; index < piece.length; index += maxLength) {
+        chunks.push(piece.slice(index, index + maxLength).trim())
+      }
+      continue
+    }
+
+    if ((current + piece).length > maxLength && current.trim()) {
+      chunks.push(current.trim())
+      current = piece
+      continue
+    }
+
+    current += piece
+  }
+
+  if (current.trim()) {
+    chunks.push(current.trim())
+  }
+
+  return chunks.length ? chunks : ['<p></p>']
 }
 
 function rewriteWPHTMLForImport(html) {
