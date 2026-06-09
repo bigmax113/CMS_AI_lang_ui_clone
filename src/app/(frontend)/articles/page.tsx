@@ -1,11 +1,20 @@
-import { ContentCard, PublicChrome, articleHref, formatDate, listPublishedArticles } from '../_content/contentHelpers'
+import {
+  ContentCard,
+  PublicChrome,
+  articleHref,
+  createSEOPageMetadata,
+  formatDate,
+  listPublishedArticles,
+} from '../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
+export const metadata = createSEOPageMetadata({
   description: 'Published CMS AI content materials.',
+  path: '/articles',
   title: 'Content - CMS AI',
-}
+  type: 'website',
+})
 
 export default async function ArticlesIndexPage() {
   const articles = await listPublishedArticles()
