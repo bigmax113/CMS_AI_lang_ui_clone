@@ -9,6 +9,7 @@ import {
 import type { PayloadRequest } from 'payload'
 
 import { absolutePublicURL, blogPostPublicPath, type PublicSite } from '../../lib/publicURLs'
+import { cleanArticleText, excerptArticleText, slugifyArticleTitle } from '../../lib/articleFields'
 import { articlesSlug } from '../Articles'
 import { authorsSlug } from '../Authors'
 import { blogTemplatesSlug } from '../BlogTemplates'
@@ -28,6 +29,8 @@ export const blogPostsSlug = 'blog-posts'
 
 const isPublicSite = (value: unknown): value is PublicSite =>
   typeof value === 'object' && value !== null && 'slug' in value
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
 
 const resolvePublicSite = async (site: unknown, req: PayloadRequest): Promise<null | PublicSite> => {
   if (isPublicSite(site)) {
@@ -89,8 +92,9 @@ const crossSiteCtaBlock = {
 
 export const BlogPostsCollection: CollectionConfig = {
   slug: blogPostsSlug,
+  defaultSort: '-createdAt',
   admin: {
-    defaultColumns: ['title', 'status', 'site', 'template', 'updatedAt'],
+    defaultColumns: ['title', 'status', 'site', 'createdAt', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => blogPostURL(doc, req),
     useAsTitle: 'title',
@@ -98,6 +102,50 @@ export const BlogPostsCollection: CollectionConfig = {
   labels: {
     plural: 'Legacy Blog Posts',
     singular: 'Legacy Blog Post',
+  },
+  hooks: {
+    beforeValidate: [
+      ({ data, originalDoc }) => {
+        if (!data) {
+          return data
+        }
+
+        const nextData = { ...data }
+        const originalSEO = isRecord(originalDoc?.seo) ? originalDoc.seo : {}
+        const inputSEO = isRecord(nextData.seo) ? { ...nextData.seo } : undefined
+        const title = cleanArticleText(nextData.title) || cleanArticleText(originalDoc?.title)
+        const summary = cleanArticleText(nextData.summary) || cleanArticleText(originalDoc?.summary)
+
+        if (!cleanArticleText(nextData.slug) && !cleanArticleText(originalDoc?.slug) && title) {
+          nextData.slug = slugifyArticleTitle(title)
+        }
+
+        const seoTitle = cleanArticleText(inputSEO?.title) || cleanArticleText(originalSEO.title)
+        const seoDescription =
+          cleanArticleText(inputSEO?.description) || cleanArticleText(originalSEO.description)
+        let nextSEO = inputSEO
+
+        if (!seoTitle && title) {
+          nextSEO ||= {}
+          nextSEO.title = title
+        }
+
+        if (!seoDescription) {
+          const description = summary || excerptArticleText(nextData.content || originalDoc?.content, 300) || title
+
+          if (description) {
+            nextSEO ||= {}
+            nextSEO.description = description
+          }
+        }
+
+        if (nextSEO) {
+          nextData.seo = nextSEO
+        }
+
+        return nextData
+      },
+    ],
   },
   fields: [
     {
@@ -202,9 +250,8 @@ export const BlogPostsCollection: CollectionConfig = {
               name: 'summary',
               type: 'textarea',
               admin: {
-                description: 'Short intro for cards, indexes, and AI source previews.',
+                description: 'Short intro for cards, indexes, and AI source previews. Imported WP summaries are preserved in full.',
               },
-              maxLength: 360,
             },
             {
               name: 'coverImage',
@@ -403,12 +450,16 @@ export const BlogPostsCollection: CollectionConfig = {
             {
               name: 'title',
               type: 'text',
-              maxLength: 70,
+              admin: {
+                description: 'SEO title. No hard character limit: keep the source SEO text intact.',
+              },
             },
             {
               name: 'description',
               type: 'textarea',
-              maxLength: 160,
+              admin: {
+                description: 'SEO description. No hard character limit: keep the source SEO text intact.',
+              },
             },
             {
               name: 'image',

@@ -53,7 +53,7 @@ function selectedArticleIDsFromDOM(): string[] {
 }
 
 export const ArticleTranslationToolbar: React.FC = () => {
-  const [selectedLocales, setSelectedLocales] = useState<string[]>([])
+  const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
   const [running, setRunning] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const selectedLabels = useMemo(
@@ -120,6 +120,8 @@ export const ArticleTranslationToolbar: React.FC = () => {
           .join('; ')
 
         setMessage(`Created ${total} draft(s), failed ${failed.length}. ${failedSummary}`)
+      } else if (!total) {
+        setMessage('No new drafts were needed for the selected language set.')
       } else {
         setMessage(`Created ${total} translated draft(s). Refreshing list...`)
       }

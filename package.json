@@ -19,7 +19,8 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "wp:baseline": "node scripts/wp-migration.mjs baseline",
     "wp:export": "node scripts/wp-migration.mjs export",
-    "wp:import": "node scripts/wp-migration.mjs import"
+    "wp:import": "node scripts/wp-migration.mjs import",
+    "wp:repair-fields": "node scripts/repair-wp-article-fields.mjs"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.82.1",

@@ -18,6 +18,7 @@ export default async function ArticlesIndexPage() {
             {articles.map((article) => (
               <ContentCard
                 href={articleHref(article)}
+                image={article.coverImage}
                 key={article.id}
                 label={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
                 summary={article.summary}

@@ -11,6 +11,7 @@ import {
   normalizeArticleLanguageCode,
   stripArticleLanguagePrefix,
 } from '../lib/articleTranslations'
+import { slugifyArticleTitle } from '../lib/articleFields'
 
 const DEFAULT_XAI_BASE_URL = 'https://api.x.ai/v1'
 const DEFAULT_GROK_TEXT_MODEL = 'grok-4.3'
@@ -24,9 +25,6 @@ const MAX_ARTICLE_BRIEF_CHARS = 24_000
 const MAX_ARTICLE_TRANSLATION_CHARS = 26_000
 const MAX_ARTICLE_TRANSLATION_SEGMENTS = 160
 const MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS = 4_000
-const ARTICLE_SEO_TITLE_MAX_CHARS = 70
-const ARTICLE_SEO_DESCRIPTION_MAX_CHARS = 160
-const ARTICLE_SUMMARY_MAX_CHARS = 320
 
 const embeddingCache = new Map<string, number[]>()
 const queryExpansionCache = new Map<string, string[]>()
@@ -412,12 +410,12 @@ export const saveArticleDraftEndpoint: Endpoint = {
           contentType: 'article',
           languageCode,
           seo: {
-            description: limitArticleField(draft.seoDescription, ARTICLE_SEO_DESCRIPTION_MAX_CHARS),
-            title: limitArticleField(draft.seoTitle, ARTICLE_SEO_TITLE_MAX_CHARS),
+            description: optionalArticleField(draft.seoDescription),
+            title: optionalArticleField(draft.seoTitle),
           },
           slug,
           status: body.status || 'draft',
-          summary: limitArticleField(draft.summary, ARTICLE_SUMMARY_MAX_CHARS),
+          summary: optionalArticleField(draft.summary),
           title: withLanguageTitlePrefix(language.code, title),
           translationGroup,
         },
@@ -516,6 +514,11 @@ export const translateArticlesEndpoint: Endpoint = {
       for (const locale of locales) {
         try {
           const targetLanguageCode = normalizeArticleLanguageCode(locale.code)
+
+          if (targetLanguageCode === sourceLanguageCode) {
+            continue
+          }
+
           const contentPlan = createArticleContentTranslationPlan(source.content)
           const sourceBody =
             contentPlan?.segments
@@ -560,22 +563,13 @@ export const translateArticlesEndpoint: Endpoint = {
               languageCode: targetLanguageCode,
               owner: source.owner,
               seo: {
-                description: limitArticleField(
-                  translated.seoDescription || sourceSEO.description,
-                  ARTICLE_SEO_DESCRIPTION_MAX_CHARS,
-                ),
+                description: optionalArticleField(translated.seoDescription || sourceSEO.description),
                 image: sourceSEO.image,
-                title: limitArticleField(
-                  translated.seoTitle || sourceSEO.title,
-                  ARTICLE_SEO_TITLE_MAX_CHARS,
-                ),
+                title: optionalArticleField(translated.seoTitle || sourceSEO.title),
               },
               slug,
               status: 'draft',
-              summary: limitArticleField(
-                translated.summary || source.summary,
-                ARTICLE_SUMMARY_MAX_CHARS,
-              ),
+              summary: optionalArticleField(translated.summary || source.summary),
               tags: source.tags || [],
               title: withLanguageTitlePrefix(locale.code, translated.title || sourceTitle),
               translationGroup: sourceTranslationGroup,
@@ -894,16 +888,6 @@ function translationSegmentsFromUnknown(value: unknown): ArticleTranslationSegme
   return segments
 }
 
-function slugifyArticleTitle(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/gu, '')
-    .replace(/[^a-z0-9]+/gu, '-')
-    .replace(/^-+|-+$/gu, '')
-    .slice(0, 96)
-}
-
 function parseModelJSONObject(content: string): unknown {
   const trimmed = content.trim().replace(/^```(?:json)?\s*|\s*```$/giu, '')
 
@@ -953,21 +937,14 @@ function clipArticleTranslationText(value: string): string {
     : value
 }
 
-function limitArticleField(value: unknown, maxChars: number): string | undefined {
+function optionalArticleField(value: unknown): string | undefined {
   const text = textFromUnknown(value)
 
   if (!text) {
     return undefined
   }
 
-  if (text.length <= maxChars) {
-    return text
-  }
-
-  const clipped = text.slice(0, maxChars).trim()
-  const withoutPartialWord = clipped.replace(/\s+\S*$/u, '').trim()
-
-  return withoutPartialWord || clipped
+  return text
 }
 
 function errorMessageFromUnknown(error: unknown): string {
@@ -1537,7 +1514,7 @@ async function translateArticleFields(args: {
     'Preserve structure, paragraph order, heading levels, and segment IDs. Do not shorten the text or add facts.',
     'Style: natural native marketing copy for gaming products; modern, technological, confident, not overblown.',
     'Do not use long dashes. Prefer short hyphens or normal punctuation.',
-    'Hard field limits: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
+    'Do not truncate title, summary, seoTitle, or seoDescription. Preserve full source meaning and field structure.',
     '',
     'Translation brief:',
     'You are a professional translator and content editor for the LORGAR gaming-equipment brand.',
@@ -1628,7 +1605,7 @@ async function reviewTranslatedArticleFields(args: {
     'Do not shorten the article body and do not add new facts. Preserve headings, paragraphs, product names, model names, brands, and SEO keywords.',
     'Keep LORGAR untranslated. Keep common gaming terms in English when that sounds natural locally.',
     'Do not use long dashes. Prefer short hyphens or normal punctuation.',
-    'Hard field limits: seoTitle <= 70 characters, seoDescription <= 160 characters, summary <= 320 characters.',
+    'Do not truncate title, summary, seoTitle, or seoDescription. Preserve full source meaning and field structure.',
     '',
     'Source JSON:',
     JSON.stringify(args.source, null, 2),
@@ -1708,6 +1685,7 @@ async function generateGrokArticle(args: {
               'Create practical, publishable CMS article copy.',
               'Return ONLY valid JSON with keys: title, slug, summary, outline, bodyMarkdown, faq, seoTitle, seoDescription.',
               'bodyMarkdown, title, slug, summary, seoTitle, and seoDescription must be strings.',
+              'Do not truncate summary, seoTitle, or seoDescription to fit old CMS character limits.',
               'outline must be an array of short strings.',
               'faq must be an array of objects with question and answer.',
               'Write in the requested output language. If the policy says to follow the brief, preserve the primary language of the source brief.',

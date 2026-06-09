@@ -408,6 +408,8 @@ export const Media: CollectionConfig = {
     read: () => true,
   },
   admin: {
+    description:
+      'Media is the shared file library for images, video, and RAG documents. Use bulk upload here for several files; use Image inside the article editor to insert a chosen image into the article body.',
     defaultColumns: ['filename', 'mimeType', 'updatedAt'],
     group: 'Library',
     useAsTitle: 'filename',
@@ -841,6 +843,7 @@ export const Media: CollectionConfig = {
   },
   upload: {
     adminThumbnail: getAdminThumbnail,
+    bulkUpload: true,
     cacheTags: false,
     displayPreview: true,
     mimeTypes: [

@@ -5,10 +5,10 @@ import {
   AuthorByline,
   ArticleLanguageSwitcher,
   PublicChrome,
-  PublicImage,
   RichText,
   StructuredData,
   createSEOPageMetadata,
+  findPreviewArticleBySlug,
   findPublishedArticleBySlug,
   formatDate,
   listPublishedArticleTranslations,
@@ -20,11 +20,37 @@ type PageProps = {
   params: Promise<{
     slug: string
   }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
-export const generateMetadata = async ({ params }: PageProps) => {
+const firstQueryValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value)
+
+const findArticleForPage = async ({
+  query,
+  slug,
+}: {
+  query?: Record<string, string | string[] | undefined>
+  slug: string
+}) => {
+  if (firstQueryValue(query?.preview) === '1') {
+    const previewArticle = await findPreviewArticleBySlug({
+      id: firstQueryValue(query?.id),
+      slug,
+      token: firstQueryValue(query?.token),
+    })
+
+    if (previewArticle) {
+      return previewArticle
+    }
+  }
+
+  return findPublishedArticleBySlug(slug)
+}
+
+export const generateMetadata = async ({ params, searchParams }: PageProps) => {
   const { slug } = await params
-  const article = await findPublishedArticleBySlug(slug)
+  const query = await searchParams
+  const article = await findArticleForPage({ query, slug })
 
   if (!article) {
     return {
@@ -32,7 +58,7 @@ export const generateMetadata = async ({ params }: PageProps) => {
     }
   }
 
-  const translations = await listPublishedArticleTranslations(article)
+  const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
   const languageAlternates = Object.fromEntries(
     translations.map((translation) => [translation.hreflang, translation.href]),
   )
@@ -46,18 +72,20 @@ export const generateMetadata = async ({ params }: PageProps) => {
   })
 }
 
-export default async function ArticlePage({ params }: PageProps) {
+export default async function ArticlePage({ params, searchParams }: PageProps) {
   const { slug } = await params
-  const article = await findPublishedArticleBySlug(slug)
+  const query = await searchParams
+  const article = await findArticleForPage({ query, slug })
 
   if (!article) {
     notFound()
   }
 
-  const translations = await listPublishedArticleTranslations(article)
+  const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
 
   return (
     <PublicChrome
+      backgroundImage={article.coverImage}
       kicker={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
       title={article.title}
     >
@@ -76,9 +104,6 @@ export default async function ArticlePage({ params }: PageProps) {
         <AuthorByline authors={article.authors} />
         <ArticleLanguageSwitcher alternates={translations} />
         {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}
-        {article.coverImage ? (
-          <PublicImage alt={article.title} className="public-content__cover" media={article.coverImage} />
-        ) : null}
         <RichText content={article.content} />
       </article>
     </PublicChrome>

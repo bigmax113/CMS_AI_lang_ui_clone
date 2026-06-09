@@ -12,6 +12,7 @@ import {
   articleTranslationGroupFromArticle,
   inferArticleLanguageCode,
 } from '@/lib/articleTranslations'
+import { isValidArticlePreviewToken } from '@/lib/articlePreview'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { SafeImage } from './SafeImage'
 
@@ -866,46 +867,72 @@ export const StructuredData = ({
 }
 
 export const PublicChrome = ({
+  backgroundImage,
   children,
   kicker,
   title,
 }: {
+  backgroundImage?: Media | null | number
   children: React.ReactNode
   kicker?: string
   title: string
-}) => (
-  <div className="public-content">
-    <header className="public-content__topbar">
-      <Link href="/ai">AI Workbench</Link>
-      <Link href="/admin">Admin</Link>
-      <Link href="/articles">Content</Link>
-      <Link href="/blog">Blog</Link>
-    </header>
-    <section className="public-content__hero">
-      {kicker ? <p className="public-content__kicker">{kicker}</p> : null}
-      <h1>{title}</h1>
-    </section>
-    {children}
-  </div>
-)
+}) => {
+  const heroImageURL = mediaURL(isMedia(backgroundImage) ? backgroundImage : null)
+  const heroStyle = heroImageURL
+    ? ({ '--public-hero-image': `url("${heroImageURL.replace(/"/gu, '\\"')}")` } as React.CSSProperties)
+    : undefined
+
+  return (
+    <div className="public-content">
+      <header className="public-content__topbar">
+        <Link href="/ai">AI Workbench</Link>
+        <Link href="/admin">Admin</Link>
+        <Link href="/articles">Content</Link>
+        <Link href="/blog">Blog</Link>
+      </header>
+      <section
+        className={['public-content__hero', heroImageURL ? 'public-content__hero--image' : ''].filter(Boolean).join(' ')}
+        style={heroStyle}
+      >
+        {kicker ? <p className="public-content__kicker">{kicker}</p> : null}
+        <h1>{title}</h1>
+      </section>
+      {children}
+    </div>
+  )
+}
 
 export const ContentCard = ({
   href,
+  image,
   label,
   summary,
   title,
 }: {
   href: string
+  image?: Media | null | number
   label?: null | string
   summary?: null | string
   title: string
-}) => (
-  <Link className="public-content__card" href={href}>
-    {label ? <span>{label}</span> : null}
-    <strong>{title}</strong>
-    {summary ? <p>{summary}</p> : null}
-  </Link>
-)
+}) => {
+  const resolvedImage = isMedia(image) ? image : null
+
+  return (
+    <Link className="public-content__card" href={href}>
+      {resolvedImage ? (
+        <SafeImage
+          alt={resolvedImage.alt || title}
+          className="public-content__card-image"
+          fileName={resolvedImage.filename}
+          src={mediaURL(resolvedImage)}
+        />
+      ) : null}
+      {label ? <span>{label}</span> : null}
+      <strong>{title}</strong>
+      {summary ? <p>{summary}</p> : null}
+    </Link>
+  )
+}
 
 export const findPublishedArticleBySlug = async (slug: string) => {
   const payload = await getPayload({ config: configPromise })
@@ -931,6 +958,35 @@ export const findPublishedArticleBySlug = async (slug: string) => {
   })
 
   return result.docs[0] || null
+}
+
+export const findPreviewArticleBySlug = async ({
+  id,
+  slug,
+  token,
+}: {
+  id?: null | string
+  slug: string
+  token?: null | string
+}) => {
+  if (!id || !token) {
+    return null
+  }
+
+  const payload = await getPayload({ config: configPromise })
+  const article = await payload.findByID({
+    collection: 'articles',
+    depth: 2,
+    disableErrors: true,
+    id,
+    overrideAccess: true,
+  })
+
+  if (!article || article.slug !== slug) {
+    return null
+  }
+
+  return isValidArticlePreviewToken({ id: article.id, slug, token }) ? article : null
 }
 
 export const listPublishedArticles = async () => {

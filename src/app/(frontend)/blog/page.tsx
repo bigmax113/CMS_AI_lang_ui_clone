@@ -22,6 +22,7 @@ export default async function BlogIndexPage() {
               return (
                 <ContentCard
                   href={blogPostHref(post)}
+                  image={post.coverImage}
                   key={post.id}
                   label={label || 'Blog post'}
                   summary={post.summary}

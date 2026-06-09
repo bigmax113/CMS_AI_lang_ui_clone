@@ -498,7 +498,7 @@ function normalizeExportedPost({ categoryByID, mediaByID, post, site, tagByID })
 
 function mapPostToArticle({ post, site, statusMode }) {
   const title = cleanText(stripHTML(post.titleHTML || post.slug || `WP ${post.id}`)) || post.slug || `WP ${post.id}`
-  const summary = cleanText(stripHTML(post.excerptHTML || '')).slice(0, 320)
+  const summary = cleanText(stripHTML(post.excerptHTML || ''))
   const tags = [
     ...(post.categories || []).map((item) => item?.name),
     ...(post.tags || []).map((item) => item?.name),
@@ -506,8 +506,8 @@ function mapPostToArticle({ post, site, statusMode }) {
     .filter(Boolean)
     .slice(0, 24)
     .map((tag) => ({ tag }))
-  const seoTitle = cleanText(post.seo?.title || title).slice(0, 70)
-  const seoDescription = cleanText(post.seo?.description || summary || title).slice(0, 160)
+  const seoTitle = cleanText(post.seo?.title || title)
+  const seoDescription = cleanText(post.seo?.description || summary || title)
   const status = resolveImportStatus({ post, statusMode })
   const translationGroup = inferTranslationGroup(post, site)
 

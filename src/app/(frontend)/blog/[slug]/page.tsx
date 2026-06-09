@@ -4,7 +4,6 @@ import { blogPostPublicPath } from '@/lib/publicURLs'
 import {
   AuthorByline,
   PublicChrome,
-  PublicImage,
   RichText,
   StructuredData,
   createSEOPageMetadata,
@@ -54,7 +53,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const kicker = [site?.name, formatDate(post.publishedAt) || post.category].filter(Boolean).join(' / ')
 
   return (
-    <PublicChrome kicker={kicker || 'Blog post'} title={post.title}>
+    <PublicChrome backgroundImage={post.coverImage} kicker={kicker || 'Blog post'} title={post.title}>
       <StructuredData
         authors={post.authors}
         content={post.content}
@@ -69,9 +68,6 @@ export default async function BlogPostPage({ params }: PageProps) {
       <article className="public-content__article">
         <AuthorByline authors={post.authors} />
         {post.summary ? <p className="public-content__summary">{post.summary}</p> : null}
-        {post.coverImage ? (
-          <PublicImage alt={post.title} className="public-content__cover" media={post.coverImage} />
-        ) : null}
         <RichText content={post.content} />
       </article>
     </PublicChrome>

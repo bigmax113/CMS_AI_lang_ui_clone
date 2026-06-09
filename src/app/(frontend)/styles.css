@@ -89,12 +89,38 @@ body {
 .public-content__hero {
   background: linear-gradient(135deg, #0b6b6f, #16202f);
   color: #ffffff;
+  overflow: hidden;
   padding: 44px;
+  position: relative;
+}
+
+.public-content__hero::before {
+  content: "";
+  inset: 0;
+  position: absolute;
+  z-index: 0;
+}
+
+.public-content__hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.public-content__hero--image {
+  background-image:
+    linear-gradient(90deg, rgba(15, 23, 36, 0.82), rgba(15, 23, 36, 0.58) 48%, rgba(15, 23, 36, 0.34)),
+    var(--public-hero-image);
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 380px;
 }
 
 .public-content__hero h1 {
   color: #ffffff;
-  font-size: clamp(38px, 6vw, 68px);
+  font-size: 64px;
   line-height: 1.05;
   margin: 0;
   max-width: 900px;
@@ -131,6 +157,14 @@ body {
   text-decoration: none;
 }
 
+.public-content__card-image {
+  aspect-ratio: 16 / 9;
+  border-radius: 6px;
+  margin: 0 0 14px;
+  object-fit: cover;
+  width: 100%;
+}
+
 .public-content__card span {
   color: #5c7089;
   display: block;
@@ -155,7 +189,7 @@ body {
   font-size: 22px;
   line-height: 1.45;
   margin: 0 0 24px;
-  max-width: 880px;
+  max-width: none;
 }
 
 .public-content__language-switcher {
@@ -205,7 +239,7 @@ body {
   display: grid;
   gap: 12px;
   margin: 0 0 22px;
-  max-width: 860px;
+  max-width: none;
 }
 
 .public-content__author {
@@ -288,7 +322,8 @@ body {
 }
 
 .public-content__richtext {
-  max-width: 860px;
+  max-width: none;
+  width: 100%;
 }
 
 .public-content__richtext h2,
@@ -331,7 +366,7 @@ body {
 .public-content__html-embed {
   border: 1px dashed #9fb0c2;
   border-radius: 8px;
-  margin: 24px 0;
+  margin: 24px auto;
   overflow-x: auto;
   padding: 16px;
 }
@@ -436,7 +471,7 @@ body {
 }
 
 .public-content__image-block--large {
-  --image-max-width: 860px;
+  --image-max-width: 960px;
 }
 
 .public-content__image-block--medium {
@@ -638,6 +673,7 @@ iframe.public-content__video-frame {
 
 .public-content__table {
   border-collapse: collapse;
+  margin: 28px auto;
   width: 100%;
 }
 
@@ -669,6 +705,14 @@ iframe.public-content__video-frame {
   .public-content__section,
   .public-content__article {
     padding: 20px;
+  }
+
+  .public-content__hero {
+    min-height: 280px;
+  }
+
+  .public-content__hero h1 {
+    font-size: 38px;
   }
 
   .public-content__grid {

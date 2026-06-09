@@ -109,6 +109,7 @@ export const articleLanguageOptions = articleLanguageDefinitions.map(({ label, v
 }))
 
 const articleTranslationTargetCodes = [
+  'en',
   'cs',
   'uk',
   'ro',

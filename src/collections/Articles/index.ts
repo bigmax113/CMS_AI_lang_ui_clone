@@ -26,8 +26,13 @@ import {
   productCardCarouselBlock,
   videoBlock,
 } from '../contentBlocks'
+import { articlePreviewPath } from '../../lib/articlePreview'
+import { cleanArticleText, excerptArticleText, slugifyArticleTitle } from '../../lib/articleFields'
 
 export const articlesSlug = 'articles'
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
 
 const calloutBlock = {
   slug: 'callout',
@@ -81,18 +86,25 @@ export const ArticlesCollection: CollectionConfig = {
       }
     },
   },
+  defaultSort: '-createdAt',
   admin: {
     components: {
       beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
     },
-    defaultColumns: ['title', 'languageCode', 'status', 'category', 'updatedAt'],
+    defaultColumns: ['title', 'languageCode', 'status', 'createdAt', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => {
-      if (doc.status !== 'published' || typeof doc.slug !== 'string') {
+      if (typeof doc.slug !== 'string') {
         return null
       }
 
-      return absolutePublicURL(articlePublicPath(doc.slug), req)
+      if (doc.status === 'published') {
+        return absolutePublicURL(articlePublicPath(doc.slug), req)
+      }
+
+      const id = typeof doc.id === 'number' || typeof doc.id === 'string' ? doc.id : null
+
+      return absolutePublicURL(articlePreviewPath({ id, slug: doc.slug }), req)
     },
     useAsTitle: 'title',
   },
@@ -107,13 +119,46 @@ export const ArticlesCollection: CollectionConfig = {
           return data
         }
 
+        const nextData = { ...data }
+        const originalSEO = isRecord(originalDoc?.seo) ? originalDoc.seo : {}
+        const inputSEO = isRecord(nextData.seo) ? { ...nextData.seo } : undefined
+        const title = cleanArticleText(nextData.title) || cleanArticleText(originalDoc?.title)
+        const summary = cleanArticleText(nextData.summary) || cleanArticleText(originalDoc?.summary)
+
+        if (!cleanArticleText(nextData.slug) && !cleanArticleText(originalDoc?.slug) && title) {
+          nextData.slug = slugifyArticleTitle(title)
+        }
+
+        const seoTitle = cleanArticleText(inputSEO?.title) || cleanArticleText(originalSEO.title)
+        const seoDescription =
+          cleanArticleText(inputSEO?.description) || cleanArticleText(originalSEO.description)
+        let nextSEO = inputSEO
+
+        if (!seoTitle && title) {
+          nextSEO ||= {}
+          nextSEO.title = title
+        }
+
+        if (!seoDescription) {
+          const description = summary || excerptArticleText(nextData.content || originalDoc?.content, 300) || title
+
+          if (description) {
+            nextSEO ||= {}
+            nextSEO.description = description
+          }
+        }
+
+        if (nextSEO) {
+          nextData.seo = nextSEO
+        }
+
         const currentArticle = {
           ...originalDoc,
-          ...data,
+          ...nextData,
         }
 
         return {
-          ...data,
+          ...nextData,
           languageCode: inferArticleLanguageCode(currentArticle),
           translationGroup: articleTranslationGroupFromArticle(currentArticle),
         }
@@ -253,6 +298,28 @@ export const ArticlesCollection: CollectionConfig = {
       virtual: true,
     },
     {
+      name: 'previewUrl',
+      type: 'text',
+      admin: {
+        description: 'Fast preview link for drafts and review items. The Payload Preview button opens the same URL.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      hooks: {
+        afterRead: [
+          ({ data, req }) => {
+            if (!data?.id || typeof data.slug !== 'string') {
+              return 'Save this article once to get a preview URL.'
+            }
+
+            return absolutePublicURL(articlePreviewPath({ id: data.id, slug: data.slug }), req)
+          },
+        ],
+      },
+      label: 'Preview URL',
+      virtual: true,
+    },
+    {
       name: 'publishedAt',
       type: 'date',
       admin: {
@@ -271,9 +338,8 @@ export const ArticlesCollection: CollectionConfig = {
               name: 'summary',
               type: 'textarea',
               admin: {
-                description: 'Short intro shown in cards, search results, and previews.',
+                description: 'Short intro shown in cards, search results, and previews. Imported summaries are kept in full.',
               },
-              maxLength: 320,
             },
             {
               name: 'coverImage',
@@ -481,12 +547,16 @@ export const ArticlesCollection: CollectionConfig = {
             {
               name: 'title',
               type: 'text',
-              maxLength: 70,
+              admin: {
+                description: 'SEO title. No hard character limit: keep it as long as the source or SEO team requires.',
+              },
             },
             {
               name: 'description',
               type: 'textarea',
-              maxLength: 160,
+              admin: {
+                description: 'SEO description. No hard character limit: existing WP text is preserved in full.',
+              },
             },
             {
               name: 'image',

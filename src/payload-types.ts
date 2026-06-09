@@ -291,6 +291,8 @@ export interface Author {
   createdAt: string;
 }
 /**
+ * Media is the shared file library for images, video, and RAG documents. Use bulk upload here for several files; use Image inside the article editor to insert a chosen image into the article body.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
@@ -446,7 +448,7 @@ export interface BlogPost {
   template?: (number | null) | BlogTemplate;
   publishedAt?: string | null;
   /**
-   * Short intro for cards, indexes, and AI source previews.
+   * Short intro for cards, indexes, and AI source previews. Imported WP summaries are preserved in full.
    */
   summary?: string | null;
   coverImage?: (number | null) | Media;
@@ -517,7 +519,13 @@ export interface BlogPost {
     linkingNotes?: string | null;
   };
   seo?: {
+    /**
+     * SEO title. No hard character limit: keep the source SEO text intact.
+     */
     title?: string | null;
+    /**
+     * SEO description. No hard character limit: keep the source SEO text intact.
+     */
     description?: string | null;
     image?: (number | null) | Media;
   };
@@ -553,9 +561,13 @@ export interface Article {
    * Frontend link. It works after status is Published.
    */
   publicUrl?: string | null;
+  /**
+   * Fast preview link for drafts and review items. The Payload Preview button opens the same URL.
+   */
+  previewUrl?: string | null;
   publishedAt?: string | null;
   /**
-   * Short intro shown in cards, search results, and previews.
+   * Short intro shown in cards, search results, and previews. Imported summaries are kept in full.
    */
   summary?: string | null;
   coverImage?: (number | null) | Media;
@@ -625,7 +637,13 @@ export interface Article {
     editorialNotes?: string | null;
   };
   seo?: {
+    /**
+     * SEO title. No hard character limit: keep it as long as the source or SEO team requires.
+     */
     title?: string | null;
+    /**
+     * SEO description. No hard character limit: existing WP text is preserved in full.
+     */
     description?: string | null;
     image?: (number | null) | Media;
   };
@@ -1140,6 +1158,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   languageCode?: T;
   translationGroup?: T;
   publicUrl?: T;
+  previewUrl?: T;
   publishedAt?: T;
   summary?: T;
   coverImage?: T;
