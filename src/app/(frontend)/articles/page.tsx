@@ -10,9 +10,9 @@ import {
 export const dynamic = 'force-dynamic'
 
 export const metadata = createSEOPageMetadata({
-  description: 'Published CMS AI content materials.',
+  description: 'Published articles, guides, news, and product content.',
   path: '/articles',
-  title: 'Content - CMS AI',
+  title: 'Content',
   type: 'website',
 })
 

@@ -106,7 +106,7 @@ const dataURLResponse = (source: string) => {
 
   return new Response(Buffer.from(match[2], 'base64'), {
     headers: {
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
       'Content-Type': match[1],
     },
   })
@@ -304,7 +304,7 @@ const streamGoogleDriveFile = async ({
   }
 
   const headers = new Headers({
-    'Cache-Control': 'public, max-age=300',
+    'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
     'Content-Disposition': `inline${filename ? `; filename="${safeDriveFileName(filename)}"` : ''}`,
     'Content-Type': response.headers.get('Content-Type') || mimeType,
   })

@@ -638,6 +638,10 @@ export interface Article {
   };
   seo?: {
     /**
+     * Optional canonical URL override. Leave empty to use the generated public article URL.
+     */
+    canonicalURL?: string | null;
+    /**
      * SEO title. No hard character limit: keep it as long as the source or SEO team requires.
      */
     title?: string | null;
@@ -646,6 +650,22 @@ export interface Article {
      */
     description?: string | null;
     image?: (number | null) | Media;
+    /**
+     * Optional Open Graph title. Leave empty to use SEO title.
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional Open Graph description. Leave empty to use SEO description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional Twitter/X Card title. Leave empty to use OG or SEO title.
+     */
+    twitterTitle?: string | null;
+    /**
+     * Optional Twitter/X Card description. Leave empty to use OG or SEO description.
+     */
+    twitterDescription?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1202,9 +1222,14 @@ export interface ArticlesSelect<T extends boolean = true> {
   seo?:
     | T
     | {
+        canonicalURL?: T;
         title?: T;
         description?: T;
         image?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        twitterTitle?: T;
+        twitterDescription?: T;
       };
   updatedAt?: T;
   createdAt?: T;

@@ -34,6 +34,34 @@ export const articlesSlug = 'articles'
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
+const fallbackSummaryFromContent = (content: unknown, title?: string) => {
+  const summary = excerptArticleText(content, 320)
+
+  if (summary && summary !== title) {
+    return summary
+  }
+
+  return undefined
+}
+
+const fallbackSEODescription = ({
+  content,
+  summary,
+  title,
+}: {
+  content: unknown
+  summary?: string
+  title?: string
+}) => {
+  const candidate = summary || fallbackSummaryFromContent(content, title)
+
+  if (candidate && candidate !== title) {
+    return candidate
+  }
+
+  return title ? `Read the full article: ${title}.` : undefined
+}
+
 const calloutBlock = {
   slug: 'callout',
   labels: {
@@ -123,10 +151,17 @@ export const ArticlesCollection: CollectionConfig = {
         const originalSEO = isRecord(originalDoc?.seo) ? originalDoc.seo : {}
         const inputSEO = isRecord(nextData.seo) ? { ...nextData.seo } : undefined
         const title = cleanArticleText(nextData.title) || cleanArticleText(originalDoc?.title)
-        const summary = cleanArticleText(nextData.summary) || cleanArticleText(originalDoc?.summary)
+        const summary =
+          cleanArticleText(nextData.summary) ||
+          cleanArticleText(originalDoc?.summary) ||
+          fallbackSummaryFromContent(nextData.content || originalDoc?.content, title)
 
         if (!cleanArticleText(nextData.slug) && !cleanArticleText(originalDoc?.slug) && title) {
           nextData.slug = slugifyArticleTitle(title)
+        }
+
+        if (!cleanArticleText(nextData.summary) && summary) {
+          nextData.summary = summary
         }
 
         const seoTitle = cleanArticleText(inputSEO?.title) || cleanArticleText(originalSEO.title)
@@ -140,9 +175,24 @@ export const ArticlesCollection: CollectionConfig = {
         }
 
         if (!seoDescription) {
-          const description = summary || excerptArticleText(nextData.content || originalDoc?.content, 300) || title
+          const description = fallbackSEODescription({
+            content: nextData.content || originalDoc?.content,
+            summary,
+            title,
+          })
 
           if (description) {
+            nextSEO ||= {}
+            nextSEO.description = description
+          }
+        } else if (seoDescription === seoTitle || seoDescription === title) {
+          const description = fallbackSEODescription({
+            content: nextData.content || originalDoc?.content,
+            summary,
+            title,
+          })
+
+          if (description && description !== seoDescription) {
             nextSEO ||= {}
             nextSEO.description = description
           }
@@ -545,6 +595,15 @@ export const ArticlesCollection: CollectionConfig = {
           name: 'seo',
           fields: [
             {
+              name: 'canonicalURL',
+              type: 'text',
+              admin: {
+                description:
+                  'Optional canonical URL override. Leave empty to use the generated public article URL.',
+              },
+              label: 'Canonical URL',
+            },
+            {
               name: 'title',
               type: 'text',
               admin: {
@@ -563,6 +622,44 @@ export const ArticlesCollection: CollectionConfig = {
               type: 'upload',
               displayPreview: true,
               relationTo: mediaSlug,
+            },
+            {
+              type: 'collapsible',
+              fields: [
+                {
+                  name: 'ogTitle',
+                  type: 'text',
+                  admin: {
+                    description: 'Optional Open Graph title. Leave empty to use SEO title.',
+                  },
+                  label: 'OG title',
+                },
+                {
+                  name: 'ogDescription',
+                  type: 'textarea',
+                  admin: {
+                    description: 'Optional Open Graph description. Leave empty to use SEO description.',
+                  },
+                  label: 'OG description',
+                },
+                {
+                  name: 'twitterTitle',
+                  type: 'text',
+                  admin: {
+                    description: 'Optional Twitter/X Card title. Leave empty to use OG or SEO title.',
+                  },
+                  label: 'Twitter title',
+                },
+                {
+                  name: 'twitterDescription',
+                  type: 'textarea',
+                  admin: {
+                    description: 'Optional Twitter/X Card description. Leave empty to use OG or SEO description.',
+                  },
+                  label: 'Twitter description',
+                },
+              ],
+              label: 'Social metadata overrides',
             },
           ],
           label: 'SEO',

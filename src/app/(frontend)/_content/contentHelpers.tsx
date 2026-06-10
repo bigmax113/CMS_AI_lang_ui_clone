@@ -130,20 +130,32 @@ export const createSEOPageMetadata = ({
   description,
   image,
   languageAlternates,
+  ogDescription,
+  ogTitle,
   path,
   title,
+  twitterDescription,
+  twitterTitle,
   type = 'article',
 }: {
   canonicalURL?: null | string
   description?: null | string
   image?: Media | null | number
   languageAlternates?: Record<string, string>
+  ogDescription?: null | string
+  ogTitle?: null | string
   path?: null | string
   title: string
+  twitterDescription?: null | string
+  twitterTitle?: null | string
   type?: 'article' | 'website'
 }): Metadata => {
   const canonical = canonicalURL || absoluteURL(path) || publicBaseURL()
   const imageURL = seoImageURL(image)
+  const openGraphTitle = ogTitle || title
+  const openGraphDescription = ogDescription || description || undefined
+  const cardTitle = twitterTitle || openGraphTitle
+  const cardDescription = twitterDescription || openGraphDescription
   const alternateLanguages = languageAlternates
     ? Object.fromEntries(
         Object.entries(languageAlternates).map(([language, url]) => [
@@ -170,18 +182,18 @@ export const createSEOPageMetadata = ({
     },
     description: description || undefined,
     openGraph: {
-      description: description || undefined,
+      description: openGraphDescription,
       images,
-      title,
+      title: openGraphTitle,
       type,
       url: canonical,
     },
     title,
     twitter: {
       card: 'summary_large_image',
-      description: description || undefined,
+      description: cardDescription,
       images: imageURL ? [imageURL] : undefined,
-      title,
+      title: cardTitle,
     },
   }
 }
@@ -217,6 +229,70 @@ const faqItemsFromFields = (fields: Record<string, unknown>) =>
       question: textField(item.question),
     }))
     .filter((item) => item.question && item.answer)
+
+const nodeText = (node?: LexicalNode): string => {
+  if (!node) {
+    return ''
+  }
+
+  const ownText = textField(node.text)
+  const childText = node.children?.map(nodeText).filter(Boolean).join(' ') || ''
+
+  return [ownText, childText].filter(Boolean).join(' ').replace(/\s+/gu, ' ').trim()
+}
+
+const faqItemsFromRichText = (content: Article['content'] | BlogPost['content'] | null | undefined) => {
+  const children = ((content?.root as LexicalNode | undefined)?.children || []).filter(Boolean)
+  const items: Array<{ answer: string; question: string }> = []
+  let isInFAQSection = false
+  let currentQuestion = ''
+  let answerParts: string[] = []
+  const flush = () => {
+    const answer = answerParts.join(' ').replace(/\s+/gu, ' ').trim()
+
+    if (currentQuestion && answer) {
+      items.push({
+        answer,
+        question: currentQuestion,
+      })
+    }
+
+    currentQuestion = ''
+    answerParts = []
+  }
+
+  for (const child of children) {
+    const text = nodeText(child)
+
+    if (!text) {
+      continue
+    }
+
+    if (child.type === 'heading' && /\bfaq\b|frequently asked|questions|часто|вопрос/iu.test(text)) {
+      flush()
+      isInFAQSection = true
+      continue
+    }
+
+    if (!isInFAQSection) {
+      continue
+    }
+
+    if (child.type === 'heading') {
+      flush()
+      currentQuestion = text
+      continue
+    }
+
+    if (currentQuestion && (child.type === 'paragraph' || child.type === 'listitem')) {
+      answerParts.push(text)
+    }
+  }
+
+  flush()
+
+  return items
+}
 
 const productCardFromFields = (fields: Record<string, unknown>) => ({
   brand: textField(fields.brand),
@@ -340,7 +416,7 @@ const videoFromFields = (fields: Record<string, unknown>) => {
     description: textField(fields.description),
     duration: textField(fields.duration),
     embedURL,
-    maxWidth: optionField(fields.maxWidth, ['360', '480', '720'] as const, '720'),
+    maxWidth: optionField(fields.maxWidth, ['article', '360', '480', '720'] as const, 'article'),
     orientation: optionField(fields.orientation, ['horizontal', 'vertical', 'square'] as const, 'horizontal'),
     size: optionField(fields.size, ['small', 'medium', 'full'] as const, 'full'),
     sourceType: optionField(fields.sourceType, ['youtube', 'externalMP4', 'upload', 'url'] as const, 'url'),
@@ -413,9 +489,12 @@ const renderProductCard = (
 }
 
 const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: string) => {
-  if (!video.title || (!video.sourceURL && !video.embedURL)) {
+  if (!video.sourceURL && !video.embedURL) {
     return null
   }
+
+  const accessibleTitle = video.title || video.caption || 'Embedded video'
+  const maxWidth = video.maxWidth === 'article' ? '100%' : `${video.maxWidth}px`
 
   return (
     <figure
@@ -426,7 +505,7 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
         `public-content__video--${video.align}`,
       ].join(' ')}
       key={key}
-      style={{ '--video-user-max-width': `${video.maxWidth}px` } as React.CSSProperties}
+      style={{ '--video-user-max-width': maxWidth } as React.CSSProperties}
     >
       {video.embedURL ? (
         <iframe
@@ -436,7 +515,7 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
           loading="lazy"
           referrerPolicy="strict-origin-when-cross-origin"
           src={video.embedURL}
-          title={video.title}
+          title={accessibleTitle}
         />
       ) : isPlayableVideoURL(video.sourceURL) ? (
         <video className="public-content__video-frame" controls playsInline poster={video.thumbnailURL || undefined}>
@@ -444,20 +523,15 @@ const renderVideoFigure = (video: ReturnType<typeof videoFromFields>, key: strin
         </video>
       ) : (
         <a className="public-content__video-link" href={video.sourceURL} rel="noreferrer" target="_blank">
-          {video.thumbnailURL ? <SafeImage alt={video.title} src={video.thumbnailURL} /> : null}
-          <span>{video.title}</span>
+          {video.thumbnailURL ? <SafeImage alt={accessibleTitle} src={video.thumbnailURL} /> : null}
+          <span>{accessibleTitle}</span>
         </a>
       )}
-      <figcaption>
-        {video.caption ? (
+      {video.caption ? (
+        <figcaption>
           <span>{video.caption}</span>
-        ) : (
-          <>
-            <strong>{video.title}</strong>
-            {video.description ? <span>{video.description}</span> : null}
-          </>
-        )}
-      </figcaption>
+        </figcaption>
+      ) : null}
     </figure>
   )
 }
@@ -509,8 +583,8 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
   }
 
   if (node.type === 'heading') {
-    const tag = ['h2', 'h3', 'h4'].includes(String(node.tag)) ? String(node.tag) : 'h2'
-    const Heading = tag as 'h2' | 'h3' | 'h4'
+    const tag = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(String(node.tag)) ? String(node.tag) : 'h2'
+    const Heading = tag as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
     return <Heading key={key}>{children}</Heading>
   }
@@ -785,10 +859,11 @@ export const StructuredData = ({
       .filter((product) => product.name),
     ...collectBlockFields(content, 'productCardCarousel').flatMap(productCardsFromCarouselFields),
   ]
-  const faqItems = collectBlockFields(content, 'faq').flatMap(faqItemsFromFields)
+  const blockFAQItems = collectBlockFields(content, 'faq').flatMap(faqItemsFromFields)
+  const faqItems = blockFAQItems.length ? blockFAQItems : faqItemsFromRichText(content)
   const videos = collectBlockFields(content, 'video')
     .map(videoFromFields)
-    .filter((video) => video.title && (video.embedURL || video.contentURL || video.sourceURL))
+    .filter((video) => video.embedURL || video.contentURL || video.sourceURL)
   const schemas = [
     {
       '@context': 'https://schema.org',
@@ -844,10 +919,10 @@ export const StructuredData = ({
       '@type': 'VideoObject',
       caption: video.caption || undefined,
       contentUrl: video.contentURL ? absoluteURL(video.contentURL) : undefined,
-      description: video.schemaDescription || video.description || undefined,
+      description: video.schemaDescription || video.description || video.caption || undefined,
       duration: video.duration || undefined,
       embedUrl: absoluteURL(video.embedURL),
-      name: video.schemaName || video.title,
+      name: video.schemaName || video.title || video.caption || title,
       thumbnailUrl: video.thumbnailURL ? [absoluteURL(video.thumbnailURL)] : undefined,
       uploadDate: video.uploadDate || publishedAt || undefined,
     })),
@@ -862,6 +937,51 @@ export const StructuredData = ({
           type="application/ld+json"
         />
       ))}
+    </>
+  )
+}
+
+export type BreadcrumbItem = {
+  href: string
+  label: string
+}
+
+export const Breadcrumbs = ({ items }: { items: BreadcrumbItem[] }) => {
+  const visibleItems = items.filter((item) => item.href && item.label)
+
+  if (visibleItems.length < 2) {
+    return null
+  }
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: visibleItems.map((item, index) => ({
+      '@type': 'ListItem',
+      item: absoluteURL(item.href),
+      name: item.label,
+      position: index + 1,
+    })),
+  }
+
+  return (
+    <>
+      <nav aria-label="Breadcrumbs" className="public-content__breadcrumbs">
+        {visibleItems.map((item, index) => {
+          const isLast = index === visibleItems.length - 1
+
+          return (
+            <React.Fragment key={`${item.href}-${index}`}>
+              {isLast ? <span aria-current="page">{item.label}</span> : <Link href={item.href}>{item.label}</Link>}
+              {!isLast ? <span aria-hidden="true">/</span> : null}
+            </React.Fragment>
+          )
+        })}
+      </nav>
+      <script
+        dangerouslySetInnerHTML={{ __html: safeJSON(schema) }}
+        type="application/ld+json"
+      />
     </>
   )
 }

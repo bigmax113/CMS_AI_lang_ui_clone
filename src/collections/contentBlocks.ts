@@ -125,9 +125,12 @@ export const imageBlock = {
     {
       name: 'image',
       type: 'upload',
+      admin: {
+        description:
+          'Choose an image for the article body. Drafts can be saved while this is empty; empty image blocks are ignored on the public page.',
+      },
       displayPreview: true,
       relationTo: mediaSlug,
-      required: true,
     },
     {
       name: 'caption',
@@ -242,15 +245,19 @@ export const imageRowBlock = {
       name: 'images',
       type: 'array',
       admin: {
-        description: 'Place 2-4 images in one responsive row on the public article page.',
+        description:
+          'Place 2-4 images in one responsive row on the public article page. Drafts can be saved while the row is incomplete.',
       },
       fields: [
         {
           name: 'image',
           type: 'upload',
+          admin: {
+            description:
+              'Choose an image. Drafts can be saved while an image row is being prepared; empty items are ignored on the public page.',
+          },
           displayPreview: true,
           relationTo: mediaSlug,
-          required: true,
         },
         {
           name: 'caption',
@@ -258,8 +265,7 @@ export const imageRowBlock = {
         },
       ],
       maxRows: 4,
-      minRows: 2,
-      required: true,
+      minRows: 0,
     },
   ],
 } satisfies Block
@@ -268,7 +274,10 @@ export const videoFields = (): Field[] => [
     {
       name: 'title',
       type: 'text',
-      required: true,
+      admin: {
+        description:
+          'Optional internal/accessibility title. It is not printed under the public player unless you add a visible caption.',
+      },
     },
     {
       name: 'description',
@@ -355,7 +364,7 @@ export const videoFields = (): Field[] => [
       name: 'caption',
       type: 'text',
       admin: {
-        description: 'Visible caption under the video. Leave empty to show title and description.',
+        description: 'Visible caption under the video. Leave empty to show only the player.',
       },
     },
     {
@@ -410,9 +419,13 @@ export const videoFields = (): Field[] => [
         {
           name: 'maxWidth',
           type: 'select',
-          defaultValue: '720',
+          defaultValue: 'article',
           label: 'Maximum width',
           options: [
+            {
+              label: 'Article width',
+              value: 'article',
+            },
             {
               label: '360 px',
               value: '360',

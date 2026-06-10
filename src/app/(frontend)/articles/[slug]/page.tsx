@@ -4,6 +4,7 @@ import { articlePublicPath } from '@/lib/publicURLs'
 import {
   AuthorByline,
   ArticleLanguageSwitcher,
+  Breadcrumbs,
   PublicChrome,
   RichText,
   StructuredData,
@@ -62,13 +63,27 @@ export const generateMetadata = async ({ params, searchParams }: PageProps) => {
   const languageAlternates = Object.fromEntries(
     translations.map((translation) => [translation.hreflang, translation.href]),
   )
+  const seo = article.seo as
+    | {
+        canonicalURL?: null | string
+        ogDescription?: null | string
+        ogTitle?: null | string
+        twitterDescription?: null | string
+        twitterTitle?: null | string
+      }
+    | undefined
 
   return createSEOPageMetadata({
+    canonicalURL: seo?.canonicalURL,
     description: article.seo?.description || article.summary,
     image: article.seo?.image || article.coverImage,
     languageAlternates,
+    ogDescription: seo?.ogDescription,
+    ogTitle: seo?.ogTitle,
     path: articlePublicPath(article.slug),
-    title: `${article.seo?.title || article.title} - CMS AI`,
+    title: article.seo?.title || article.title,
+    twitterDescription: seo?.twitterDescription,
+    twitterTitle: seo?.twitterTitle,
   })
 }
 
@@ -82,6 +97,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   }
 
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
+  const articlePath = articlePublicPath(article.slug) || '/articles'
 
   return (
     <PublicChrome
@@ -101,6 +117,13 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
         url={articlePublicPath(article.slug)}
       />
       <article className="public-content__article">
+        <Breadcrumbs
+          items={[
+            { href: '/', label: 'Home' },
+            { href: '/articles', label: 'Content' },
+            { href: articlePath, label: article.title },
+          ]}
+        />
         <AuthorByline authors={article.authors} />
         <ArticleLanguageSwitcher alternates={translations} />
         {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}

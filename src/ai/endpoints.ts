@@ -927,6 +927,51 @@ function normalizeArticleDraft(value: unknown, fallbackTitle: string): ArticleDr
   }
 }
 
+function plainTextFromMarkdown(value: unknown): string {
+  return textFromUnknown(value)
+    .replace(/```[\s\S]*?```/gu, ' ')
+    .replace(/`([^`]+)`/gu, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/gu, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
+    .replace(/^#{1,6}\s+/gmu, '')
+    .replace(/^[-*]\s+/gmu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+}
+
+function excerptPlainText(value: unknown, maxChars = 320): string {
+  const text = plainTextFromMarkdown(value)
+
+  if (text.length <= maxChars) {
+    return text
+  }
+
+  return text.slice(0, maxChars).replace(/\s+\S*$/u, '').trim() || text.slice(0, maxChars).trim()
+}
+
+function ensureArticleDraftCompleteness(draft: ArticleDraft, fallbackTitle: string): ArticleDraft {
+  const title = textFromUnknown(draft.title) || fallbackTitle || 'Generated article draft'
+  const summary = textFromUnknown(draft.summary) || excerptPlainText(draft.bodyMarkdown, 260)
+  const seoTitle = textFromUnknown(draft.seoTitle) || title
+  const bodyExcerpt = excerptPlainText(draft.bodyMarkdown, 320)
+  const seoDescriptionCandidate =
+    textFromUnknown(draft.seoDescription) || summary || bodyExcerpt || `Read the full article: ${title}.`
+  const seoDescription =
+    seoDescriptionCandidate === seoTitle || seoDescriptionCandidate === title
+      ? bodyExcerpt && bodyExcerpt !== title
+        ? bodyExcerpt
+        : `Read the full article: ${title}.`
+      : seoDescriptionCandidate
+
+  return {
+    ...draft,
+    seoDescription,
+    seoTitle,
+    summary,
+    title,
+  }
+}
+
 function clipArticleBrief(value: string): string {
   return value.length > MAX_ARTICLE_BRIEF_CHARS ? value.slice(0, MAX_ARTICLE_BRIEF_CHARS) : value
 }
@@ -1034,7 +1079,7 @@ function markdownToLexical(markdown: unknown): LexicalContent {
       continue
     }
 
-    const heading = line.match(/^(#{1,4})\s+(.+)$/u)
+    const heading = line.match(/^(#{1,6})\s+(.+)$/u)
 
     if (heading) {
       flushParagraph()
@@ -1088,7 +1133,7 @@ function createLexicalHeading(text: string, level: number): LexicalChild {
     direction: null,
     format: '',
     indent: 0,
-    tag: `h${Math.min(Math.max(level, 2), 4)}`,
+    tag: `h${Math.min(Math.max(level, 1), 6)}`,
     type: 'heading',
     version: 1,
   }
@@ -1379,7 +1424,7 @@ function collectLexicalMarkdown(node: unknown, lines: string[]): string {
     const tag = typeof record.tag === 'string' ? record.tag : 'h2'
     const level = Number(tag.replace(/^h/u, '')) || 2
 
-    lines.push(`${'#'.repeat(Math.min(Math.max(level, 2), 4))} ${childText}`)
+    lines.push(`${'#'.repeat(Math.min(Math.max(level, 1), 6))} ${childText}`)
     return ''
   }
 
@@ -1647,7 +1692,10 @@ async function reviewTranslatedArticleFields(args: {
   }
   const parsed = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
 
-  return normalizeArticleDraft(parsed, args.translated.title || args.source.title)
+  return ensureArticleDraftCompleteness(
+    normalizeArticleDraft(parsed, args.translated.title || args.source.title),
+    args.translated.title || args.source.title,
+  )
 }
 
 async function generateGrokArticle(args: {
@@ -1733,7 +1781,7 @@ async function generateGrokArticle(args: {
       }>
     }
     const parsedDraft = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
-    const draft = normalizeArticleDraft(parsedDraft, args.title)
+    const draft = ensureArticleDraftCompleteness(normalizeArticleDraft(parsedDraft, args.title), args.title)
 
     return {
       baseURL,
