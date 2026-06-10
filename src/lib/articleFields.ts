@@ -1,15 +1,49 @@
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
+const htmlEntities: Record<string, string> = {
+  amp: '&',
+  apos: "'",
+  hellip: '…',
+  gt: '>',
+  lt: '<',
+  nbsp: ' ',
+  ndash: '-',
+  mdash: '-',
+  quot: '"',
+}
+
+const decodeArticleTextEntities = (value: string): string =>
+  value
+    .replace(/&#x([0-9a-f]+);/giu, (_match, code: string) => {
+      const value = Number.parseInt(code, 16)
+
+      return Number.isFinite(value) ? String.fromCodePoint(value) : ''
+    })
+    .replace(/&#(\d+);/gu, (_match, code: string) => {
+      const value = Number.parseInt(code, 10)
+
+      return Number.isFinite(value) ? String.fromCodePoint(value) : ''
+    })
+    .replace(/&([a-z]+);/giu, (match, entity: string) => htmlEntities[entity.toLowerCase()] || match)
+
+const normalizeArticleText = (value: string): string | undefined => {
+  const text = decodeArticleTextEntities(value)
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/\s*\[(?:…|\.{3}|&hellip;|&#8230;|&#x2026;)\]\s*$/iu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+
+  return text || undefined
+}
+
 export const cleanArticleText = (value: unknown): string | undefined => {
   if (typeof value === 'string') {
-    const text = value.trim()
-
-    return text || undefined
+    return normalizeArticleText(value)
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value)
+    return normalizeArticleText(String(value))
   }
 
   return undefined
