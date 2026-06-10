@@ -26,6 +26,7 @@ export const slugifyArticleTitle = (value: unknown): string =>
 
 export const articleTextFromLexical = (content: unknown): string => {
   const textParts: string[] = []
+
   const visit = (node: unknown) => {
     if (!isRecord(node)) {
       return
@@ -56,7 +57,11 @@ export const articleTextFromLexical = (content: unknown): string => {
     }
   }
 
-  visit(content)
+  if (isRecord(content) && isRecord(content.root)) {
+    visit(content.root)
+  } else {
+    visit(content)
+  }
 
   return textParts.join(' ').replace(/\s+/gu, ' ').trim()
 }
