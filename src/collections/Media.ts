@@ -911,6 +911,7 @@ export const Media: CollectionConfig = {
     adminThumbnail: getAdminThumbnail,
     bulkUpload: true,
     cacheTags: false,
+    disableLocalStorage: driveStorageEnabled,
     displayPreview: true,
     mimeTypes: [
       'image/*',
