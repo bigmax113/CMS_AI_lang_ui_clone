@@ -164,6 +164,10 @@ export const ArticlesCollection: CollectionConfig = {
           nextData.summary = summary
         }
 
+        if (nextData.status === 'published' && !nextData.publishedAt && !originalDoc?.publishedAt) {
+          nextData.publishedAt = new Date().toISOString()
+        }
+
         const seoTitle = cleanArticleText(inputSEO?.title) || cleanArticleText(originalSEO.title)
         const seoDescription =
           cleanArticleText(inputSEO?.description) || cleanArticleText(originalSEO.description)

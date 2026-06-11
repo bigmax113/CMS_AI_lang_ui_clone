@@ -100,12 +100,13 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
   const articlePath = articlePublicPath(article.slug) || '/articles'
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
+  const publishedDate = article.publishedAt || article.createdAt
 
   return (
     <PublicChrome
       backgroundImage={article.coverImage}
       kicker={article.contentType || article.category || 'Article'}
-      meta={<ArticleMetaLine authors={article.authors} publishedAt={article.publishedAt} />}
+      meta={<ArticleMetaLine authors={article.authors} publishedAt={publishedDate} />}
       title={article.title}
     >
       <StructuredData
@@ -114,7 +115,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
         contentType="Article"
         description={article.seo?.description || summary}
         image={article.seo?.image || article.coverImage}
-        publishedAt={article.publishedAt}
+        publishedAt={publishedDate}
         title={article.seo?.title || article.title}
         updatedAt={article.updatedAt}
         url={articlePublicPath(article.slug)}

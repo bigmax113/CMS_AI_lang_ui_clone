@@ -55,11 +55,12 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
   const site = isSite(post.site) ? post.site : null
   const kicker = [site?.name, post.category].filter(Boolean).join(' / ')
   const summary = publicSummaryText({ content: post.content, summary: post.summary })
+  const publishedDate = post.publishedAt || post.createdAt
 
   return (
     <PublicChrome
       kicker={kicker || 'Blog post'}
-      meta={<ArticleMetaLine authors={post.authors} publishedAt={post.publishedAt} />}
+      meta={<ArticleMetaLine authors={post.authors} publishedAt={publishedDate} />}
       title={post.title}
     >
       <StructuredData
@@ -68,7 +69,7 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
         contentType="BlogPosting"
         description={post.seo?.description || summary}
         image={post.seo?.image || post.coverImage}
-        publishedAt={post.publishedAt}
+        publishedAt={publishedDate}
         title={post.seo?.title || post.title}
         updatedAt={post.updatedAt}
         url={blogPostPublicPath({ site, slug: post.slug })}

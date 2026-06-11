@@ -30,6 +30,7 @@ type LexicalNode = {
 }
 
 const defaultSEOImagePath = '/seo/default-og.png'
+const defaultPublicAuthorName = process.env.DEFAULT_ARTICLE_AUTHOR_NAME || 'Matthew King'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -846,7 +847,7 @@ export const ArticleMetaLine = ({
   const names = authorListFromValue(authors)
     .map((author) => author.name)
     .filter(Boolean)
-    .join(', ')
+    .join(', ') || defaultPublicAuthorName
   const date = formatArticleMetaDate(publishedAt)
 
   if (!names && !date) {
