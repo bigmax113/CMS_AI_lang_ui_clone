@@ -2,7 +2,13 @@
 
 import React, { useMemo, useState } from 'react'
 
-import { articleTranslationTargetDefinitions } from '../../../lib/articleTranslations'
+import { articleLanguageDefinitions, articleTranslationTargetDefinitions } from '../../../lib/articleTranslations'
+
+const filterLanguages = articleLanguageDefinitions.map((language) => ({
+  code: language.value,
+  displayCode: language.displayCode,
+  label: language.label,
+}))
 
 const languages = articleTranslationTargetDefinitions.map((language) => ({
   code: language.value,
@@ -56,6 +62,13 @@ export const ArticleTranslationToolbar: React.FC = () => {
   const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
   const [running, setRunning] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [activeLanguageFilter, setActiveLanguageFilter] = useState(() => {
+    if (typeof window === 'undefined') {
+      return ''
+    }
+
+    return new URLSearchParams(window.location.search).get('where[languageCode][equals]') || ''
+  })
   const selectedLabels = useMemo(
     () =>
       selectedLocales.length
@@ -66,6 +79,20 @@ export const ArticleTranslationToolbar: React.FC = () => {
         : 'Choose languages',
     [selectedLocales],
   )
+
+  const applyLanguageFilter = (code: string) => {
+    const url = new URL(window.location.href)
+
+    if (code) {
+      url.searchParams.set('where[languageCode][equals]', code)
+    } else {
+      url.searchParams.delete('where[languageCode][equals]')
+    }
+
+    url.searchParams.delete('page')
+    setActiveLanguageFilter(code)
+    window.location.assign(url.toString())
+  }
 
   const toggleLocale = (code: string) => {
     setSelectedLocales((current) =>
@@ -145,24 +172,44 @@ export const ArticleTranslationToolbar: React.FC = () => {
 
   return (
     <div className="article-translation-toolbar">
-      <details className="article-translation-toolbar__languages">
-        <summary>{selectedLabels}</summary>
-        <div>
-          {languages.map((language) => (
-            <label key={language.code}>
-              <input
-                checked={selectedLocales.includes(language.code)}
-                onChange={() => toggleLocale(language.code)}
-                type="checkbox"
-              />
+      <div className="article-translation-toolbar__group article-translation-toolbar__filter">
+        <span>Filter by language</span>
+        <select
+          aria-label="Filter articles by language"
+          onChange={(event) => applyLanguageFilter(event.target.value)}
+          value={activeLanguageFilter}
+        >
+          <option value="">All languages</option>
+          {filterLanguages.map((language) => (
+            <option key={language.code} value={language.code}>
               {language.label}
-            </label>
+            </option>
           ))}
+        </select>
+      </div>
+      <div className="article-translation-toolbar__group">
+        <span>Translate to</span>
+        <div className="article-translation-toolbar__actions">
+          <details className="article-translation-toolbar__languages">
+            <summary>{selectedLabels}</summary>
+            <div>
+              {languages.map((language) => (
+                <label key={language.code}>
+                  <input
+                    checked={selectedLocales.includes(language.code)}
+                    onChange={() => toggleLocale(language.code)}
+                    type="checkbox"
+                  />
+                  {language.label}
+                </label>
+              ))}
+            </div>
+          </details>
+          <button disabled={running} onClick={() => void translateSelected()} type="button">
+            Translate selected
+          </button>
         </div>
-      </details>
-      <button disabled={running} onClick={() => void translateSelected()} type="button">
-        Translate selected
-      </button>
+      </div>
       {message ? <span>{message}</span> : null}
     </div>
   )

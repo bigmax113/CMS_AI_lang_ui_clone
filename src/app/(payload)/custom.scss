@@ -173,16 +173,21 @@
 }
 
 .article-translation-toolbar button,
-.article-translation-toolbar summary {
+.article-translation-toolbar summary,
+.article-translation-toolbar select {
   align-items: center;
   border: 1px solid var(--theme-elevation-200);
   border-radius: 6px;
-  cursor: pointer;
   display: inline-flex;
   font-size: 14px;
   font-weight: 700;
   min-height: 36px;
   padding: 0 12px;
+}
+
+.article-translation-toolbar button,
+.article-translation-toolbar summary {
+  cursor: pointer;
 }
 
 .article-translation-toolbar button {
@@ -202,8 +207,34 @@
   list-style: none;
 }
 
+.article-translation-toolbar select {
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  min-width: 190px;
+}
+
 .article-translation-toolbar summary::-webkit-details-marker {
   display: none;
+}
+
+.article-translation-toolbar__group {
+  align-items: flex-start;
+  display: grid;
+  gap: 6px;
+}
+
+.article-translation-toolbar__group > span {
+  color: var(--theme-elevation-600);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.article-translation-toolbar__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .article-translation-toolbar__languages {
