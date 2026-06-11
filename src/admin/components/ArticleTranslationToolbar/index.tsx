@@ -97,7 +97,17 @@ export const ArticleTranslationToolbar: React.FC = () => {
   }
 
   useEffect(() => {
-    const syncFilterFromURL = () => setActiveLanguageFilter(languageFilterFromLocation())
+    const syncFilterFromURL = () => {
+      const nextFilter = languageFilterFromLocation()
+
+      setActiveLanguageFilter(nextFilter)
+
+      const select = document.querySelector<HTMLSelectElement>('[data-article-language-filter]')
+
+      if (select && select.value !== nextFilter) {
+        select.value = nextFilter
+      }
+    }
 
     syncFilterFromURL()
     const intervalID = window.setInterval(syncFilterFromURL, 500)
@@ -187,8 +197,9 @@ export const ArticleTranslationToolbar: React.FC = () => {
         <span>Filter by language</span>
         <select
           aria-label="Filter articles by language"
+          data-article-language-filter
+          defaultValue={activeLanguageFilter}
           onChange={(event) => applyLanguageFilter(event.target.value)}
-          value={activeLanguageFilter}
         >
           <option value="">All languages</option>
           {filterLanguages.map((language) => (
