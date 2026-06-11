@@ -35,7 +35,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
 const fallbackSummaryFromContent = (content: unknown, title?: string) => {
-  const summary = excerptArticleText(content, 320)
+  const summary = excerptArticleText(content, 520)
 
   if (summary && summary !== title) {
     return summary

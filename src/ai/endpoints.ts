@@ -939,6 +939,10 @@ function plainTextFromMarkdown(value: unknown): string {
     .trim()
 }
 
+const terminalPlainTextPunctuation = /[.!?]["')\]]?$/u
+const plainTextSentenceEnd = /[.!?]["')\]]?(?=\s|$)/gu
+const danglingPlainEnglishWord = /\b(?:a|an|and|as|at|by|for|from|in|into|of|on|or|the|to|with)$/iu
+
 function excerptPlainText(value: unknown, maxChars = 320): string {
   const text = plainTextFromMarkdown(value)
 
@@ -946,12 +950,41 @@ function excerptPlainText(value: unknown, maxChars = 320): string {
     return text
   }
 
-  return text.slice(0, maxChars).replace(/\s+\S*$/u, '').trim() || text.slice(0, maxChars).trim()
+  const window = text.slice(0, maxChars).trim()
+  let lastSentenceEnd = -1
+
+  for (const match of window.matchAll(plainTextSentenceEnd)) {
+    lastSentenceEnd = (match.index || 0) + match[0].length
+  }
+
+  const minimumUsefulLength = Math.min(140, Math.floor(maxChars * 0.55))
+
+  if (lastSentenceEnd >= minimumUsefulLength) {
+    return window.slice(0, lastSentenceEnd).trim()
+  }
+
+  return window.replace(/\s+\S*$/u, '').trim() || window
+}
+
+function isLikelyTruncatedPlainText(value: unknown): boolean {
+  const text = plainTextFromMarkdown(value)
+
+  if (!text || terminalPlainTextPunctuation.test(text)) {
+    return false
+  }
+
+  if (danglingPlainEnglishWord.test(text)) {
+    return true
+  }
+
+  return !/[.!?]/u.test(text.slice(-90))
 }
 
 function ensureArticleDraftCompleteness(draft: ArticleDraft, fallbackTitle: string): ArticleDraft {
   const title = textFromUnknown(draft.title) || fallbackTitle || 'Generated article draft'
-  const summary = textFromUnknown(draft.summary) || excerptPlainText(draft.bodyMarkdown, 260)
+  const rawSummary = textFromUnknown(draft.summary)
+  const bodySummary = excerptPlainText(draft.bodyMarkdown, 420)
+  const summary = rawSummary && !isLikelyTruncatedPlainText(rawSummary) ? rawSummary : bodySummary || rawSummary
   const seoTitle = textFromUnknown(draft.seoTitle) || title
   const bodyExcerpt = excerptPlainText(draft.bodyMarkdown, 320)
   const seoDescriptionCandidate =

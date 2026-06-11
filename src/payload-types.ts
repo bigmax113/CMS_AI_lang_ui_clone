@@ -343,7 +343,7 @@ export interface Media {
   /**
    * Shows whether a small image/video copy was stored in Postgres for free-plan persistence.
    */
-  embeddedImageStatus?: ('stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
+  embeddedImageStatus?: ('stored-in-drive' | 'stored-in-db' | 'not-image' | 'too-large' | 'no-buffer') | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;

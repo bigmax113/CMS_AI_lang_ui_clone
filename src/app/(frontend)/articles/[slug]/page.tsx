@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { articlePublicPath } from '@/lib/publicURLs'
 import {
-  AuthorByline,
+  ArticleMetaLine,
   ArticleLanguageSwitcher,
   Breadcrumbs,
   PublicChrome,
@@ -11,8 +11,8 @@ import {
   createSEOPageMetadata,
   findPreviewArticleBySlug,
   findPublishedArticleBySlug,
-  formatDate,
   listPublishedArticleTranslations,
+  publicSummaryText,
 } from '../../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -72,10 +72,11 @@ export const generateMetadata = async ({ params, searchParams }: PageProps) => {
         twitterTitle?: null | string
       }
     | undefined
+  const summary = publicSummaryText({ content: article.content, summary: article.summary })
 
   return createSEOPageMetadata({
     canonicalURL: seo?.canonicalURL,
-    description: article.seo?.description || article.summary,
+    description: article.seo?.description || summary,
     image: article.seo?.image || article.coverImage,
     languageAlternates,
     ogDescription: seo?.ogDescription,
@@ -98,18 +99,20 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
 
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
   const articlePath = articlePublicPath(article.slug) || '/articles'
+  const summary = publicSummaryText({ content: article.content, summary: article.summary })
 
   return (
     <PublicChrome
       backgroundImage={article.coverImage}
-      kicker={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
+      kicker={article.contentType || article.category || 'Article'}
+      meta={<ArticleMetaLine authors={article.authors} publishedAt={article.publishedAt} />}
       title={article.title}
     >
       <StructuredData
         authors={article.authors}
         content={article.content}
         contentType="Article"
-        description={article.seo?.description || article.summary}
+        description={article.seo?.description || summary}
         image={article.seo?.image || article.coverImage}
         publishedAt={article.publishedAt}
         title={article.seo?.title || article.title}
@@ -119,14 +122,13 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
       <article className="public-content__article">
         <Breadcrumbs
           items={[
-            { href: '/', label: 'Home' },
-            { href: '/articles', label: 'Content' },
+            { href: '/blog', label: 'Blog' },
+            { href: '/articles', label: 'All Articles' },
             { href: articlePath, label: article.title },
           ]}
         />
-        <AuthorByline authors={article.authors} />
         <ArticleLanguageSwitcher alternates={translations} />
-        {article.summary ? <p className="public-content__summary">{article.summary}</p> : null}
+        {summary ? <p className="public-content__summary">{summary}</p> : null}
         <RichText content={article.content} />
       </article>
     </PublicChrome>

@@ -5,6 +5,7 @@ import {
   createSEOPageMetadata,
   formatDate,
   listPublishedArticles,
+  publicSummaryText,
 } from '../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export const metadata = createSEOPageMetadata({
   description: 'Published articles, guides, news, and product content.',
   path: '/articles',
-  title: 'Content',
+  title: 'All Articles',
   type: 'website',
 })
 
@@ -20,7 +21,7 @@ export default async function ArticlesIndexPage() {
   const articles = await listPublishedArticles()
 
   return (
-    <PublicChrome kicker="Published content" title="Content">
+    <PublicChrome kicker="Published content" title="All Articles">
       <section className="public-content__section">
         {articles.length ? (
           <div className="public-content__grid">
@@ -30,7 +31,7 @@ export default async function ArticlesIndexPage() {
                 image={article.coverImage}
                 key={article.id}
                 label={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
-                summary={article.summary}
+                summary={publicSummaryText({ content: article.content, summary: article.summary })}
                 title={article.title}
               />
             ))}

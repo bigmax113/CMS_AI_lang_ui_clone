@@ -2,15 +2,15 @@ import { notFound } from 'next/navigation'
 
 import { blogPostPublicPath } from '@/lib/publicURLs'
 import {
-  AuthorByline,
+  ArticleMetaLine,
   PublicChrome,
   PublicImage,
   RichText,
   StructuredData,
   createSEOPageMetadata,
   findPublishedBlogPostBySitePath,
-  formatDate,
   isSite,
+  publicSummaryText,
 } from '../../../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -33,10 +33,11 @@ export const generateMetadata = async ({ params }: PageProps) => {
   }
 
   const site = isSite(post.site) ? post.site : null
+  const summary = publicSummaryText({ content: post.content, summary: post.summary })
 
   return createSEOPageMetadata({
     canonicalURL: post.canonicalURL,
-    description: post.seo?.description || post.summary,
+    description: post.seo?.description || summary,
     image: post.seo?.image || post.coverImage,
     path: blogPostPublicPath({ site, slug: post.slug }),
     title: `${post.seo?.title || post.title} - CMS AI`,
@@ -52,15 +53,20 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
   }
 
   const site = isSite(post.site) ? post.site : null
-  const kicker = [site?.name, formatDate(post.publishedAt) || post.category].filter(Boolean).join(' / ')
+  const kicker = [site?.name, post.category].filter(Boolean).join(' / ')
+  const summary = publicSummaryText({ content: post.content, summary: post.summary })
 
   return (
-    <PublicChrome kicker={kicker || 'Blog post'} title={post.title}>
+    <PublicChrome
+      kicker={kicker || 'Blog post'}
+      meta={<ArticleMetaLine authors={post.authors} publishedAt={post.publishedAt} />}
+      title={post.title}
+    >
       <StructuredData
         authors={post.authors}
         content={post.content}
         contentType="BlogPosting"
-        description={post.seo?.description || post.summary}
+        description={post.seo?.description || summary}
         image={post.seo?.image || post.coverImage}
         publishedAt={post.publishedAt}
         title={post.seo?.title || post.title}
@@ -68,8 +74,7 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
         url={blogPostPublicPath({ site, slug: post.slug })}
       />
       <article className="public-content__article">
-        <AuthorByline authors={post.authors} />
-        {post.summary ? <p className="public-content__summary">{post.summary}</p> : null}
+        {summary ? <p className="public-content__summary">{summary}</p> : null}
         {post.coverImage ? (
           <PublicImage alt={post.title} className="public-content__cover" media={post.coverImage} />
         ) : null}

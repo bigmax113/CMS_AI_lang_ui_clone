@@ -791,6 +791,10 @@ export const Media: CollectionConfig = {
       },
       options: [
         {
+          label: 'Stored in Google Drive',
+          value: 'stored-in-drive',
+        },
+        {
           label: 'Stored in database',
           value: 'stored-in-db',
         },
@@ -826,6 +830,10 @@ export const Media: CollectionConfig = {
           if (thumbnailURL) {
             record.thumbnailURL = thumbnailURL
           }
+        }
+
+        if (record.driveFileID || record.externalFileURL) {
+          record.embeddedImageDataURL = undefined
         }
 
         return doc
@@ -865,6 +873,14 @@ export const Media: CollectionConfig = {
           }
         } else if (!driveStorageEnabled) {
           nextData.driveStorageStatus = 'drive-disabled'
+        }
+
+        if (nextData.driveFileID) {
+          return {
+            ...nextData,
+            embeddedImageDataURL: undefined,
+            embeddedImageStatus: 'stored-in-drive',
+          }
         }
 
         if (!mimeType || !canEmbedInDatabase(String(mimeType))) {

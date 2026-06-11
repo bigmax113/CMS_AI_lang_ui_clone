@@ -4,7 +4,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const htmlEntities: Record<string, string> = {
   amp: '&',
   apos: "'",
-  hellip: '…',
+  hellip: '...',
   gt: '>',
   lt: '<',
   nbsp: ' ',
@@ -12,6 +12,10 @@ const htmlEntities: Record<string, string> = {
   mdash: '-',
   quot: '"',
 }
+
+const terminalSentencePunctuation = /[.!?]["')\]]?$/u
+const commonSentenceEnd = /[.!?]["')\]]?(?=\s|$)/gu
+const danglingEnglishWord = /\b(?:a|an|and|as|at|by|for|from|in|into|of|on|or|the|to|with)$/iu
 
 const decodeArticleTextEntities = (value: string): string =>
   value
@@ -30,11 +34,34 @@ const decodeArticleTextEntities = (value: string): string =>
 const normalizeArticleText = (value: string): string | undefined => {
   const text = decodeArticleTextEntities(value)
     .replace(/<[^>]+>/gu, ' ')
-    .replace(/\s*\[(?:…|\.{3}|&hellip;|&#8230;|&#x2026;)\]\s*$/iu, '')
+    .replace(/\s*\[(?:\u2026|\.{3}|&hellip;|&#8230;|&#x2026;)\]\s*$/iu, '')
     .replace(/\s+/gu, ' ')
     .trim()
 
   return text || undefined
+}
+
+const sentenceSafeExcerpt = (text: string, maxChars: number): string => {
+  if (text.length <= maxChars) {
+    return text
+  }
+
+  const window = text.slice(0, maxChars).trim()
+  let lastSentenceEnd = -1
+
+  for (const match of window.matchAll(commonSentenceEnd)) {
+    lastSentenceEnd = (match.index || 0) + match[0].length
+  }
+
+  const minimumUsefulLength = Math.min(140, Math.floor(maxChars * 0.55))
+
+  if (lastSentenceEnd >= minimumUsefulLength) {
+    return window.slice(0, lastSentenceEnd).trim()
+  }
+
+  const clipped = window.replace(/\s+\S*$/u, '').trim()
+
+  return clipped || window
 }
 
 export const cleanArticleText = (value: unknown): string | undefined => {
@@ -107,11 +134,25 @@ export const excerptArticleText = (value: unknown, maxChars = 320): string | und
     return undefined
   }
 
-  if (text.length <= maxChars) {
-    return text
+  return sentenceSafeExcerpt(text, maxChars)
+}
+
+export const isLikelyTruncatedArticleText = (value: unknown): boolean => {
+  const text = cleanArticleText(value)
+
+  if (!text) {
+    return false
   }
 
-  const clipped = text.slice(0, maxChars).replace(/\s+\S*$/u, '').trim()
+  if (terminalSentencePunctuation.test(text)) {
+    return false
+  }
 
-  return clipped || text.slice(0, maxChars).trim()
+  if (danglingEnglishWord.test(text)) {
+    return true
+  }
+
+  const tail = text.slice(-90)
+
+  return !/[.!?]/u.test(tail)
 }

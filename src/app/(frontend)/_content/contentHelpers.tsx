@@ -5,6 +5,7 @@ import React from 'react'
 import { getPayload } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
+import { excerptArticleText, isLikelyTruncatedArticleText } from '@/lib/articleFields'
 import {
   articleLanguageDisplayCodeByCode,
   articleLanguageHreflangByCode,
@@ -56,6 +57,18 @@ export const formatDate = (value?: null | string) => {
 
   return new Intl.DateTimeFormat('ru', {
     day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value))
+}
+
+export const formatArticleMetaDate = (value?: null | string) => {
+  if (!value) {
+    return null
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
     month: 'long',
     year: 'numeric',
   }).format(new Date(value))
@@ -345,6 +358,20 @@ const authorListFromValue = (value: unknown) =>
     .map((item) => (isRecord(item) && 'value' in item ? item.value : item))
     .filter(isAuthor)
     .filter((author) => author.status !== 'hidden')
+
+export const publicSummaryText = ({
+  content,
+  summary,
+}: {
+  content?: Article['content'] | BlogPost['content'] | null
+  summary?: null | string
+}) => {
+  if (summary && !isLikelyTruncatedArticleText(summary)) {
+    return summary
+  }
+
+  return excerptArticleText(content, 520) || summary || null
+}
 
 const parseURL = (value: string) => {
   try {
@@ -809,6 +836,32 @@ export const AuthorByline = ({
   )
 }
 
+export const ArticleMetaLine = ({
+  authors,
+  publishedAt,
+}: {
+  authors?: Article['authors'] | BlogPost['authors'] | null
+  publishedAt?: null | string
+}) => {
+  const names = authorListFromValue(authors)
+    .map((author) => author.name)
+    .filter(Boolean)
+    .join(', ')
+  const date = formatArticleMetaDate(publishedAt)
+
+  if (!names && !date) {
+    return null
+  }
+
+  return (
+    <p className="public-content__meta">
+      {names ? <span>{names}</span> : null}
+      {names && date ? <span aria-hidden="true">·</span> : null}
+      {date ? <time dateTime={publishedAt || undefined}>{date}</time> : null}
+    </p>
+  )
+}
+
 export const PublicImage = ({
   alt,
   className,
@@ -990,11 +1043,13 @@ export const PublicChrome = ({
   backgroundImage,
   children,
   kicker,
+  meta,
   title,
 }: {
   backgroundImage?: Media | null | number
   children: React.ReactNode
   kicker?: string
+  meta?: React.ReactNode
   title: string
 }) => {
   const heroImageURL = mediaURL(isMedia(backgroundImage) ? backgroundImage : null)
@@ -1016,6 +1071,7 @@ export const PublicChrome = ({
       >
         {kicker ? <p className="public-content__kicker">{kicker}</p> : null}
         <h1>{title}</h1>
+        {meta ? <div className="public-content__meta-wrap">{meta}</div> : null}
       </section>
       {children}
     </div>
