@@ -117,6 +117,9 @@ let cachedOAuthToken: GoogleOAuthToken | null = null
 const googleDriveFileURL = (fileID: string) =>
   `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileID)}`
 
+const googleDriveRedirectResponse = (fileID: string) =>
+  Response.redirect(googleDriveFileURL(fileID), 302)
+
 const readJSONFromEnv = <T,>(plainKey: string, base64Key: string): T | null => {
   const plain = process.env[plainKey]
   const base64 = process.env[base64Key]
@@ -334,6 +337,10 @@ const responseFromStoredMedia = async (
   }
 
   const driveFileID = typeof doc.driveFileID === 'string' ? doc.driveFileID : ''
+
+  if (driveFileID && drivePublicReadEnabled) {
+    return googleDriveRedirectResponse(driveFileID)
+  }
 
   if (driveFileID) {
     return streamGoogleDriveFile({
@@ -686,7 +693,7 @@ export const Media: CollectionConfig = {
       name: 'driveFileID',
       type: 'text',
       admin: {
-        description: 'Google Drive file ID used by the public media proxy.',
+        description: 'Google Drive file ID used by the public media redirect/proxy.',
         readOnly: true,
       },
       label: 'Google Drive file ID',

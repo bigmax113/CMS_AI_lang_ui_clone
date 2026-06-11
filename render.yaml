@@ -39,9 +39,9 @@ services:
       - key: GOOGLE_DRIVE_OAUTH_TOKEN_JSON_B64
         sync: false
       - key: GOOGLE_DRIVE_PUBLIC_READ
-        value: 'false'
+        value: 'true'
       - key: MEDIA_EXTERNAL_STORAGE_REQUIRED
-        value: 'false'
+        value: 'true'
       - key: XAI_API_KEY
         sync: false
       - key: XAI_BASE_URL
