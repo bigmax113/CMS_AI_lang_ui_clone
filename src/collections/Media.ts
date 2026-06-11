@@ -117,8 +117,8 @@ let cachedOAuthToken: GoogleOAuthToken | null = null
 const googleDriveFileURL = (fileID: string) =>
   `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileID)}`
 
-const googleDriveRedirectResponse = (fileID: string) =>
-  Response.redirect(googleDriveFileURL(fileID), 302)
+const googleDriveImageURL = (fileID: string) =>
+  `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileID)}&sz=w2400`
 
 const getMediaDeliveryURL = (doc: Record<string, unknown>, route: 'asset' | 'thumbnail') => {
   const id = typeof doc.id === 'number' || typeof doc.id === 'string' ? doc.id : ''
@@ -126,9 +126,10 @@ const getMediaDeliveryURL = (doc: Record<string, unknown>, route: 'asset' | 'thu
   const embedded = typeof doc.embeddedImageDataURL === 'string' ? doc.embeddedImageDataURL : ''
   const externalFile = typeof doc.externalFileURL === 'string' ? doc.externalFileURL : ''
   const externalImage = typeof doc.externalImageURL === 'string' ? doc.externalImageURL : ''
+  const mimeType = typeof doc.mimeType === 'string' ? doc.mimeType : ''
 
   if (driveFileID && drivePublicReadEnabled) {
-    return googleDriveFileURL(driveFileID)
+    return mimeType.startsWith('image/') ? googleDriveImageURL(driveFileID) : googleDriveFileURL(driveFileID)
   }
 
   if ((driveFileID || externalFile || externalImage || embedded.startsWith('data:')) && id) {
@@ -357,7 +358,10 @@ const responseFromStoredMedia = async (
   const driveFileID = typeof doc.driveFileID === 'string' ? doc.driveFileID : ''
 
   if (driveFileID && drivePublicReadEnabled) {
-    return googleDriveRedirectResponse(driveFileID)
+    return Response.redirect(
+      mimeType.startsWith('image/') ? googleDriveImageURL(driveFileID) : googleDriveFileURL(driveFileID),
+      302,
+    )
   }
 
   if (driveFileID) {
