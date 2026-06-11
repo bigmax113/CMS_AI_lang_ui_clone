@@ -120,6 +120,24 @@ const googleDriveFileURL = (fileID: string) =>
 const googleDriveRedirectResponse = (fileID: string) =>
   Response.redirect(googleDriveFileURL(fileID), 302)
 
+const getMediaDeliveryURL = (doc: Record<string, unknown>, route: 'asset' | 'thumbnail') => {
+  const id = typeof doc.id === 'number' || typeof doc.id === 'string' ? doc.id : ''
+  const driveFileID = typeof doc.driveFileID === 'string' ? doc.driveFileID : ''
+  const embedded = typeof doc.embeddedImageDataURL === 'string' ? doc.embeddedImageDataURL : ''
+  const externalFile = typeof doc.externalFileURL === 'string' ? doc.externalFileURL : ''
+  const externalImage = typeof doc.externalImageURL === 'string' ? doc.externalImageURL : ''
+
+  if (driveFileID && drivePublicReadEnabled) {
+    return googleDriveFileURL(driveFileID)
+  }
+
+  if ((driveFileID || externalFile || externalImage || embedded.startsWith('data:')) && id) {
+    return `/api/${mediaSlug}/${encodeURIComponent(String(id))}/${route}`
+  }
+
+  return null
+}
+
 const readJSONFromEnv = <T,>(plainKey: string, base64Key: string): T | null => {
   const plain = process.env[plainKey]
   const base64 = process.env[base64Key]
@@ -788,6 +806,27 @@ export const Media: CollectionConfig = {
     },
   ],
   hooks: {
+    afterRead: [
+      ({ doc }) => {
+        const record = doc as Record<string, unknown>
+        const mimeType = typeof record.mimeType === 'string' ? record.mimeType : ''
+        const deliveryURL = getMediaDeliveryURL(record, 'asset')
+
+        if (deliveryURL) {
+          record.url = deliveryURL
+        }
+
+        if (mimeType.startsWith('image/')) {
+          const thumbnailURL = getMediaDeliveryURL(record, 'thumbnail')
+
+          if (thumbnailURL) {
+            record.thumbnailURL = thumbnailURL
+          }
+        }
+
+        return doc
+      },
+    ],
     beforeChange: [
       async ({ data, req }) => {
         const file = req.file as UploadFile | undefined
