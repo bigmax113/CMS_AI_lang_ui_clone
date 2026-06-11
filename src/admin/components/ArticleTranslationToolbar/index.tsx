@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { articleLanguageDefinitions, articleTranslationTargetDefinitions } from '../../../lib/articleTranslations'
 
@@ -58,17 +58,19 @@ function selectedArticleIDsFromDOM(): string[] {
   return [...ids]
 }
 
+function languageFilterFromLocation(): string {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+
+  return new URLSearchParams(window.location.search).get('where[languageCode][equals]') || ''
+}
+
 export const ArticleTranslationToolbar: React.FC = () => {
   const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
   const [running, setRunning] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [activeLanguageFilter, setActiveLanguageFilter] = useState(() => {
-    if (typeof window === 'undefined') {
-      return ''
-    }
-
-    return new URLSearchParams(window.location.search).get('where[languageCode][equals]') || ''
-  })
+  const [activeLanguageFilter, setActiveLanguageFilter] = useState(languageFilterFromLocation)
   const selectedLabels = useMemo(
     () =>
       selectedLocales.length
@@ -93,6 +95,15 @@ export const ArticleTranslationToolbar: React.FC = () => {
     setActiveLanguageFilter(code)
     window.location.assign(url.toString())
   }
+
+  useEffect(() => {
+    const syncFilterFromURL = () => setActiveLanguageFilter(languageFilterFromLocation())
+
+    syncFilterFromURL()
+    const intervalID = window.setInterval(syncFilterFromURL, 500)
+
+    return () => window.clearInterval(intervalID)
+  }, [])
 
   const toggleLocale = (code: string) => {
     setSelectedLocales((current) =>
