@@ -16,12 +16,6 @@ export const SafeImage = ({
   const [failedSrc, setFailedSrc] = useState<null | string>(null)
   const hasFailed = !src || failedSrc === src
 
-  const checkImage = (image: HTMLImageElement | null) => {
-    if (src && image?.complete && image.naturalWidth === 0) {
-      window.setTimeout(() => setFailedSrc(src), 0)
-    }
-  }
-
   if (hasFailed || !src) {
     return (
       <div className={`public-content__image-missing ${className || ''}`}>
@@ -37,6 +31,6 @@ export const SafeImage = ({
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- Payload media URLs can be local, external, or DB data URLs.
-    <img alt={alt} className={className} onError={() => setFailedSrc(src)} ref={checkImage} src={src} />
+    <img alt={alt} className={className} onError={() => setFailedSrc(src)} src={src} />
   )
 }
