@@ -34,6 +34,24 @@ body {
   }
 }
 
+html:has(.public-content--lorgar),
+body:has(.public-content--lorgar) {
+  background: #080914;
+}
+
+.public-content.public-content--lorgar {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(138, 92, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 12%, rgba(34, 211, 238, 0.1), transparent 26%),
+    #080914;
+  color: #f7f8ff;
+  padding: 0;
+}
+
+.public-content.public-content--lorgar a {
+  color: inherit;
+}
+
 .sr-only {
   border: 0;
   clip: rect(0 0 0 0);
