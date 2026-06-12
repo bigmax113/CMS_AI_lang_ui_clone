@@ -12,6 +12,7 @@ import {
   findPreviewArticleBySlug,
   findPublishedArticleBySlug,
   listPublishedArticleTranslations,
+  publicArticleNavigationLabels,
   publicSummaryText,
 } from '../../_content/contentHelpers'
 
@@ -99,6 +100,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
 
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
   const articlePath = articlePublicPath(article.slug) || '/articles'
+  const navigationLabels = publicArticleNavigationLabels(article.languageCode)
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
   const publishedDate = article.publishedAt || article.createdAt
 
@@ -106,7 +108,13 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
     <PublicChrome
       backgroundImage={article.coverImage}
       kicker={article.contentType || article.category || 'Article'}
-      meta={<ArticleMetaLine authors={article.authors} publishedAt={publishedDate} />}
+      meta={
+        <ArticleMetaLine
+          authors={article.authors}
+          languageCode={article.languageCode}
+          publishedAt={publishedDate}
+        />
+      }
       title={article.title}
     >
       <StructuredData
@@ -123,13 +131,12 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
       <article className="public-content__article">
         <Breadcrumbs
           items={[
-            { href: '/blog', label: 'Blog' },
-            { href: '/articles', label: 'All Articles' },
+            { href: '/blog', label: navigationLabels.blog },
+            { href: '/articles', label: navigationLabels.allArticles },
             { href: articlePath, label: article.title },
           ]}
         />
         <ArticleLanguageSwitcher alternates={translations} />
-        {summary ? <p className="public-content__summary">{summary}</p> : null}
         <RichText content={article.content} />
       </article>
     </PublicChrome>

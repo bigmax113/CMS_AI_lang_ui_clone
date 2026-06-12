@@ -12,6 +12,8 @@ import {
   articleLanguageLabelByCode,
   articleTranslationGroupFromArticle,
   inferArticleLanguageCode,
+  normalizeArticleLanguageCode,
+  type ArticleLanguageCode,
 } from '@/lib/articleTranslations'
 import { isValidArticlePreviewToken } from '@/lib/articlePreview'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
@@ -63,16 +65,65 @@ export const formatDate = (value?: null | string) => {
   }).format(new Date(value))
 }
 
-export const formatArticleMetaDate = (value?: null | string) => {
+const articleDateLocaleByCode: Record<ArticleLanguageCode, string> = {
+  bg: 'bg-BG',
+  cs: 'cs-CZ',
+  ee: 'et-EE',
+  en: 'en-US',
+  hu: 'hu-HU',
+  kz: 'kk-KZ',
+  lt: 'lt-LT',
+  lv: 'lv-LV',
+  pl: 'pl-PL',
+  ro: 'ro-RO',
+  rs: 'sr-Latn-RS',
+  ru: 'ru-RU',
+  sk: 'sk-SK',
+  uk: 'uk-UA',
+}
+
+const publicArticleNavigationLabelsByCode: Record<
+  ArticleLanguageCode,
+  {
+    allArticles: string
+    blog: string
+  }
+> = {
+  bg: { allArticles: 'Всички статии', blog: 'Блог' },
+  cs: { allArticles: 'Všechny články', blog: 'Blog' },
+  ee: { allArticles: 'Kõik artiklid', blog: 'Blogi' },
+  en: { allArticles: 'All Articles', blog: 'Blog' },
+  hu: { allArticles: 'Összes cikk', blog: 'Blog' },
+  kz: { allArticles: 'Барлық мақалалар', blog: 'Блог' },
+  lt: { allArticles: 'Visi straipsniai', blog: 'Tinklaraštis' },
+  lv: { allArticles: 'Visi raksti', blog: 'Blogs' },
+  pl: { allArticles: 'Wszystkie artykuły', blog: 'Blog' },
+  ro: { allArticles: 'Toate articolele', blog: 'Blog' },
+  rs: { allArticles: 'Svi članci', blog: 'Blog' },
+  ru: { allArticles: 'Все статьи', blog: 'Блог' },
+  sk: { allArticles: 'Všetky články', blog: 'Blog' },
+  uk: { allArticles: 'Усі статті', blog: 'Блог' },
+}
+
+export const publicArticleNavigationLabels = (languageCode?: null | string) =>
+  publicArticleNavigationLabelsByCode[normalizeArticleLanguageCode(languageCode)]
+
+export const formatArticleMetaDate = (value?: null | string, languageCode?: null | string) => {
   if (!value) {
     return null
   }
 
-  return new Intl.DateTimeFormat('en-US', {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return new Intl.DateTimeFormat(articleDateLocaleByCode[normalizeArticleLanguageCode(languageCode)], {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 export const mediaURL = (media?: Media | null | number) => {
@@ -839,16 +890,18 @@ export const AuthorByline = ({
 
 export const ArticleMetaLine = ({
   authors,
+  languageCode,
   publishedAt,
 }: {
   authors?: Article['authors'] | BlogPost['authors'] | null
+  languageCode?: null | string
   publishedAt?: null | string
 }) => {
   const names = authorListFromValue(authors)
     .map((author) => author.name)
     .filter(Boolean)
     .join(', ') || defaultPublicAuthorName
-  const date = formatArticleMetaDate(publishedAt)
+  const date = formatArticleMetaDate(publishedAt, languageCode)
 
   if (!names && !date) {
     return null

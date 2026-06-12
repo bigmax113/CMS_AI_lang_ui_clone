@@ -75,7 +75,6 @@ export default async function SiteBlogPostPage({ params }: PageProps) {
         url={blogPostPublicPath({ site, slug: post.slug })}
       />
       <article className="public-content__article">
-        {summary ? <p className="public-content__summary">{summary}</p> : null}
         {post.coverImage ? (
           <PublicImage alt={post.title} className="public-content__cover" media={post.coverImage} />
         ) : null}

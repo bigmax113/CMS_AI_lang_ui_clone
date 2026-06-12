@@ -83,7 +83,6 @@ export default async function BlogPostPage({ params }: PageProps) {
             { href: postPath, label: post.title },
           ]}
         />
-        {summary ? <p className="public-content__summary">{summary}</p> : null}
         <RichText content={post.content} />
       </article>
     </PublicChrome>

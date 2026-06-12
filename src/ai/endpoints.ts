@@ -562,6 +562,7 @@ export const translateArticlesEndpoint: Endpoint = {
               coverImage: source.coverImage,
               languageCode: targetLanguageCode,
               owner: source.owner,
+              publishedAt: source.publishedAt,
               seo: {
                 description: optionalArticleField(translated.seoDescription || sourceSEO.description),
                 image: sourceSEO.image,
