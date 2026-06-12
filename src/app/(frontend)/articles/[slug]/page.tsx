@@ -2,17 +2,14 @@ import { notFound } from 'next/navigation'
 
 import { articlePublicPath } from '@/lib/publicURLs'
 import {
-  ArticleMetaLine,
-  ArticleLanguageSwitcher,
-  Breadcrumbs,
-  PublicChrome,
+  LorgarArticleLayout,
   RichText,
   StructuredData,
   createSEOPageMetadata,
   findPreviewArticleBySlug,
   findPublishedArticleBySlug,
+  listPublishedArticles,
   listPublishedArticleTranslations,
-  publicArticleNavigationLabels,
   publicSummaryText,
 } from '../../_content/contentHelpers'
 
@@ -99,23 +96,16 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   }
 
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
-  const articlePath = articlePublicPath(article.slug) || '/articles'
-  const navigationLabels = publicArticleNavigationLabels(article.languageCode)
+  const recentArticles = await listPublishedArticles()
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
   const publishedDate = article.publishedAt || article.createdAt
 
   return (
-    <PublicChrome
-      backgroundImage={article.coverImage}
-      kicker={article.contentType || article.category || 'Article'}
-      meta={
-        <ArticleMetaLine
-          authors={article.authors}
-          languageCode={article.languageCode}
-          publishedAt={publishedDate}
-        />
-      }
-      title={article.title}
+    <LorgarArticleLayout
+      article={article}
+      recentArticles={recentArticles}
+      summary={summary}
+      translations={translations}
     >
       <StructuredData
         authors={article.authors}
@@ -128,17 +118,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
         updatedAt={article.updatedAt}
         url={articlePublicPath(article.slug)}
       />
-      <article className="public-content__article">
-        <Breadcrumbs
-          items={[
-            { href: '/blog', label: navigationLabels.blog },
-            { href: '/articles', label: navigationLabels.allArticles },
-            { href: articlePath, label: article.title },
-          ]}
-        />
-        <ArticleLanguageSwitcher alternates={translations} />
-        <RichText content={article.content} />
-      </article>
-    </PublicChrome>
+      <RichText content={article.content} />
+    </LorgarArticleLayout>
   )
 }

@@ -22,8 +22,8 @@ export const SafeImage = ({
         <strong>Image unavailable</strong>
         <span>{fileName || alt || 'The Media file is missing from storage.'}</span>
         <p>
-          The media file is missing from persistent storage or from a legacy local upload. Re-upload
-          this file or run the Google Drive media migration.
+          The media file is missing from cloud media storage or from a legacy local upload. Re-upload
+          this file or run the media migration.
         </p>
       </div>
     )

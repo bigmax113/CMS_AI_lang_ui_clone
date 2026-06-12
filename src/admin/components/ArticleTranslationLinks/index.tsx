@@ -35,16 +35,14 @@ const currentArticleIDFromLocation = () => {
 }
 
 export const ArticleTranslationLinks: React.FC = () => {
-  const [currentID, setCurrentID] = useState<null | string>(null)
+  const currentID = useMemo(() => currentArticleIDFromLocation(), [])
   const [links, setLinks] = useState<ArticleRecord[]>([])
-  const [message, setMessage] = useState('Loading translations...')
+  const [message, setMessage] = useState(
+    currentID ? 'Loading translations...' : 'Save this article first to link translations.',
+  )
 
   useEffect(() => {
-    const id = currentArticleIDFromLocation()
-    setCurrentID(id)
-
-    if (!id) {
-      setMessage('Save this article first to link translations.')
+    if (!currentID) {
       return
     }
 
@@ -52,7 +50,7 @@ export const ArticleTranslationLinks: React.FC = () => {
 
     const loadLinks = async () => {
       try {
-        const currentResponse = await fetch(`/api/articles/${id}?depth=0`)
+        const currentResponse = await fetch(`/api/articles/${currentID}?depth=0`)
 
         if (!currentResponse.ok) {
           throw new Error(`Cannot load current article: HTTP ${currentResponse.status}`)
@@ -99,7 +97,7 @@ export const ArticleTranslationLinks: React.FC = () => {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [currentID])
 
   const sortedLinks = useMemo(
     () =>
