@@ -24,6 +24,27 @@ export const articleLanguageDefinitions = [
     wpBlogURL: 'https://lorgar.cz/blog',
   },
   {
+    displayCode: 'DE',
+    hreflang: 'de',
+    label: 'DE German',
+    language: 'German',
+    value: 'de',
+  },
+  {
+    displayCode: 'EL',
+    hreflang: 'el',
+    label: 'EL Greek',
+    language: 'Greek',
+    value: 'el',
+  },
+  {
+    displayCode: 'ES',
+    hreflang: 'es',
+    label: 'ES Spanish',
+    language: 'Spanish',
+    value: 'es',
+  },
+  {
     displayCode: 'UA',
     hreflang: 'uk',
     label: 'UA Ukrainian',
@@ -97,7 +118,7 @@ export const articleLanguageDefinitions = [
   {
     displayCode: 'RU',
     hreflang: 'ru',
-    label: 'RU Russian (legacy)',
+    label: 'RU Russian',
     language: 'Russian',
     value: 'ru',
   },
@@ -110,6 +131,10 @@ export const articleLanguageOptions = articleLanguageDefinitions.map(({ label, v
 
 const articleTranslationTargetCodes = [
   'en',
+  'de',
+  'el',
+  'ru',
+  'es',
   'cs',
   'uk',
   'ro',

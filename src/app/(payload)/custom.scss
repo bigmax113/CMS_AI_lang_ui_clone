@@ -249,9 +249,12 @@
   display: grid;
   gap: 8px;
   left: 0;
+  max-height: min(420px, 70vh);
   min-width: 220px;
+  overflow-y: auto;
   padding: 12px;
   position: absolute;
+  scrollbar-gutter: stable;
   top: calc(100% + 6px);
   z-index: 10;
 }

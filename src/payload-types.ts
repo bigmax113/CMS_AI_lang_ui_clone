@@ -552,7 +552,7 @@ export interface Article {
   /**
    * Language of this article. Used by public language switching and AI translation grouping.
    */
-  languageCode: 'en' | 'bg' | 'cs' | 'uk' | 'ro' | 'sk' | 'hu' | 'kz' | 'pl' | 'rs' | 'lv' | 'ee' | 'lt' | 'ru';
+  languageCode: 'en' | 'bg' | 'cs' | 'de' | 'el' | 'es' | 'uk' | 'ro' | 'sk' | 'hu' | 'kz' | 'pl' | 'rs' | 'lv' | 'ee' | 'lt' | 'ru';
   /**
    * Same value links all language versions of one article. AI translations inherit it automatically.
    */

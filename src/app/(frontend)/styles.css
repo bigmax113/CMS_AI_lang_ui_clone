@@ -748,9 +748,15 @@ body:has(.public-content--lorgar) {
 }
 
 .lorgar-sidebar {
+  align-self: start;
   display: grid;
   gap: 22px;
+  max-height: calc(100vh - 44px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
   position: sticky;
+  scrollbar-gutter: stable;
   top: 22px;
 }
 
@@ -871,7 +877,11 @@ body:has(.public-content--lorgar) {
   }
 
   .lorgar-sidebar {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
     position: static;
+    scrollbar-gutter: auto;
   }
 }
 
