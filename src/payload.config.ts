@@ -19,17 +19,23 @@ import {
   videoStatusEndpoint,
 } from './ai/endpoints'
 import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
+import { ArticleReactionsCollection } from './collections/ArticleReactions'
 import { ArticlesCollection, articlesSlug } from './collections/Articles'
 import { AuthorsCollection, authorsSlug } from './collections/Authors'
 import { BlogPostsCollection, blogPostsSlug } from './collections/BlogPosts'
 import { BlogTemplatesCollection, blogTemplatesSlug } from './collections/BlogTemplates'
 import { Media, mediaSlug } from './collections/Media'
+import { NewsletterSubscriptionsCollection } from './collections/NewsletterSubscriptions'
 import { PromptTemplatesCollection, promptTemplatesSlug } from './collections/PromptTemplates'
 import { SiteLinksCollection, siteLinksSlug } from './collections/SiteLinks'
 import { SitesCollection, sitesSlug } from './collections/Sites'
 import { TestRunsCollection, testRunsSlug } from './collections/TestRuns'
 import { Users, usersSlug } from './collections/Users'
 import { migrations } from './migrations'
+import {
+  articleReactionEndpoint,
+  newsletterSubscriptionEndpoint,
+} from './publicInteractions/endpoints'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -93,6 +99,8 @@ export default buildConfig({
     SiteLinksCollection,
     TestRunsCollection,
     ArticlesCollection,
+    ArticleReactionsCollection,
+    NewsletterSubscriptionsCollection,
     Media,
     Users,
   ],
@@ -109,6 +117,8 @@ export default buildConfig({
     updateArticleStatusesEndpoint,
     translateUiEndpoint,
     videoStatusEndpoint,
+    articleReactionEndpoint,
+    newsletterSubscriptionEndpoint,
   ],
   secret: payloadSecret,
   typescript: {

@@ -2,11 +2,12 @@ import configPromise from '@payload-config'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import React from 'react'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
 import { excerptArticleText, isLikelyTruncatedArticleText } from '@/lib/articleFields'
 import {
+  articleLanguageDefinitions,
   articleLanguageDisplayCodeByCode,
   articleLanguageHreflangByCode,
   articleLanguageLabelByCode,
@@ -17,6 +18,8 @@ import {
 } from '@/lib/articleTranslations'
 import { isValidArticlePreviewToken } from '@/lib/articlePreview'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
+import { LorgarArticleActions } from './LorgarArticleActions'
+import { LorgarSubscribeForm } from './LorgarSubscribeForm'
 import { SafeImage } from './SafeImage'
 
 type LexicalNode = {
@@ -1131,13 +1134,17 @@ export const PublicChrome = ({
   backgroundImage,
   children,
   kicker,
+  languageCode,
   meta,
+  searchQuery,
   title,
 }: {
   backgroundImage?: Media | null | number
   children: React.ReactNode
   kicker?: string
+  languageCode?: null | string
   meta?: React.ReactNode
+  searchQuery?: null | string
   title: string
 }) => {
   const heroImageURL = mediaURL(isMedia(backgroundImage) ? backgroundImage : null)
@@ -1147,7 +1154,7 @@ export const PublicChrome = ({
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
-      <LorgarHeader />
+      <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
       <section
         className={['public-content__hero', heroImageURL ? 'public-content__hero--image' : ''].filter(Boolean).join(' ')}
         style={heroStyle}
@@ -1249,22 +1256,84 @@ export const findPreviewArticleBySlug = async ({
   return isValidArticlePreviewToken({ id: article.id, slug, token }) ? article : null
 }
 
-export const listPublishedArticles = async () => {
+const normalizedFilterText = (value?: null | string) => value?.trim().toLowerCase()
+
+const articleMatchesSearchQuery = (article: Article, searchQuery?: null | string) => {
+  const query = normalizedFilterText(searchQuery)
+
+  if (!query) {
+    return true
+  }
+
+  const tagText = article.tags?.map((tag) => tag.tag).filter(Boolean).join(' ') || ''
+  const haystack = [
+    article.title,
+    article.summary,
+    article.category,
+    article.contentType,
+    tagText,
+    excerptArticleText(article.content, 4000),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return haystack.includes(query)
+}
+
+const articleMatchesTagQuery = (article: Article, tagQuery?: null | string) => {
+  const query = normalizedFilterText(tagQuery)
+
+  if (!query) {
+    return true
+  }
+
+  return publicArticleTags(article).some((tag) => tag.toLowerCase() === query)
+}
+
+export const listPublishedArticles = async ({
+  languageCode,
+  limit = 500,
+  searchQuery,
+  tagQuery,
+}: {
+  languageCode?: ArticleLanguageCode | null
+  limit?: number
+  searchQuery?: null | string
+  tagQuery?: null | string
+} = {}) => {
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'articles',
-    depth: 1,
-    limit: 100,
-    overrideAccess: true,
-    sort: '-publishedAt',
-    where: {
+  const whereClauses: Where[] = [
+    {
       status: {
         equals: 'published',
       },
     },
+  ]
+
+  if (languageCode) {
+    whereClauses.push({
+      languageCode: {
+        equals: languageCode,
+      },
+    })
+  }
+
+  const where: Where = {
+    and: whereClauses,
+  }
+  const result = await payload.find({
+    collection: 'articles',
+    depth: 1,
+    limit,
+    overrideAccess: true,
+    sort: '-publishedAt',
+    where,
   })
 
-  return result.docs
+  return result.docs.filter(
+    (article) => articleMatchesSearchQuery(article, searchQuery) && articleMatchesTagQuery(article, tagQuery),
+  )
 }
 
 export type ArticleLanguageAlternate = {
@@ -1536,16 +1605,74 @@ const LorgarPrimaryNav = ({ className }: { className?: string }) => (
   </nav>
 )
 
+const lorgarArticlesPath = ({
+  languageCode,
+  searchQuery,
+  tagQuery,
+}: {
+  languageCode?: null | string
+  searchQuery?: null | string
+  tagQuery?: null | string
+}) => {
+  const params = new URLSearchParams()
+  const normalizedLanguageCode = normalizeArticleLanguageCode(languageCode)
+  const query = searchQuery?.trim()
+  const tag = tagQuery?.trim()
+
+  if (normalizedLanguageCode) {
+    params.set('lang', normalizedLanguageCode)
+  }
+
+  if (query) {
+    params.set('q', query)
+  }
+
+  if (tag) {
+    params.set('tag', tag)
+  }
+
+  const queryString = params.toString()
+
+  return `/articles${queryString ? `?${queryString}` : ''}`
+}
+
+const lorgarLanguageLinks = ({
+  alternates,
+  currentCode,
+  searchQuery,
+}: {
+  alternates?: ArticleLanguageAlternate[]
+  currentCode: ArticleLanguageCode
+  searchQuery?: null | string
+}) => {
+  const alternatesByCode = new Map(alternates?.map((alternate) => [alternate.code, alternate]) || [])
+
+  return articleLanguageDefinitions.map((language) => {
+    const alternate = alternatesByCode.get(language.value)
+
+    return {
+      code: language.value,
+      displayCode: language.displayCode,
+      href: alternate?.href || lorgarArticlesPath({ languageCode: language.value, searchQuery }),
+      isCurrent: alternate?.isCurrent || (!alternates?.length && language.value === currentCode),
+      label: language.label,
+      title: alternate?.title || `${language.language} articles`,
+    }
+  })
+}
+
 const LorgarHeader = ({
   alternates,
   languageCode,
+  searchQuery,
 }: {
   alternates?: ArticleLanguageAlternate[]
   languageCode?: null | string
+  searchQuery?: null | string
 }) => {
   const currentCode = normalizeArticleLanguageCode(languageCode)
   const currentDisplayCode = articleLanguageDisplayCodeByCode[currentCode] || currentCode.toUpperCase()
-  const languageLinks = alternates?.length ? alternates : []
+  const languageLinks = lorgarLanguageLinks({ alternates, currentCode, searchQuery })
 
   return (
     <header className="lorgar-header">
@@ -1554,22 +1681,24 @@ const LorgarHeader = ({
       </Link>
       <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
-        <Link className="lorgar-header__search" href="/articles" aria-label="Search articles">
-          <span aria-hidden="true" />
-        </Link>
+        <form action="/articles" className="lorgar-header__search" role="search">
+          <input aria-label="Search articles" defaultValue={searchQuery || ''} name="q" placeholder="Search" type="search" />
+          <input name="lang" type="hidden" value={currentCode} />
+          <button aria-label="Search articles" type="submit">
+            <span aria-hidden="true" />
+          </button>
+        </form>
         <details className="lorgar-header__language">
           <summary>{currentDisplayCode}</summary>
-          {languageLinks.length ? (
-            <div>
-              {languageLinks.map((alternate) =>
-                alternate.isCurrent ? (
-                  <strong aria-current="page" key={alternate.code}>{alternate.displayCode}</strong>
-                ) : (
-                  <Link href={alternate.href} key={alternate.code}>{alternate.displayCode}</Link>
-                ),
-              )}
-            </div>
-          ) : null}
+          <div>
+            {languageLinks.map((alternate) =>
+              alternate.isCurrent ? (
+                <strong aria-current="page" key={alternate.code}>{alternate.displayCode}</strong>
+              ) : (
+                <Link href={alternate.href} key={alternate.code} title={alternate.title}>{alternate.displayCode}</Link>
+              ),
+            )}
+          </div>
         </details>
         <details className="lorgar-header__mobile-menu">
           <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
@@ -1622,39 +1751,18 @@ const LorgarMeta = ({
   )
 }
 
-const LorgarArticleShare = ({ path, title }: { path?: null | string; title: string }) => {
+const LorgarArticleShare = ({
+  articleSlug,
+  path,
+  title,
+}: {
+  articleSlug: string
+  path?: null | string
+  title: string
+}) => {
   const url = absoluteURL(path) || publicBaseURL()
-  const encodedURL = encodeURIComponent(url)
-  const encodedTitle = encodeURIComponent(title)
 
-  return (
-    <div className="lorgar-share">
-      <div className="lorgar-share__reactions" aria-label="Article reactions">
-        <span>Reactions:</span>
-        <button aria-label="Like article" type="button">
-          <LorgarIcon name="like" />
-        </button>
-        <button aria-label="Discuss article" type="button">
-          <LorgarIcon name="discuss" />
-        </button>
-      </div>
-      <div className="lorgar-share__links" aria-label="Share article">
-        <span>Share:</span>
-        <a aria-label="Copy article link" href={url}>
-          <LorgarIcon name="link" />
-        </a>
-        <a aria-label="Share on Facebook" href={`https://www.facebook.com/sharer/sharer.php?u=${encodedURL}`} rel="noreferrer" target="_blank">
-          <LorgarIcon name="facebook" />
-        </a>
-        <a aria-label="Share on X" href={`https://twitter.com/intent/tweet?url=${encodedURL}&text=${encodedTitle}`} rel="noreferrer" target="_blank">
-          <LorgarIcon name="x" />
-        </a>
-        <a aria-label="Share on LinkedIn" href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedURL}&title=${encodedTitle}`} rel="noreferrer" target="_blank">
-          <LorgarIcon name="linkedin" />
-        </a>
-      </div>
-    </div>
-  )
+  return <LorgarArticleActions articleSlug={articleSlug} title={title} url={url} />
 }
 
 const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
@@ -1715,7 +1823,7 @@ const LorgarCTA = () => (
   </section>
 )
 
-const LorgarSubscribe = () => (
+const LorgarSubscribe = ({ languageCode }: { languageCode?: null | string }) => (
   <section className="lorgar-subscribe" aria-label="Subscribe to LORGAR blog">
     <div className="lorgar-subscribe__icon">
       <LorgarIcon name="mail" />
@@ -1724,10 +1832,7 @@ const LorgarSubscribe = () => (
       <h2>Subscribe to our blog</h2>
       <p>Get the latest news and insights delivered straight to your inbox.</p>
     </div>
-    <form action="https://lorgar.com/for-users" method="get">
-      <input aria-label="Email address" name="email" placeholder="Enter your email" type="email" />
-      <button type="submit">Subscribe</button>
-    </form>
+    <LorgarSubscribeForm languageCode={normalizeArticleLanguageCode(languageCode)} />
   </section>
 )
 
@@ -1796,7 +1901,12 @@ export const LorgarArticleLayout = ({
             <div className="lorgar-article-tags">
               <span>TAGS</span>
               {tags.slice(0, 5).map((tag) => (
-                <Link href={`/articles?tag=${encodeURIComponent(tag)}`} key={tag}>{tag}</Link>
+                <Link
+                  href={lorgarArticlesPath({ languageCode: article.languageCode, tagQuery: tag })}
+                  key={tag}
+                >
+                  {tag}
+                </Link>
               ))}
             </div>
           ) : null}
@@ -1807,10 +1917,10 @@ export const LorgarArticleLayout = ({
           {isMedia(article.coverImage) ? (
             <PublicImage alt={article.coverImage.alt || article.title} className="lorgar-article-cover" media={article.coverImage} />
           ) : null}
-          <LorgarArticleShare path={articlePath} title={article.title} />
+          <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} />
           <div className="lorgar-article-body">{children}</div>
           <LorgarCTA />
-          <LorgarSubscribe />
+          <LorgarSubscribe languageCode={article.languageCode} />
           <LorgarRelatedPosts currentArticle={article} recentArticles={recentArticles} />
         </article>
       </main>
