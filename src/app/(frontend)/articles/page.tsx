@@ -49,11 +49,11 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
     <PublicChrome
       kicker="Published content"
       languageCode={languageCode}
-      meta={<p className="public-content__results-note">{resultLabel}</p>}
       searchQuery={searchQuery}
       title="All Articles"
     >
       <section className="public-content__section">
+        <p className="public-content__results-note">{resultLabel}</p>
         {articles.length ? (
           <div className="public-content__grid">
             {articles.map((article) => (

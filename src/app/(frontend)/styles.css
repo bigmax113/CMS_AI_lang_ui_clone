@@ -140,7 +140,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   gap: 24px;
-  grid-template-columns: minmax(170px, 0.7fr) minmax(520px, 1.8fr) minmax(112px, 0.45fr);
+  grid-template-columns: minmax(170px, 210px) minmax(0, 1fr) minmax(220px, 300px);
   margin: 0 auto;
   max-width: 1360px;
   padding: 28px 44px 24px;
@@ -164,7 +164,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 .lorgar-header__nav {
   align-items: center;
   display: flex;
-  gap: clamp(16px, 2vw, 30px);
+  gap: clamp(14px, 1.4vw, 24px);
   justify-content: center;
 }
 
@@ -272,7 +272,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   gap: 8px;
   justify-content: center;
   padding: 0 8px 0 13px;
-  width: min(250px, 24vw);
+  width: min(190px, 18vw);
 }
 
 .lorgar-header__search input {
