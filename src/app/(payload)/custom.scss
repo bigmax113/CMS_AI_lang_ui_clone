@@ -208,6 +208,10 @@
   color: #ffffff;
 }
 
+.collection-list--articles .list-selection__actions > button.list-selection__button:not(.delete-documents__toggle) {
+  display: none !important;
+}
+
 .article-translation-toolbar button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
