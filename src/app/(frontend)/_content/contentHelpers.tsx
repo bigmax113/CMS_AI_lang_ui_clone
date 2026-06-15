@@ -53,18 +53,6 @@ export const isAuthor = (value: unknown): value is Author =>
 const isLocalPayloadMediaURL = (value?: null | string) =>
   Boolean(value?.startsWith('/api/media/file/') || value?.includes('/api/media/file/'))
 
-export const formatDate = (value?: null | string) => {
-  if (!value) {
-    return null
-  }
-
-  return new Intl.DateTimeFormat('ru', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(value))
-}
-
 const articleDateLocaleByCode: Record<ArticleLanguageCode, string> = {
   bg: 'bg-BG',
   cs: 'cs-CZ',
@@ -83,6 +71,18 @@ const articleDateLocaleByCode: Record<ArticleLanguageCode, string> = {
   ru: 'ru-RU',
   sk: 'sk-SK',
   uk: 'uk-UA',
+}
+
+export const formatDate = (value?: null | string, languageCode?: null | string) => {
+  if (!value) {
+    return null
+  }
+
+  return new Intl.DateTimeFormat(articleDateLocaleByCode[normalizeArticleLanguageCode(languageCode)], {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value))
 }
 
 const publicArticleNavigationLabelsByCode: Record<
@@ -1398,14 +1398,32 @@ const lorgarPolicyLinks = [
   { href: 'https://lorgar.com/cookies-policy', label: 'Cookies policy' },
 ]
 
-const lorgarSocialLinks = [
-  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', label: 'YouTube', short: 'YT' },
-  { href: 'https://www.facebook.com/lorgargaming', label: 'Facebook', short: 'FB' },
-  { href: 'https://www.instagram.com/lorgar.global/', label: 'Instagram', short: 'IG' },
-  { href: 'https://www.tiktok.com/@lorgar.global', label: 'TikTok', short: 'TT' },
-  { href: 'https://wa.me/48732080677', label: 'WhatsApp', short: 'WA' },
-  { href: 'https://t.me/Lorgar_support_bot', label: 'Telegram', short: 'TG' },
-  { href: 'https://www.linkedin.com/company/lorgar/', label: 'LinkedIn', short: 'IN' },
+type LorgarIconName =
+  | 'discuss'
+  | 'facebook'
+  | 'instagram'
+  | 'like'
+  | 'link'
+  | 'linkedin'
+  | 'mail'
+  | 'telegram'
+  | 'tiktok'
+  | 'whatsapp'
+  | 'x'
+  | 'youtube'
+
+const lorgarSocialLinks: Array<{
+  href: string
+  icon: LorgarIconName
+  label: string
+}> = [
+  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', icon: 'youtube', label: 'YouTube' },
+  { href: 'https://www.facebook.com/lorgargaming', icon: 'facebook', label: 'Facebook' },
+  { href: 'https://www.instagram.com/lorgar.global/', icon: 'instagram', label: 'Instagram' },
+  { href: 'https://www.tiktok.com/@lorgar.global', icon: 'tiktok', label: 'TikTok' },
+  { href: 'https://wa.me/48732080677', icon: 'whatsapp', label: 'WhatsApp' },
+  { href: 'https://t.me/Lorgar_support_bot', icon: 'telegram', label: 'Telegram' },
+  { href: 'https://www.linkedin.com/company/lorgar/', icon: 'linkedin', label: 'LinkedIn' },
 ]
 
 const ExternalLink = ({
@@ -1427,6 +1445,65 @@ const ExternalLink = ({
 const LorgarLogo = ({ className }: { className?: string }) => (
   <img alt="LORGAR Ready To Play" className={className} height={72} src="/lorgar-logo.svg" width={260} />
 )
+
+const LorgarIcon = ({ name }: { name: LorgarIconName }) => {
+  const letterIcon: Partial<Record<LorgarIconName, string>> = {
+    facebook: 'f',
+    linkedin: 'in',
+    tiktok: 'tt',
+    whatsapp: 'wa',
+    x: 'x',
+    youtube: 'yt',
+  }
+
+  if (letterIcon[name]) {
+    return (
+      <svg aria-hidden="true" className="lorgar-ui-icon" viewBox="0 0 24 24">
+        <text dominantBaseline="central" textAnchor="middle" x="12" y="12">
+          {letterIcon[name]}
+        </text>
+      </svg>
+    )
+  }
+
+  return (
+    <svg aria-hidden="true" className="lorgar-ui-icon" fill="none" viewBox="0 0 24 24">
+      {name === 'like' ? (
+        <>
+          <path d="M8 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3v11Z" />
+          <path d="M8 10l4-7 1.5.8c.9.5 1.3 1.5 1 2.5L14 9h5a2 2 0 0 1 2 2.3l-1.1 7A3 3 0 0 1 17 21H8V10Z" />
+        </>
+      ) : null}
+      {name === 'discuss' ? (
+        <>
+          <path d="M5 6.5A3.5 3.5 0 0 1 8.5 3h7A3.5 3.5 0 0 1 19 6.5v4a3.5 3.5 0 0 1-3.5 3.5H11l-5 4v-4A3.5 3.5 0 0 1 2.5 10.5v-4Z" />
+          <path d="M8 8h8M8 11h5" />
+        </>
+      ) : null}
+      {name === 'link' ? (
+        <>
+          <path d="M9.5 14.5 14.5 9.5" />
+          <path d="M10.5 6.5 12 5a4 4 0 0 1 5.7 5.7l-1.6 1.6" />
+          <path d="M13.5 17.5 12 19a4 4 0 0 1-5.7-5.7l1.6-1.6" />
+        </>
+      ) : null}
+      {name === 'instagram' ? (
+        <>
+          <rect height="15" rx="4" width="15" x="4.5" y="4.5" />
+          <circle cx="12" cy="12" r="3.3" />
+          <path d="M16.7 7.4h.1" />
+        </>
+      ) : null}
+      {name === 'telegram' ? <path d="M21 4 3.5 11.3l6.8 2.4L13 20l3.1-14.2-6.4 7.9" /> : null}
+      {name === 'mail' ? (
+        <>
+          <rect height="14" rx="3" width="18" x="3" y="5" />
+          <path d="m4.5 7 7.5 6 7.5-6" />
+        </>
+      ) : null}
+    </svg>
+  )
+}
 
 const LorgarNavDropdown = ({
   items,
@@ -1472,9 +1549,9 @@ const LorgarHeader = ({
 
   return (
     <header className="lorgar-header">
-      <ExternalLink className="lorgar-header__brand" href="https://lorgar.com">
+      <Link className="lorgar-header__brand" href="/articles">
         <LorgarLogo className="lorgar-header__logo" />
-      </ExternalLink>
+      </Link>
       <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
         <Link className="lorgar-header__search" href="/articles" aria-label="Search articles">
@@ -1554,20 +1631,26 @@ const LorgarArticleShare = ({ path, title }: { path?: null | string; title: stri
     <div className="lorgar-share">
       <div className="lorgar-share__reactions" aria-label="Article reactions">
         <span>Reactions:</span>
-        <button type="button">Like</button>
-        <button type="button">Discuss</button>
+        <button aria-label="Like article" type="button">
+          <LorgarIcon name="like" />
+        </button>
+        <button aria-label="Discuss article" type="button">
+          <LorgarIcon name="discuss" />
+        </button>
       </div>
       <div className="lorgar-share__links" aria-label="Share article">
         <span>Share:</span>
-        <a href={url}>Link</a>
-        <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedURL}`} rel="noreferrer" target="_blank">
-          Facebook
+        <a aria-label="Copy article link" href={url}>
+          <LorgarIcon name="link" />
         </a>
-        <a href={`https://twitter.com/intent/tweet?url=${encodedURL}&text=${encodedTitle}`} rel="noreferrer" target="_blank">
-          X
+        <a aria-label="Share on Facebook" href={`https://www.facebook.com/sharer/sharer.php?u=${encodedURL}`} rel="noreferrer" target="_blank">
+          <LorgarIcon name="facebook" />
         </a>
-        <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedURL}&title=${encodedTitle}`} rel="noreferrer" target="_blank">
-          LinkedIn
+        <a aria-label="Share on X" href={`https://twitter.com/intent/tweet?url=${encodedURL}&text=${encodedTitle}`} rel="noreferrer" target="_blank">
+          <LorgarIcon name="x" />
+        </a>
+        <a aria-label="Share on LinkedIn" href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedURL}&title=${encodedTitle}`} rel="noreferrer" target="_blank">
+          <LorgarIcon name="linkedin" />
         </a>
       </div>
     </div>
@@ -1576,7 +1659,6 @@ const LorgarArticleShare = ({ path, title }: { path?: null | string; title: stri
 
 const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
-  const date = formatArticleMetaDate(article.publishedAt || article.createdAt, article.languageCode)
   const summary = article.summary || excerptArticleText(article.content, 180)
 
   return (
@@ -1589,7 +1671,6 @@ const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
         />
       ) : null}
       <span>
-        {date ? <small>{date}</small> : null}
         <strong>{article.title}</strong>
         {summary ? <p>{summary}</p> : null}
       </span>
@@ -1629,8 +1710,24 @@ const LorgarCTA = () => (
     <strong>Interested in working with LORGAR?</strong>
     <div>
       <ExternalLink href="https://lorgar.com/for-partners">For partners</ExternalLink>
-      <ExternalLink href="https://lorgar.com/where-to-buy">Contact us</ExternalLink>
+      <ExternalLink href="https://lorgar.com/for-users">Contact us</ExternalLink>
     </div>
+  </section>
+)
+
+const LorgarSubscribe = () => (
+  <section className="lorgar-subscribe" aria-label="Subscribe to LORGAR blog">
+    <div className="lorgar-subscribe__icon">
+      <LorgarIcon name="mail" />
+    </div>
+    <div>
+      <h2>Subscribe to our blog</h2>
+      <p>Get the latest news and insights delivered straight to your inbox.</p>
+    </div>
+    <form action="https://lorgar.com/for-users" method="get">
+      <input aria-label="Email address" name="email" placeholder="Enter your email" type="email" />
+      <button type="submit">Subscribe</button>
+    </form>
   </section>
 )
 
@@ -1649,7 +1746,7 @@ const LorgarFooter = () => (
     <div className="lorgar-footer__social" aria-label="Social links">
       {lorgarSocialLinks.map((item) => (
         <ExternalLink href={item.href} key={item.href} newTab>
-          <span aria-hidden="true">{item.short}</span>
+          <LorgarIcon name={item.icon} />
           <span className="sr-only">{item.label}</span>
         </ExternalLink>
       ))}
@@ -1697,6 +1794,7 @@ export const LorgarArticleLayout = ({
           />
           {tags.length ? (
             <div className="lorgar-article-tags">
+              <span>TAGS</span>
               {tags.slice(0, 5).map((tag) => (
                 <Link href={`/articles?tag=${encodeURIComponent(tag)}`} key={tag}>{tag}</Link>
               ))}
@@ -1712,6 +1810,7 @@ export const LorgarArticleLayout = ({
           <LorgarArticleShare path={articlePath} title={article.title} />
           <div className="lorgar-article-body">{children}</div>
           <LorgarCTA />
+          <LorgarSubscribe />
           <LorgarRelatedPosts currentArticle={article} recentArticles={recentArticles} />
         </article>
       </main>

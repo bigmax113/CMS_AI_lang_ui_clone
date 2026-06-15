@@ -30,7 +30,7 @@ export default async function ArticlesIndexPage() {
                 href={articleHref(article)}
                 image={article.coverImage}
                 key={article.id}
-                label={formatDate(article.publishedAt) || article.contentType || article.category || 'Article'}
+                label={formatDate(article.publishedAt, article.languageCode) || article.contentType || article.category || 'Article'}
                 summary={publicSummaryText({ content: article.content, summary: article.summary })}
                 title={article.title}
               />

@@ -80,6 +80,25 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   width: 1px;
 }
 
+.lorgar-ui-icon {
+  display: block;
+  height: 1em;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 1em;
+}
+
+.lorgar-ui-icon text {
+  fill: currentColor;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .public-content--lorgar {
   --lorgar-bg: #02030a;
   --lorgar-bg-soft: #080a16;
@@ -90,7 +109,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   --lorgar-text: #f7f8ff;
   --lorgar-muted: #a9b1ca;
   --lorgar-subtle: #747f9f;
-  --lorgar-accent: #8a5cff;
+  --lorgar-accent: #a100ff;
   --lorgar-accent-2: #22d3ee;
   --lorgar-radius: 18px;
   background:
@@ -153,18 +172,19 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 .lorgar-header__tools a,
 .lorgar-header__language summary,
 .lorgar-nav-dropdown summary {
-  color: var(--lorgar-muted);
+  color: var(--lorgar-text);
   font-size: 14px;
   font-weight: 850;
   line-height: 1;
   text-decoration: none;
+  text-transform: uppercase;
 }
 
 .lorgar-header__nav a:hover,
 .lorgar-header__tools a:hover,
 .lorgar-header__language summary:hover,
 .lorgar-nav-dropdown summary:hover {
-  color: var(--lorgar-text);
+  color: var(--lorgar-accent);
 }
 
 .lorgar-nav-dropdown {
@@ -182,11 +202,20 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 }
 
 .lorgar-nav-dropdown summary::after {
-  color: var(--lorgar-subtle);
-  content: "v";
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  content: "";
   display: inline-block;
-  font-size: 11px;
+  height: 7px;
   margin-left: 8px;
+  position: relative;
+  top: -3px;
+  transform: rotate(45deg);
+  width: 7px;
+}
+
+.lorgar-nav-dropdown summary:hover::after {
+  color: var(--lorgar-accent);
 }
 
 .lorgar-nav-dropdown > div {
@@ -207,17 +236,18 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 
 .lorgar-nav-dropdown > div a {
   border-radius: 10px;
-  color: var(--lorgar-muted);
+  color: var(--lorgar-text);
   display: block;
   font-size: 13px;
   line-height: 1.25;
   padding: 10px 12px;
   text-decoration: none;
+  text-transform: uppercase;
 }
 
 .lorgar-nav-dropdown > div a:hover {
   background: rgba(138, 92, 255, 0.14);
-  color: var(--lorgar-text);
+  color: var(--lorgar-accent);
 }
 
 .lorgar-header__tools {
@@ -278,11 +308,16 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 }
 
 .lorgar-header__language summary::after {
-  content: "v";
-  color: var(--lorgar-subtle);
+  border-bottom: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  content: "";
   display: inline-block;
-  font-size: 12px;
+  height: 7px;
   margin-left: 10px;
+  position: relative;
+  top: -3px;
+  transform: rotate(45deg);
+  width: 7px;
 }
 
 .lorgar-header__language div {
@@ -303,16 +338,21 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 .lorgar-header__language a,
 .lorgar-header__language strong {
   border-radius: 8px;
-  color: var(--lorgar-muted);
+  color: var(--lorgar-text);
   font-size: 13px;
   font-weight: 850;
   line-height: 1;
   padding: 9px 10px;
   text-decoration: none;
+  text-transform: uppercase;
+}
+
+.lorgar-header__language a:hover {
+  color: var(--lorgar-accent);
 }
 
 .lorgar-header__language strong {
-  background: rgba(138, 92, 255, 0.16);
+  background: rgba(161, 0, 255, 0.18);
   color: var(--lorgar-text);
 }
 
@@ -492,14 +532,26 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   margin: 0 0 20px;
 }
 
+.lorgar-article-tags > span {
+  align-items: center;
+  color: var(--lorgar-accent-2);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 9px 0;
+  text-transform: uppercase;
+}
+
 .lorgar-article-tags a,
 .lorgar-topic-list a,
 .public-content--lorgar .public-content__language-switcher a,
 .public-content--lorgar .public-content__language-switcher strong {
-  background: rgba(138, 92, 255, 0.1);
-  border: 1px solid rgba(138, 92, 255, 0.42);
+  background: rgba(161, 0, 255, 0.14);
+  border: 1px solid rgba(161, 0, 255, 0.62);
   border-radius: 999px;
-  color: #d9d3ff;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 850;
   line-height: 1;
@@ -538,21 +590,21 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 
 .lorgar-meta span {
   align-items: center;
-  color: var(--lorgar-muted);
+  color: #ffffff;
   display: inline-flex;
-  font-size: 14px;
-  font-weight: 780;
-  gap: 9px;
+  font-size: 16px;
+  font-weight: 850;
+  gap: 11px;
 }
 
 .lorgar-meta__icon {
-  color: var(--lorgar-accent-2);
-  height: 18px;
+  color: var(--lorgar-accent);
+  height: 24px;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.9;
-  width: 18px;
+  width: 24px;
 }
 
 .public-content--lorgar .public-content__language-switcher {
@@ -601,24 +653,35 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 }
 
 .lorgar-share span {
-  color: var(--lorgar-subtle);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 850;
+  text-transform: uppercase;
 }
 
 .lorgar-share button,
 .lorgar-share a {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--lorgar-border);
+  align-items: center;
+  background: var(--lorgar-accent);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   color: var(--lorgar-text);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 850;
+  height: 42px;
+  justify-content: center;
   line-height: 1;
-  padding: 9px 12px;
+  padding: 0;
   text-decoration: none;
+  width: 42px;
+}
+
+.lorgar-share button:hover,
+.lorgar-share a:hover {
+  background: #bf38ff;
 }
 
 .lorgar-article-body {
@@ -627,7 +690,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 }
 
 .public-content--lorgar .public-content__richtext {
-  max-width: 920px;
+  max-width: 100%;
 }
 
 .public-content--lorgar .public-content__richtext h1,
@@ -683,7 +746,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 .public-content--lorgar .public-content__figure img,
 .public-content--lorgar .public-content__image-block img,
 .public-content--lorgar .public-content__image-row img {
-  border: 1px solid var(--lorgar-border);
+  border: 0;
   border-radius: var(--lorgar-radius);
 }
 
@@ -696,13 +759,25 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 }
 
 .public-content--lorgar .public-content__product-card,
-.public-content--lorgar .public-content__faq details,
-.public-content--lorgar .public-content__html-embed,
-.public-content--lorgar .public-content__callout,
-.public-content--lorgar .public-content__cta {
+.public-content--lorgar .public-content__faq details {
   background: var(--lorgar-panel);
   border-color: var(--lorgar-border);
   color: var(--lorgar-text);
+}
+
+.public-content--lorgar .public-content__callout,
+.public-content--lorgar .public-content__cta {
+  background: transparent;
+  border: 0;
+  color: var(--lorgar-text);
+  padding: 0;
+}
+
+.public-content--lorgar .public-content__html-embed {
+  background: transparent;
+  border: 0;
+  color: var(--lorgar-text);
+  padding: 0;
 }
 
 .public-content--lorgar .public-content__product-copy strong,
@@ -758,7 +833,8 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   border: 1px solid var(--lorgar-border);
   border-radius: 18px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
+  grid-template-rows: auto 1fr;
   overflow: hidden;
   padding: 12px;
   text-decoration: none;
@@ -772,13 +848,10 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   width: 100%;
 }
 
-.lorgar-related-card small {
-  color: var(--lorgar-subtle);
-  display: block;
-  font-size: 12px;
-  font-weight: 780;
-  line-height: 1.2;
-  margin-bottom: 8px;
+.lorgar-related-card span {
+  align-content: start;
+  display: grid;
+  gap: 10px;
 }
 
 .lorgar-related-card strong {
@@ -787,13 +860,14 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   font-size: 18px;
   font-weight: 900;
   line-height: 1.25;
+  text-align: center;
 }
 
 .lorgar-related-card p {
   color: var(--lorgar-muted);
   font-size: 14px;
   line-height: 1.5;
-  margin: 10px 0 0;
+  margin: 0;
 }
 
 .lorgar-footer {
@@ -823,6 +897,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   font-weight: 800;
   line-height: 1.3;
   text-decoration: none;
+  text-transform: uppercase;
 }
 
 .lorgar-footer__nav a:hover,
@@ -844,7 +919,7 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   border-radius: 999px;
   color: var(--lorgar-text);
   display: inline-flex;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 900;
   height: 34px;
   justify-content: center;
@@ -862,7 +937,10 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
   font-weight: 750;
   gap: 10px 20px;
   grid-column: 1 / -1;
+  justify-content: center;
   padding-top: 18px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .lorgar-cta-strip strong {
@@ -899,73 +977,64 @@ html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
 
 .lorgar-subscribe {
   align-items: center;
-  background: var(--lorgar-panel);
-  border: 1px solid var(--lorgar-border);
-  border-radius: var(--lorgar-radius);
+  background: rgba(12, 14, 30, 0.72);
+  border: 1px solid rgba(161, 0, 255, 0.42);
+  border-radius: 18px;
   display: grid;
-  gap: 24px;
-  grid-template-columns: 1fr minmax(260px, 360px);
-  margin: 0 0 34px;
-  max-width: 880px;
-  padding: 24px;
+  gap: 22px;
+  grid-template-columns: auto minmax(0, 1fr) minmax(320px, 0.8fr);
+  margin: 30px 0 24px;
+  max-width: 1120px;
+  padding: 24px 26px;
 }
 
-.lorgar-subscribe > div {
+.lorgar-subscribe__icon {
   align-items: center;
-  display: flex;
-  gap: 18px;
-}
-
-.lorgar-subscribe > div > span {
-  background: rgba(138, 92, 255, 0.16);
-  border: 1px solid var(--lorgar-border);
-  border-radius: 16px;
-  display: block;
-  height: 56px;
-  position: relative;
-  width: 56px;
-}
-
-.lorgar-subscribe > div > span::before {
-  border: 2px solid var(--lorgar-accent-2);
-  border-radius: 4px;
-  content: "";
-  height: 20px;
-  left: 16px;
-  position: absolute;
-  top: 17px;
-  width: 24px;
+  background: var(--lorgar-accent);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 32px;
+  height: 68px;
+  justify-content: center;
+  width: 68px;
 }
 
 .lorgar-subscribe h2 {
-  color: var(--lorgar-text);
-  font-size: 21px;
-  line-height: 1.2;
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1.15;
   margin: 0 0 6px;
+  text-transform: uppercase;
 }
 
 .lorgar-subscribe p {
-  color: var(--lorgar-muted);
-  font-size: 14px;
-  line-height: 1.5;
+  color: #ffffff;
+  font-size: 15px;
+  line-height: 1.45;
   margin: 0;
 }
 
 .lorgar-subscribe form {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .lorgar-subscribe input {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--lorgar-border);
   border-radius: 10px;
-  color: var(--lorgar-text);
+  color: #ffffff;
   font: inherit;
   font-size: 14px;
   min-width: 0;
-  padding: 12px 13px;
+  padding: 13px 14px;
   width: 100%;
+}
+
+.lorgar-subscribe input::placeholder {
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .lorgar-subscribe button {
