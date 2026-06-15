@@ -5,7 +5,7 @@ import React from 'react'
 import { getPayload } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
-import { articleTextFromLexical, excerptArticleText, isLikelyTruncatedArticleText } from '@/lib/articleFields'
+import { excerptArticleText, isLikelyTruncatedArticleText } from '@/lib/articleFields'
 import {
   articleLanguageDisplayCodeByCode,
   articleLanguageHreflangByCode,
@@ -458,12 +458,6 @@ const publicArticleAuthorNames = (authors?: Article['authors'] | BlogPost['autho
     .map((author) => author.name)
     .filter(Boolean)
     .join(', ') || defaultPublicAuthorName
-
-const publicArticleReadMinutes = (content?: Article['content'] | BlogPost['content'] | null) => {
-  const wordCount = articleTextFromLexical(content).split(/\s+/u).filter(Boolean).length
-
-  return Math.max(1, Math.ceil(wordCount / 220))
-}
 
 const parseURL = (value: string) => {
   try {
@@ -1163,6 +1157,7 @@ export const PublicChrome = ({
         {meta ? <div className="public-content__meta-wrap">{meta}</div> : null}
       </section>
       {children}
+      <LorgarFooter />
     </div>
   )
 }
@@ -1360,6 +1355,110 @@ export const ArticleLanguageSwitcher = ({
   )
 }
 
+const lorgarSolutions = [
+  { href: 'https://lorgar.com/streaming', label: 'Streaming Solution' },
+  { href: 'https://lorgar.com/pc-gaming', label: 'PC Gaming Solution' },
+  { href: 'https://lorgar.com/sim-racing-flex', label: 'Sim Racing Flex Solution' },
+  { href: 'https://lorgar.com/sim-racing-pro', label: 'Sim Racing Pro Solution' },
+]
+
+const lorgarProducts = [
+  { href: 'https://lorgar.com/category/pc', label: 'PC' },
+  { href: 'https://lorgar.com/category/monitors', label: 'Monitors' },
+  { href: 'https://lorgar.com/category/gaming-mice', label: 'Mice' },
+  { href: 'https://lorgar.com/category/gaming-keyboards', label: 'Keyboards' },
+  { href: 'https://lorgar.com/category/gaming-headsets', label: 'Headsets' },
+  { href: 'https://lorgar.com/category/gaming-controllers', label: 'Controllers' },
+  { href: 'https://lorgar.com/category/gaming-mousepads', label: 'Mouse pads' },
+  { href: 'https://lorgar.com/category/gaming-chairs', label: 'Chairs' },
+  { href: 'https://lorgar.com/category/gaming-desks', label: 'Desks' },
+  { href: 'https://lorgar.com/category/web-cameras', label: 'Webcams' },
+  { href: 'https://lorgar.com/category/gaming-microphones', label: 'Microphones' },
+  { href: 'https://lorgar.com/category/gaming-racing-cockpits', label: 'Racing Cockpits' },
+  { href: 'https://lorgar.com/category/gaming-accessories', label: 'Racing Accessories' },
+]
+
+const lorgarMainLinks = [
+  { href: 'https://lorgar.com/for-users', label: 'For Users' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy' },
+]
+
+const lorgarFooterLinks = [
+  { href: 'https://lorgar.com/for-users', label: 'For Users' },
+  { href: 'https://lorgar.com/for-partners', label: 'For Partners' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy' },
+  { href: 'https://lorgar.com/about', label: 'About LORGAR' },
+]
+
+const lorgarPolicyLinks = [
+  { href: 'https://lorgar.com/warranty-terms', label: 'Warranty Policy and Warranty Cards' },
+  { href: 'https://lorgar.com/privacy-policy', label: 'Privacy Policy' },
+  { href: 'https://lorgar.com/cookies-policy', label: 'Cookies policy' },
+]
+
+const lorgarSocialLinks = [
+  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', label: 'YouTube', short: 'YT' },
+  { href: 'https://www.facebook.com/lorgargaming', label: 'Facebook', short: 'FB' },
+  { href: 'https://www.instagram.com/lorgar.global/', label: 'Instagram', short: 'IG' },
+  { href: 'https://www.tiktok.com/@lorgar.global', label: 'TikTok', short: 'TT' },
+  { href: 'https://wa.me/48732080677', label: 'WhatsApp', short: 'WA' },
+  { href: 'https://t.me/Lorgar_support_bot', label: 'Telegram', short: 'TG' },
+  { href: 'https://www.linkedin.com/company/lorgar/', label: 'LinkedIn', short: 'IN' },
+]
+
+const ExternalLink = ({
+  children,
+  className,
+  href,
+  newTab = false,
+}: {
+  children: React.ReactNode
+  className?: string
+  href: string
+  newTab?: boolean
+}) => (
+  <a className={className} href={href} rel={newTab ? 'noreferrer' : undefined} target={newTab ? '_blank' : undefined}>
+    {children}
+  </a>
+)
+
+const LorgarLogo = ({ className }: { className?: string }) => (
+  <img alt="LORGAR Ready To Play" className={className} height={72} src="/lorgar-logo.svg" width={260} />
+)
+
+const LorgarNavDropdown = ({
+  items,
+  label,
+}: {
+  items: Array<{ href: string; label: string }>
+  label: string
+}) => (
+  <details className="lorgar-nav-dropdown">
+    <summary>{label}</summary>
+    <div>
+      {items.map((item) => (
+        <ExternalLink href={item.href} key={item.href}>
+          {item.label}
+        </ExternalLink>
+      ))}
+    </div>
+  </details>
+)
+
+const LorgarPrimaryNav = ({ className }: { className?: string }) => (
+  <nav aria-label="Primary" className={className}>
+    <LorgarNavDropdown items={lorgarSolutions} label="Solutions" />
+    <LorgarNavDropdown items={lorgarProducts} label="Products" />
+    {lorgarMainLinks.map((item) => (
+      <ExternalLink href={item.href} key={item.href}>
+        {item.label}
+      </ExternalLink>
+    ))}
+  </nav>
+)
+
 const LorgarHeader = ({
   alternates,
   languageCode,
@@ -1373,18 +1472,10 @@ const LorgarHeader = ({
 
   return (
     <header className="lorgar-header">
-      <Link className="lorgar-header__brand" href="/articles">
-        <span className="lorgar-header__logo" aria-hidden="true">L</span>
-        <span>LORGAR</span>
-        <strong>Blog</strong>
-      </Link>
-      <nav aria-label="Primary" className="lorgar-header__nav">
-        <Link href="/articles">News</Link>
-        <Link href="/articles">Solutions</Link>
-        <Link href="/articles">Partnerships</Link>
-        <Link href="/articles">Company</Link>
-        <Link href="/articles">Events</Link>
-      </nav>
+      <ExternalLink className="lorgar-header__brand" href="https://lorgar.com">
+        <LorgarLogo className="lorgar-header__logo" />
+      </ExternalLink>
+      <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
         <Link className="lorgar-header__search" href="/articles" aria-label="Search articles">
           <span aria-hidden="true" />
@@ -1403,11 +1494,30 @@ const LorgarHeader = ({
             </div>
           ) : null}
         </details>
-        <span className="lorgar-header__menu" aria-hidden="true" />
+        <details className="lorgar-header__mobile-menu">
+          <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
+          <LorgarPrimaryNav className="lorgar-header__mobile-nav" />
+        </details>
       </div>
     </header>
   )
 }
+
+const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' }) => (
+  <svg aria-hidden="true" className="lorgar-meta__icon" fill="none" viewBox="0 0 24 24">
+    {type === 'date' ? (
+      <>
+        <path d="M7 3v4M17 3v4M4.5 9h15" />
+        <path d="M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z" />
+      </>
+    ) : (
+      <>
+        <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+        <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+      </>
+    )}
+  </svg>
+)
 
 const LorgarMeta = ({
   article,
@@ -1418,22 +1528,17 @@ const LorgarMeta = ({
 }) => {
   const date = formatArticleMetaDate(publishedAt, article.languageCode)
   const authorNames = publicArticleAuthorNames(article.authors)
-  const readMinutes = publicArticleReadMinutes(article.content)
 
   return (
     <div className="lorgar-meta">
       {date ? (
         <span>
-          <i aria-hidden="true" />
+          <LorgarMetaIcon type="date" />
           <time dateTime={publishedAt || undefined}>{date}</time>
         </span>
       ) : null}
       <span>
-        <i aria-hidden="true" />
-        {readMinutes} min read
-      </span>
-      <span>
-        <i aria-hidden="true" />
+        <LorgarMetaIcon type="author" />
         {authorNames}
       </span>
     </div>
@@ -1469,12 +1574,13 @@ const LorgarArticleShare = ({ path, title }: { path?: null | string; title: stri
   )
 }
 
-const LorgarSidebarArticleCard = ({ article }: { article: Article }) => {
+const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const date = formatArticleMetaDate(article.publishedAt || article.createdAt, article.languageCode)
+  const summary = article.summary || excerptArticleText(article.content, 180)
 
   return (
-    <Link className="lorgar-sidebar-card" href={href}>
+    <Link className="lorgar-related-card" href={href}>
       {isMedia(article.coverImage) ? (
         <SafeImage
           alt={article.coverImage.alt || article.title}
@@ -1483,88 +1589,80 @@ const LorgarSidebarArticleCard = ({ article }: { article: Article }) => {
         />
       ) : null}
       <span>
-        <strong>{article.title}</strong>
         {date ? <small>{date}</small> : null}
+        <strong>{article.title}</strong>
+        {summary ? <p>{summary}</p> : null}
       </span>
     </Link>
   )
 }
 
-const LorgarSidebar = ({
+const LorgarRelatedPosts = ({
   currentArticle,
   recentArticles,
-  tags,
 }: {
   currentArticle: Article
   recentArticles: Article[]
-  tags: string[]
 }) => {
-  const visibleRecent = recentArticles.filter((article) => String(article.id) !== String(currentArticle.id)).slice(0, 5)
-  const visiblePopular = recentArticles
+  const relatedArticles = recentArticles
     .filter((article) => String(article.id) !== String(currentArticle.id))
-    .slice(5, 10)
+    .slice(0, 3)
+
+  if (!relatedArticles.length) {
+    return null
+  }
 
   return (
-    <aside className="lorgar-sidebar" aria-label="Article sidebar">
-      {tags.length ? (
-        <section className="lorgar-sidebar__panel">
-          <h2>Topics</h2>
-          <div className="lorgar-topic-list">
-            {tags.map((tag) => (
-              <Link href={`/articles?tag=${encodeURIComponent(tag)}`} key={tag}>{tag}</Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-      {visibleRecent.length ? (
-        <section className="lorgar-sidebar__panel">
-          <h2>Recent news</h2>
-          <div className="lorgar-sidebar__cards">
-            {visibleRecent.map((article) => (
-              <LorgarSidebarArticleCard article={article} key={article.id} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-      {visiblePopular.length ? (
-        <section className="lorgar-sidebar__panel">
-          <h2>Popular news</h2>
-          <div className="lorgar-sidebar__cards">
-            {visiblePopular.map((article) => (
-              <LorgarSidebarArticleCard article={article} key={article.id} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-    </aside>
+    <section className="lorgar-related" aria-label="Related posts">
+      <h2>Related posts</h2>
+      <div>
+        {relatedArticles.map((article) => (
+          <LorgarRelatedArticleCard article={article} key={article.id} />
+        ))}
+      </div>
+    </section>
   )
 }
-
-const LorgarSubscribe = () => (
-  <section className="lorgar-subscribe" aria-label="Subscribe to blog">
-    <div>
-      <span aria-hidden="true" />
-      <div>
-        <h2>Subscribe to our blog</h2>
-        <p>Get the latest news and product stories delivered straight to your inbox.</p>
-      </div>
-    </div>
-    <form>
-      <label className="sr-only" htmlFor="lorgar-subscribe-email">Email</label>
-      <input id="lorgar-subscribe-email" name="email" placeholder="Enter your email" type="email" />
-      <button type="submit">Subscribe</button>
-    </form>
-  </section>
-)
 
 const LorgarCTA = () => (
   <section className="lorgar-cta-strip" aria-label="Contact LORGAR">
     <strong>Interested in working with LORGAR?</strong>
     <div>
-      <Link href="/articles">Become partner</Link>
-      <Link href="/articles">Contact us</Link>
+      <ExternalLink href="https://lorgar.com/for-partners">For partners</ExternalLink>
+      <ExternalLink href="https://lorgar.com/where-to-buy">Contact us</ExternalLink>
     </div>
   </section>
+)
+
+const LorgarFooter = () => (
+  <footer className="lorgar-footer">
+    <ExternalLink className="lorgar-footer__logo" href="https://lorgar.com">
+      <LorgarLogo />
+    </ExternalLink>
+    <nav aria-label="Footer" className="lorgar-footer__nav">
+      {lorgarFooterLinks.map((item) => (
+        <ExternalLink href={item.href} key={item.href}>
+          {item.label}
+        </ExternalLink>
+      ))}
+    </nav>
+    <div className="lorgar-footer__social" aria-label="Social links">
+      {lorgarSocialLinks.map((item) => (
+        <ExternalLink href={item.href} key={item.href} newTab>
+          <span aria-hidden="true">{item.short}</span>
+          <span className="sr-only">{item.label}</span>
+        </ExternalLink>
+      ))}
+    </div>
+    <div className="lorgar-footer__legal">
+      <span>&copy; LORGAR 2026, All rights reserved</span>
+      {lorgarPolicyLinks.map((item) => (
+        <ExternalLink href={item.href} key={item.href}>
+          {item.label}
+        </ExternalLink>
+      ))}
+    </div>
+  </footer>
 )
 
 export const LorgarArticleLayout = ({
@@ -1589,37 +1687,35 @@ export const LorgarArticleLayout = ({
     <div className="public-content public-content--lorgar">
       <LorgarHeader alternates={translations} languageCode={article.languageCode} />
       <main className="lorgar-article-shell">
-        <div className="lorgar-article-layout">
-          <article className="lorgar-article-main">
-            <Breadcrumbs
-              items={[
-                { href: '/blog', label: navigationLabels.blog },
-                { href: '/articles', label: navigationLabels.allArticles },
-                { href: articlePath, label: article.title },
-              ]}
-            />
-            {tags.length ? (
-              <div className="lorgar-article-tags">
-                {tags.slice(0, 5).map((tag) => (
-                  <Link href={`/articles?tag=${encodeURIComponent(tag)}`} key={tag}>{tag}</Link>
-                ))}
-              </div>
-            ) : null}
-            <h1>{article.title}</h1>
-            {summary ? <p className="lorgar-article-summary">{summary}</p> : null}
-            <LorgarMeta article={article} publishedAt={publishedDate} />
-            <ArticleLanguageSwitcher alternates={translations} />
-            {isMedia(article.coverImage) ? (
-              <PublicImage alt={article.coverImage.alt || article.title} className="lorgar-article-cover" media={article.coverImage} />
-            ) : null}
-            <LorgarArticleShare path={articlePath} title={article.title} />
-            <div className="lorgar-article-body">{children}</div>
-            <LorgarCTA />
-            <LorgarSubscribe />
-          </article>
-          <LorgarSidebar currentArticle={article} recentArticles={recentArticles} tags={tags} />
-        </div>
+        <article className="lorgar-article-main">
+          <Breadcrumbs
+            items={[
+              { href: '/blog', label: navigationLabels.blog },
+              { href: '/articles', label: navigationLabels.allArticles },
+              { href: articlePath, label: article.title },
+            ]}
+          />
+          {tags.length ? (
+            <div className="lorgar-article-tags">
+              {tags.slice(0, 5).map((tag) => (
+                <Link href={`/articles?tag=${encodeURIComponent(tag)}`} key={tag}>{tag}</Link>
+              ))}
+            </div>
+          ) : null}
+          <h1>{article.title}</h1>
+          {summary ? <p className="lorgar-article-summary">{summary}</p> : null}
+          <LorgarMeta article={article} publishedAt={publishedDate} />
+          <ArticleLanguageSwitcher alternates={translations} />
+          {isMedia(article.coverImage) ? (
+            <PublicImage alt={article.coverImage.alt || article.title} className="lorgar-article-cover" media={article.coverImage} />
+          ) : null}
+          <LorgarArticleShare path={articlePath} title={article.title} />
+          <div className="lorgar-article-body">{children}</div>
+          <LorgarCTA />
+          <LorgarRelatedPosts currentArticle={article} recentArticles={recentArticles} />
+        </article>
       </main>
+      <LorgarFooter />
     </div>
   )
 }

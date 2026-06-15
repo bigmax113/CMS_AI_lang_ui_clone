@@ -109,6 +109,14 @@ type TranslateArticlesRequestBody = {
   locales?: string[]
 }
 
+const articleStatusValues = ['draft', 'published', 'review'] as const
+type ArticleStatus = (typeof articleStatusValues)[number]
+
+type ArticleStatusUpdateRequestBody = {
+  ids?: Array<number | string>
+  status?: string
+}
+
 type LexicalChild = {
   type: string
   version: number
@@ -607,6 +615,77 @@ export const translateArticlesEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/translate-articles',
+}
+
+export const updateArticleStatusesEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: ArticleStatusUpdateRequestBody
+
+    try {
+      body =
+        typeof req.json === 'function' ? ((await req.json()) as ArticleStatusUpdateRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const ids = uniqueStrings(
+      (body.ids || []).map((id) => String(id).trim()).filter(Boolean),
+    ).slice(0, 100)
+    const status = body.status?.trim().toLowerCase() as ArticleStatus | undefined
+
+    if (!ids.length) {
+      return Response.json({ error: 'Select at least one article.' }, { status: 400 })
+    }
+
+    if (!status || !articleStatusValues.includes(status)) {
+      return Response.json({ error: 'Choose a valid article status.' }, { status: 400 })
+    }
+
+    const updated: Array<{ id: string | number; title?: string }> = []
+    const failed: Array<{ error: string; id: string }> = []
+
+    for (const id of ids) {
+      try {
+        const article = await req.payload.update({
+          collection: 'articles',
+          data: {
+            status,
+          },
+          id,
+          overrideAccess: false,
+          user: req.user,
+        })
+
+        updated.push({
+          id: article.id,
+          title: article.title,
+        })
+      } catch (error) {
+        failed.push({
+          error: errorMessageFromUnknown(error),
+          id,
+        })
+      }
+    }
+
+    return Response.json(
+      {
+        failed,
+        ok: failed.length === 0,
+        status,
+        total: updated.length,
+        updated: updated.length,
+        updatedArticles: updated,
+      },
+      { status: updated.length || !failed.length ? 200 : 400 },
+    )
+  },
+  method: 'post',
+  path: '/update-article-statuses',
 }
 
 export const translateUiEndpoint: Endpoint = {

@@ -36,14 +36,30 @@ body {
 
 html:has(.public-content--lorgar),
 body:has(.public-content--lorgar) {
-  background: #080914;
+  background: #02030a;
+  scrollbar-color: #7c3cff #02030a;
+  scrollbar-width: thin;
+}
+
+html:has(.public-content--lorgar)::-webkit-scrollbar {
+  width: 10px;
+}
+
+html:has(.public-content--lorgar)::-webkit-scrollbar-track {
+  background: #02030a;
+}
+
+html:has(.public-content--lorgar)::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #8a5cff, #2dd4ff);
+  border: 2px solid #02030a;
+  border-radius: 999px;
 }
 
 .public-content.public-content--lorgar {
   background:
-    radial-gradient(circle at 18% 0%, rgba(138, 92, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 86% 12%, rgba(34, 211, 238, 0.1), transparent 26%),
-    #080914;
+    radial-gradient(circle at 18% 0%, rgba(109, 40, 217, 0.16), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(6, 182, 212, 0.08), transparent 24%),
+    linear-gradient(135deg, #130b2a 0%, #050511 42%, #001016 100%);
   color: #f7f8ff;
   padding: 0;
 }
@@ -65,10 +81,10 @@ body:has(.public-content--lorgar) {
 }
 
 .public-content--lorgar {
-  --lorgar-bg: #080914;
-  --lorgar-bg-soft: #0e1020;
-  --lorgar-panel: #121528;
-  --lorgar-panel-strong: #171a31;
+  --lorgar-bg: #02030a;
+  --lorgar-bg-soft: #080a16;
+  --lorgar-panel: #101326;
+  --lorgar-panel-strong: #171a34;
   --lorgar-border: rgba(152, 164, 255, 0.22);
   --lorgar-border-strong: rgba(152, 164, 255, 0.42);
   --lorgar-text: #f7f8ff;
@@ -78,8 +94,9 @@ body:has(.public-content--lorgar) {
   --lorgar-accent-2: #22d3ee;
   --lorgar-radius: 18px;
   background:
-    radial-gradient(circle at 18% 0%, rgba(138, 92, 255, 0.18), transparent 34%),
-    radial-gradient(circle at 86% 12%, rgba(34, 211, 238, 0.1), transparent 26%),
+    radial-gradient(circle at 18% 0%, rgba(109, 40, 217, 0.16), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(6, 182, 212, 0.08), transparent 24%),
+    linear-gradient(135deg, #130b2a 0%, #050511 42%, #001016 100%),
     var(--lorgar-bg);
   color: var(--lorgar-text);
   font-family:
@@ -103,8 +120,8 @@ body:has(.public-content--lorgar) {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
-  gap: 28px;
-  grid-template-columns: minmax(210px, 0.95fr) minmax(320px, 1.7fr) minmax(150px, 0.7fr);
+  gap: 24px;
+  grid-template-columns: minmax(170px, 0.7fr) minmax(520px, 1.8fr) minmax(112px, 0.45fr);
   margin: 0 auto;
   max-width: 1360px;
   padding: 28px 44px 24px;
@@ -114,43 +131,28 @@ body:has(.public-content--lorgar) {
   align-items: center;
   color: var(--lorgar-text);
   display: inline-flex;
-  font-size: 27px;
-  font-weight: 950;
-  gap: 12px;
   line-height: 1;
   text-decoration: none;
 }
 
-.lorgar-header__brand strong {
-  color: var(--lorgar-muted);
-  font-size: 18px;
-  font-weight: 800;
-}
-
 .lorgar-header__logo {
-  align-items: center;
-  background: linear-gradient(145deg, var(--lorgar-accent), #5d37df);
-  border-radius: 12px;
-  box-shadow: 0 12px 34px rgba(138, 92, 255, 0.32);
-  color: #ffffff;
-  display: inline-flex;
-  font-size: 20px;
-  font-weight: 950;
-  height: 42px;
-  justify-content: center;
-  width: 42px;
+  display: block;
+  height: auto;
+  max-width: 190px;
+  width: 100%;
 }
 
 .lorgar-header__nav {
   align-items: center;
   display: flex;
-  gap: 28px;
+  gap: clamp(16px, 2vw, 30px);
   justify-content: center;
 }
 
 .lorgar-header__nav a,
 .lorgar-header__tools a,
-.lorgar-header__language summary {
+.lorgar-header__language summary,
+.lorgar-nav-dropdown summary {
   color: var(--lorgar-muted);
   font-size: 14px;
   font-weight: 850;
@@ -160,7 +162,61 @@ body:has(.public-content--lorgar) {
 
 .lorgar-header__nav a:hover,
 .lorgar-header__tools a:hover,
-.lorgar-header__language summary:hover {
+.lorgar-header__language summary:hover,
+.lorgar-nav-dropdown summary:hover {
+  color: var(--lorgar-text);
+}
+
+.lorgar-nav-dropdown {
+  position: relative;
+}
+
+.lorgar-nav-dropdown summary {
+  cursor: pointer;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.lorgar-nav-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.lorgar-nav-dropdown summary::after {
+  color: var(--lorgar-subtle);
+  content: "v";
+  display: inline-block;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+.lorgar-nav-dropdown > div {
+  background: rgba(12, 14, 30, 0.98);
+  border: 1px solid var(--lorgar-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44);
+  display: grid;
+  gap: 2px;
+  left: 50%;
+  min-width: 250px;
+  padding: 12px;
+  position: absolute;
+  top: calc(100% + 16px);
+  transform: translateX(-50%);
+  z-index: 30;
+}
+
+.lorgar-nav-dropdown > div a {
+  border-radius: 10px;
+  color: var(--lorgar-muted);
+  display: block;
+  font-size: 13px;
+  line-height: 1.25;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.lorgar-nav-dropdown > div a:hover {
+  background: rgba(138, 92, 255, 0.14);
   color: var(--lorgar-text);
 }
 
@@ -173,7 +229,7 @@ body:has(.public-content--lorgar) {
 
 .lorgar-header__search,
 .lorgar-header__language,
-.lorgar-header__menu {
+.lorgar-header__mobile-menu {
   align-items: center;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--lorgar-border);
@@ -260,29 +316,66 @@ body:has(.public-content--lorgar) {
   color: var(--lorgar-text);
 }
 
-.lorgar-header__menu {
+.lorgar-header__mobile-menu {
   display: none;
+  position: relative;
+}
+
+.lorgar-header__mobile-menu summary {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
   height: 42px;
   justify-content: center;
+  list-style: none;
   width: 42px;
 }
 
-.lorgar-header__menu::before,
-.lorgar-header__menu::after {
+.lorgar-header__mobile-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.lorgar-header__mobile-menu summary span,
+.lorgar-header__mobile-menu summary span::before,
+.lorgar-header__mobile-menu summary span::after {
   background: var(--lorgar-text);
   border-radius: 2px;
   content: "";
+  display: block;
   height: 2px;
-  position: absolute;
   width: 18px;
 }
 
-.lorgar-header__menu::before {
-  transform: translateY(-4px);
+.lorgar-header__mobile-menu summary span::before {
+  transform: translateY(-6px);
 }
 
-.lorgar-header__menu::after {
+.lorgar-header__mobile-menu summary span::after {
   transform: translateY(4px);
+}
+
+.lorgar-header__mobile-nav {
+  background: rgba(12, 14, 30, 0.98);
+  border: 1px solid var(--lorgar-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44);
+  display: grid;
+  gap: 14px;
+  min-width: 290px;
+  padding: 16px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 40;
+}
+
+.lorgar-header__mobile-nav .lorgar-nav-dropdown > div {
+  box-shadow: none;
+  left: auto;
+  margin-top: 10px;
+  min-width: 100%;
+  position: static;
+  transform: none;
 }
 
 .lorgar-article-shell {
@@ -295,7 +388,6 @@ body:has(.public-content--lorgar) {
   padding-bottom: 80px;
 }
 
-.public-content--index .public-content__hero,
 .public-content--index .public-content__section,
 .public-content--index .public-content__article {
   background: var(--lorgar-panel);
@@ -307,12 +399,7 @@ body:has(.public-content--lorgar) {
 }
 
 .public-content--index .public-content__hero {
-  background:
-    linear-gradient(90deg, rgba(8, 9, 20, 0.94), rgba(8, 9, 20, 0.55)),
-    radial-gradient(circle at 85% 20%, rgba(138, 92, 255, 0.32), transparent 34%),
-    var(--lorgar-panel-strong);
-  min-height: 320px;
-  padding: 54px;
+  display: none;
 }
 
 .public-content--index .public-content__hero--image {
@@ -370,11 +457,14 @@ body:has(.public-content--lorgar) {
   align-items: start;
   display: grid;
   gap: 42px;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .lorgar-article-main {
+  margin: 0 auto;
+  max-width: 1120px;
   min-width: 0;
+  width: 100%;
 }
 
 .public-content--lorgar .public-content__breadcrumbs {
@@ -455,12 +545,14 @@ body:has(.public-content--lorgar) {
   gap: 9px;
 }
 
-.lorgar-meta i {
-  background: linear-gradient(145deg, var(--lorgar-accent), var(--lorgar-accent-2));
-  border-radius: 50%;
-  display: inline-block;
-  height: 9px;
-  width: 9px;
+.lorgar-meta__icon {
+  color: var(--lorgar-accent-2);
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+  width: 18px;
 }
 
 .public-content--lorgar .public-content__language-switcher {
@@ -535,7 +627,7 @@ body:has(.public-content--lorgar) {
 }
 
 .public-content--lorgar .public-content__richtext {
-  max-width: 880px;
+  max-width: 920px;
 }
 
 .public-content--lorgar .public-content__richtext h1,
@@ -638,6 +730,139 @@ body:has(.public-content--lorgar) {
   margin: 48px 0 24px;
   max-width: 880px;
   padding-top: 24px;
+}
+
+.lorgar-related {
+  border-top: 1px solid var(--lorgar-border);
+  margin: 54px 0 0;
+  max-width: 1120px;
+  padding-top: 30px;
+}
+
+.lorgar-related h2 {
+  color: var(--lorgar-text);
+  font-size: clamp(30px, 3vw, 42px);
+  line-height: 1.05;
+  margin: 0 0 20px;
+  text-transform: uppercase;
+}
+
+.lorgar-related > div {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lorgar-related-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--lorgar-border);
+  border-radius: 18px;
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+  padding: 12px;
+  text-decoration: none;
+}
+
+.lorgar-related-card img,
+.lorgar-related-card .public-content__image-missing {
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.lorgar-related-card small {
+  color: var(--lorgar-subtle);
+  display: block;
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.lorgar-related-card strong {
+  color: var(--lorgar-text);
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.lorgar-related-card p {
+  color: var(--lorgar-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+
+.lorgar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  margin: 0 auto;
+  max-width: 1360px;
+  padding: 36px 44px 44px;
+}
+
+.lorgar-footer__logo img {
+  max-width: 190px;
+}
+
+.lorgar-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+}
+
+.lorgar-footer__nav a,
+.lorgar-footer__legal a {
+  color: var(--lorgar-muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.lorgar-footer__nav a:hover,
+.lorgar-footer__legal a:hover {
+  color: var(--lorgar-text);
+}
+
+.lorgar-footer__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.lorgar-footer__social a {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--lorgar-border);
+  border-radius: 999px;
+  color: var(--lorgar-text);
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  text-decoration: none;
+  width: 34px;
+}
+
+.lorgar-footer__legal {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--lorgar-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 10px 20px;
+  grid-column: 1 / -1;
+  padding-top: 18px;
 }
 
 .lorgar-cta-strip strong {
@@ -863,9 +1088,8 @@ body:has(.public-content--lorgar) {
     display: none;
   }
 
-  .lorgar-header__menu {
+  .lorgar-header__mobile-menu {
     display: inline-flex;
-    position: relative;
   }
 
   .lorgar-article-shell {
@@ -892,10 +1116,9 @@ body:has(.public-content--lorgar) {
   }
 
   .lorgar-header__brand {
-    font-size: 22px;
+    max-width: 168px;
   }
 
-  .lorgar-header__brand strong,
   .lorgar-header__search {
     display: none;
   }
@@ -938,6 +1161,19 @@ body:has(.public-content--lorgar) {
   .lorgar-cta-strip a,
   .lorgar-subscribe button {
     width: 100%;
+  }
+
+  .lorgar-related > div,
+  .lorgar-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .lorgar-footer {
+    padding: 30px 16px 38px;
+  }
+
+  .lorgar-footer__social {
+    justify-content: flex-start;
   }
 
   .public-content--lorgar .public-content__richtext p,

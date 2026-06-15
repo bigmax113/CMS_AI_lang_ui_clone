@@ -15,6 +15,7 @@ import {
   saveArticleDraftEndpoint,
   translateArticlesEndpoint,
   translateUiEndpoint,
+  updateArticleStatusesEndpoint,
   videoStatusEndpoint,
 } from './ai/endpoints'
 import { AIProjectsCollection, aiProjectsSlug } from './collections/AIProjects'
@@ -105,6 +106,7 @@ export default buildConfig({
     generateVideoEndpoint,
     saveArticleDraftEndpoint,
     translateArticlesEndpoint,
+    updateArticleStatusesEndpoint,
     translateUiEndpoint,
     videoStatusEndpoint,
   ],

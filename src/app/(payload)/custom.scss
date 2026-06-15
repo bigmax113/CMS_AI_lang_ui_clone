@@ -196,6 +196,18 @@
   color: #ffffff;
 }
 
+.article-translation-toolbar button.article-translation-toolbar__button--secondary {
+  background: var(--theme-elevation-50);
+  border-color: var(--theme-elevation-250);
+  color: var(--theme-text);
+}
+
+.article-translation-toolbar button.article-translation-toolbar__button--danger {
+  background: #7f1d1d;
+  border-color: #7f1d1d;
+  color: #ffffff;
+}
+
 .article-translation-toolbar button:disabled {
   cursor: not-allowed;
   opacity: 0.55;

@@ -17,6 +17,7 @@ const languages = articleTranslationTargetDefinitions.map((language) => ({
 }))
 
 const articleIDPattern = /\/admin\/collections\/articles\/([^/?#]+)/u
+type ArticleStatus = 'draft' | 'published' | 'review'
 
 type APIResponse = {
   created?: Array<{
@@ -34,7 +35,9 @@ type APIResponse = {
     id?: string
     language?: string
   }>
+  status?: ArticleStatus
   total?: number
+  updated?: number
 }
 
 function selectedArticleIDsFromDOM(): string[] {
@@ -69,8 +72,10 @@ function languageFilterFromLocation(): string {
 export const ArticleTranslationToolbar: React.FC = () => {
   const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
   const [running, setRunning] = useState(false)
+  const [statusRunning, setStatusRunning] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [activeLanguageFilter, setActiveLanguageFilter] = useState(languageFilterFromLocation)
+  const isBusy = running || statusRunning
   const selectedLabels = useMemo(
     () =>
       selectedLocales.length
@@ -111,6 +116,28 @@ export const ArticleTranslationToolbar: React.FC = () => {
 
     syncFilterFromURL()
     const intervalID = window.setInterval(syncFilterFromURL, 500)
+
+    return () => window.clearInterval(intervalID)
+  }, [])
+
+  useEffect(() => {
+    const hideDefaultPublishActions = () => {
+      document.querySelectorAll<HTMLElement>('a, button').forEach((element) => {
+        if (element.closest('.article-translation-toolbar')) {
+          return
+        }
+
+        const label = element.textContent?.replace(/\s+/gu, ' ').trim()
+
+        if (label === 'Publish' || label === 'Unpublish') {
+          element.dataset.articleStatusHidden = 'true'
+          element.style.display = 'none'
+        }
+      })
+    }
+
+    hideDefaultPublishActions()
+    const intervalID = window.setInterval(hideDefaultPublishActions, 500)
 
     return () => window.clearInterval(intervalID)
   }, [])
@@ -191,6 +218,58 @@ export const ArticleTranslationToolbar: React.FC = () => {
     }
   }
 
+  const updateSelectedStatus = async (status: ArticleStatus, label: string) => {
+    const ids = selectedArticleIDsFromDOM()
+
+    if (!ids.length) {
+      setMessage('Select one or more rows first.')
+      return
+    }
+
+    setStatusRunning(true)
+    setMessage(`${label} ${ids.length} article(s)...`)
+
+    try {
+      const response = await fetch('/api/update-article-statuses', {
+        body: JSON.stringify({
+          ids,
+          status,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as APIResponse
+
+      if (!response.ok) {
+        throw new Error(errorMessageFromAPI(payload, response.status))
+      }
+
+      const failed = payload.failed || []
+      const updated = payload.updated || payload.total || 0
+
+      if (failed.length) {
+        const failedSummary = failed
+          .slice(0, 2)
+          .map((item) => `${item.id || 'item'}: ${item.error || 'failed'}`)
+          .join('; ')
+
+        setMessage(`${label}: updated ${updated}, failed ${failed.length}. ${failedSummary}`)
+      } else {
+        setMessage(`${label}: updated ${updated} article(s). Refreshing list...`)
+      }
+
+      if (updated) {
+        window.setTimeout(() => window.location.reload(), 700)
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setStatusRunning(false)
+    }
+  }
+
   return (
     <div className="article-translation-toolbar">
       <div className="article-translation-toolbar__group article-translation-toolbar__filter">
@@ -227,8 +306,32 @@ export const ArticleTranslationToolbar: React.FC = () => {
               ))}
             </div>
           </details>
-          <button disabled={running} onClick={() => void translateSelected()} type="button">
+          <button disabled={isBusy} onClick={() => void translateSelected()} type="button">
             Translate selected
+          </button>
+        </div>
+      </div>
+      <div className="article-translation-toolbar__group article-translation-toolbar__status">
+        <span>Status</span>
+        <div className="article-translation-toolbar__actions">
+          <button disabled={isBusy} onClick={() => void updateSelectedStatus('published', 'Published')} type="button">
+            Publish selected
+          </button>
+          <button
+            className="article-translation-toolbar__button--secondary"
+            disabled={isBusy}
+            onClick={() => void updateSelectedStatus('review', 'Moved to review')}
+            type="button"
+          >
+            Move to review
+          </button>
+          <button
+            className="article-translation-toolbar__button--danger"
+            disabled={isBusy}
+            onClick={() => void updateSelectedStatus('draft', 'Unpublished')}
+            type="button"
+          >
+            Unpublish selected
           </button>
         </div>
       </div>
