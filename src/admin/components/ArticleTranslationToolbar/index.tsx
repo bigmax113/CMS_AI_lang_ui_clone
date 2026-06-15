@@ -122,7 +122,9 @@ export const ArticleTranslationToolbar: React.FC = () => {
 
   useEffect(() => {
     const hideDefaultPublishActions = () => {
-      document.querySelectorAll<HTMLElement>('a, button').forEach((element) => {
+      document
+        .querySelectorAll<HTMLElement>('a, button, [role="button"], span')
+        .forEach((element) => {
         if (element.closest('.article-translation-toolbar')) {
           return
         }
@@ -130,8 +132,10 @@ export const ArticleTranslationToolbar: React.FC = () => {
         const label = element.textContent?.replace(/\s+/gu, ' ').trim()
 
         if (label === 'Publish' || label === 'Unpublish') {
-          element.dataset.articleStatusHidden = 'true'
-          element.style.display = 'none'
+          const actionElement = element.closest<HTMLElement>('a, button, [role="button"]') || element
+
+          actionElement.dataset.articleStatusHidden = 'true'
+          actionElement.style.display = 'none'
         }
       })
     }
