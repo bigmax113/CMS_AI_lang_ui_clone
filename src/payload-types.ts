@@ -76,8 +76,6 @@ export interface Config {
     'site-links': SiteLink;
     'test-runs': TestRun;
     articles: Article;
-    'article-reactions': ArticleReaction;
-    'newsletter-subscriptions': NewsletterSubscription;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -96,8 +94,6 @@ export interface Config {
     'site-links': SiteLinksSelect<false> | SiteLinksSelect<true>;
     'test-runs': TestRunsSelect<false> | TestRunsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
-    'article-reactions': ArticleReactionsSelect<false> | ArticleReactionsSelect<true>;
-    'newsletter-subscriptions': NewsletterSubscriptionsSelect<false> | NewsletterSubscriptionsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -811,50 +807,6 @@ export interface TestRun {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "article-reactions".
- */
-export interface ArticleReaction {
-  id: number;
-  articleSlug: string;
-  reactionType: 'like' | 'discuss';
-  count: number;
-  lastReactedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletter-subscriptions".
- */
-export interface NewsletterSubscription {
-  id: number;
-  email: string;
-  languageCode:
-    | 'en'
-    | 'bg'
-    | 'cs'
-    | 'de'
-    | 'el'
-    | 'es'
-    | 'uk'
-    | 'ro'
-    | 'sk'
-    | 'hu'
-    | 'kz'
-    | 'pl'
-    | 'rs'
-    | 'lv'
-    | 'ee'
-    | 'lt'
-    | 'ru';
-  sourceURL?: string | null;
-  status: 'active' | 'unsubscribed';
-  lastSubmittedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -937,14 +889,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'articles';
         value: number | Article;
-      } | null)
-    | ({
-        relationTo: 'article-reactions';
-        value: number | ArticleReaction;
-      } | null)
-    | ({
-        relationTo: 'newsletter-subscriptions';
-        value: number | NewsletterSubscription;
       } | null)
     | ({
         relationTo: 'media';
@@ -1307,31 +1251,6 @@ export interface ArticlesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "article-reactions_select".
- */
-export interface ArticleReactionsSelect<T extends boolean = true> {
-  articleSlug?: T;
-  reactionType?: T;
-  count?: T;
-  lastReactedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "newsletter-subscriptions_select".
- */
-export interface NewsletterSubscriptionsSelect<T extends boolean = true> {
-  email?: T;
-  languageCode?: T;
-  sourceURL?: T;
-  status?: T;
-  lastSubmittedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

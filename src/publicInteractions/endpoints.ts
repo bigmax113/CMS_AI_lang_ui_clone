@@ -1,8 +1,6 @@
 import type { Endpoint } from 'payload'
 
 import { normalizeArticleLanguageCode } from '@/lib/articleTranslations'
-import { articleReactionsSlug } from '@/collections/ArticleReactions'
-import { newsletterSubscriptionsSlug } from '@/collections/NewsletterSubscriptions'
 
 type ArticleReactionBody = {
   articleSlug?: string
@@ -17,9 +15,65 @@ type NewsletterSubscriptionBody = {
 
 const reactionTypes = ['like', 'discuss'] as const
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u
+const payloadKVCollection = 'payload-kv'
 
 const stringField = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : ''
+
+const payloadKVKey = (parts: string[]) =>
+  parts
+    .map((part) => part.trim().toLowerCase().replace(/[^a-z0-9._:-]+/gu, '-'))
+    .filter(Boolean)
+    .join(':')
+
+const readKV = async (req: Parameters<Endpoint['handler']>[0], key: string) => {
+  const result = await req.payload.find({
+    collection: payloadKVCollection,
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    where: {
+      key: {
+        equals: key,
+      },
+    },
+  })
+
+  return result.docs[0] as { data?: unknown; id?: number | string } | undefined
+}
+
+const upsertKV = async ({
+  data,
+  key,
+  req,
+}: {
+  data: Record<string, unknown>
+  key: string
+  req: Parameters<Endpoint['handler']>[0]
+}) => {
+  const existing = await readKV(req, key)
+
+  if (existing?.id) {
+    return req.payload.update({
+      collection: payloadKVCollection,
+      data: {
+        data,
+        key,
+      },
+      id: existing.id,
+      overrideAccess: true,
+    })
+  }
+
+  return req.payload.create({
+    collection: payloadKVCollection,
+    data: {
+      data,
+      key,
+    },
+    overrideAccess: true,
+  })
+}
 
 export const articleReactionEndpoint: Endpoint = {
   handler: async (req) => {
@@ -36,49 +90,23 @@ export const articleReactionEndpoint: Endpoint = {
     }
 
     const validatedReactionType = reactionType as (typeof reactionTypes)[number]
-    const existing = await req.payload.find({
-      collection: articleReactionsSlug,
-      depth: 0,
-      limit: 1,
-      overrideAccess: true,
-      where: {
-        and: [
-          {
-            articleSlug: {
-              equals: articleSlug,
-            },
-          },
-          {
-            reactionType: {
-              equals: validatedReactionType,
-            },
-          },
-        ],
-      },
-    })
-    const current = existing.docs[0] as { count?: number; id?: number | string } | undefined
-    const count = Math.max(Number(current?.count || 0), 0) + 1
+    const key = payloadKVKey(['frontend', 'article-reaction', articleSlug, validatedReactionType])
+    const current = await readKV(req, key)
+    const currentData = current?.data && typeof current.data === 'object' && !Array.isArray(current.data)
+      ? (current.data as { count?: number })
+      : {}
+    const count = Math.max(Number(currentData.count || 0), 0) + 1
     const data = {
       articleSlug,
       count,
       lastReactedAt: new Date().toISOString(),
       reactionType: validatedReactionType,
     }
-    const reaction = current?.id
-      ? await req.payload.update({
-          collection: articleReactionsSlug,
-          data,
-          id: current.id,
-          overrideAccess: true,
-        })
-      : await req.payload.create({
-          collection: articleReactionsSlug,
-          data,
-          overrideAccess: true,
-        })
+
+    await upsertKV({ data, key, req })
 
     return Response.json({
-      count: Number((reaction as { count?: number }).count || count),
+      count,
       ok: true,
       reactionType: validatedReactionType,
     })
@@ -98,18 +126,7 @@ export const newsletterSubscriptionEndpoint: Endpoint = {
 
     const languageCode = normalizeArticleLanguageCode(body.languageCode)
     const sourceURL = stringField(body.sourceURL).slice(0, 500)
-    const existing = await req.payload.find({
-      collection: newsletterSubscriptionsSlug,
-      depth: 0,
-      limit: 1,
-      overrideAccess: true,
-      where: {
-        email: {
-          equals: email,
-        },
-      },
-    })
-    const current = existing.docs[0] as { id?: number | string } | undefined
+    const key = payloadKVKey(['frontend', 'newsletter', email])
     const data = {
       email,
       languageCode,
@@ -118,20 +135,7 @@ export const newsletterSubscriptionEndpoint: Endpoint = {
       status: 'active' as const,
     }
 
-    if (current?.id) {
-      await req.payload.update({
-        collection: newsletterSubscriptionsSlug,
-        data,
-        id: current.id,
-        overrideAccess: true,
-      })
-    } else {
-      await req.payload.create({
-        collection: newsletterSubscriptionsSlug,
-        data,
-        overrideAccess: true,
-      })
-    }
+    await upsertKV({ data, key, req })
 
     return Response.json({ ok: true })
   },
