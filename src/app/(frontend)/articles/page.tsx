@@ -5,13 +5,9 @@ import {
 } from '@/lib/articleTranslations'
 
 import {
-  ContentCard,
-  PublicChrome,
-  articleHref,
+  LorgarArticlesIndexLayout,
   createSEOPageMetadata,
-  formatDate,
   listPublishedArticles,
-  publicSummaryText,
 } from '../_content/contentHelpers'
 
 export const dynamic = 'force-dynamic'
@@ -46,38 +42,12 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
     : `${languageDisplayCode} ${languageLabel} articles`
 
   return (
-    <PublicChrome
-      kicker="Published content"
+    <LorgarArticlesIndexLayout
+      articles={articles}
       languageCode={languageCode}
+      resultLabel={resultLabel}
       searchQuery={searchQuery}
-      title="All Articles"
-    >
-      <section className="public-content__section">
-        <p className="public-content__results-note">{resultLabel}</p>
-        {articles.length ? (
-          <div className="public-content__grid">
-            {articles.map((article) => (
-              <ContentCard
-                href={articleHref(article)}
-                image={article.coverImage}
-                key={article.id}
-                label={
-                  formatDate(article.publishedAt, article.languageCode) ||
-                  article.contentType ||
-                  article.category ||
-                  'Article'
-                }
-                summary={publicSummaryText({ content: article.content, summary: article.summary })}
-                title={article.title}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="public-content__empty">
-            No published articles match this search and language filter.
-          </p>
-        )}
-      </section>
-    </PublicChrome>
+      tagQuery={tagQuery}
+    />
   )
 }
