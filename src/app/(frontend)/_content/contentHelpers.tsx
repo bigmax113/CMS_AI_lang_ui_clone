@@ -547,6 +547,16 @@ const videoFromFields = (fields: Record<string, unknown>) => {
 
 const safeJSON = (value: unknown) => JSON.stringify(value).replace(/</gu, '\\u003c')
 
+const sanitizeEmbedHTML = (value: string) =>
+  value
+    // Imported WP videos are converted to structured video blocks. Remove the leftover
+    // unbalanced wrapper tags so browser HTML repair cannot break React hydration.
+    .replace(/<\/div>\s*(?=<div\b[^>]*\bclass=(["'])[^"']*\bwp-video\b[^"']*\1[^>]*>)/giu, '')
+    .replace(/<div\b[^>]*\bclass=(["'])[^"']*\bwp-video\b[^"']*\1[^>]*>\s*<\/div>/giu, '')
+    .replace(/<div\b[^>]*\bclass=(["'])[^"']*\bwp-video\b[^"']*\1[^>]*>/giu, '')
+    .replace(/^\s*<\/div>\s*/giu, '')
+    .trim()
+
 const renderText = (node: LexicalNode, key: string) => {
   let textNode: React.ReactNode = node.text || ''
 
@@ -772,7 +782,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
     }
 
     if (fields.blockType === 'htmlEmbed') {
-      const html = textField(fields.html)
+      const html = sanitizeEmbedHTML(textField(fields.html))
 
       return html ? (
         <div className="public-content__html-embed" dangerouslySetInnerHTML={{ __html: html }} key={key} />
