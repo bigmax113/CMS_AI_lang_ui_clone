@@ -1424,7 +1424,7 @@ export const ArticleLanguageSwitcher = ({
               {alternate.displayCode}
             </strong>
           ) : (
-            <Link href={alternate.href} key={alternate.code} title={alternate.title}>
+                <Link href={alternate.href} key={alternate.code} prefetch={false} title={alternate.title}>
               {alternate.displayCode}
             </Link>
           ),
@@ -1709,7 +1709,7 @@ const LorgarHeader = ({
               alternate.isCurrent ? (
                 <strong aria-current="page" key={alternate.code}>{alternate.displayCode}</strong>
               ) : (
-                <Link href={alternate.href} key={alternate.code} title={alternate.title}>{alternate.displayCode}</Link>
+                <Link href={alternate.href} key={alternate.code} prefetch={false} title={alternate.title}>{alternate.displayCode}</Link>
               ),
             )}
           </div>
@@ -1728,7 +1728,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
 
   return (
-    <Link className="lorgar-blog-card" href={href}>
+    <Link className="lorgar-blog-card" href={href} prefetch={false}>
       {isMedia(article.coverImage) ? (
         <SafeImage
           alt={article.coverImage.alt || article.title}
@@ -1842,7 +1842,7 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
   const publishedDate = formatDate(article.publishedAt || article.createdAt, article.languageCode)
 
   return (
-    <Link className="lorgar-sidebar-card" href={href}>
+    <Link className="lorgar-sidebar-card" href={href} prefetch={false}>
       {isMedia(article.coverImage) ? (
         <SafeImage
           alt={article.coverImage.alt || article.title}
@@ -1881,7 +1881,7 @@ const LorgarArticleSidebar = ({
         <h2>Topics</h2>
         <div className="lorgar-topic-list">
           {(topics.length ? topics : [fallbackTopic]).map((tag) => (
-            <Link href={lorgarArticlesPath({ languageCode: currentLanguageCode, tagQuery: tag })} key={tag}>
+            <Link href={lorgarArticlesPath({ languageCode: currentLanguageCode, tagQuery: tag })} key={tag} prefetch={false}>
               {tag}
             </Link>
           ))}
@@ -1916,7 +1916,7 @@ const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
   const summary = article.summary || excerptArticleText(article.content, 180)
 
   return (
-    <Link className="lorgar-related-card" href={href}>
+    <Link className="lorgar-related-card" href={href} prefetch={false}>
       {isMedia(article.coverImage) ? (
         <SafeImage
           alt={article.coverImage.alt || article.title}
@@ -2051,6 +2051,7 @@ export const LorgarArticleLayout = ({
                   <Link
                     href={lorgarArticlesPath({ languageCode: article.languageCode, tagQuery: tag })}
                     key={tag}
+                    prefetch={false}
                   >
                     {tag}
                   </Link>

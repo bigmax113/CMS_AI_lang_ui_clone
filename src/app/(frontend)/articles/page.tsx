@@ -30,7 +30,12 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
   const searchQuery = firstQueryValue(query?.q)?.trim() || ''
   const tagQuery = firstQueryValue(query?.tag)?.trim() || ''
   const languageCode = normalizeArticleLanguageCode(firstQueryValue(query?.lang) || 'en')
-  const articles = await listPublishedArticles({ languageCode, searchQuery, tagQuery })
+  const articles = (await listPublishedArticles({
+    languageCode,
+    limit: searchQuery || tagQuery ? 500 : 12,
+    searchQuery,
+    tagQuery,
+  })).slice(0, 12)
   const languageLabel = articleLanguageLabelByCode[languageCode]
   const languageDisplayCode = articleLanguageDisplayCodeByCode[languageCode]
   const resultContext = [

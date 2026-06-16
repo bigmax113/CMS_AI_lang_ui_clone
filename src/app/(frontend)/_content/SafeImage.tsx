@@ -6,11 +6,13 @@ export const SafeImage = ({
   alt,
   className,
   fileName,
+  loading = 'lazy',
   src,
 }: {
   alt: string
   className?: string
   fileName?: null | string
+  loading?: 'eager' | 'lazy'
   src?: null | string
 }) => {
   const [failedSrc, setFailedSrc] = useState<null | string>(null)
@@ -31,6 +33,13 @@ export const SafeImage = ({
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- Payload media URLs can be local, external, or DB data URLs.
-    <img alt={alt} className={className} onError={() => setFailedSrc(src)} src={src} />
+    <img
+      alt={alt}
+      className={className}
+      decoding="async"
+      loading={loading}
+      onError={() => setFailedSrc(src)}
+      src={src}
+    />
   )
 }
