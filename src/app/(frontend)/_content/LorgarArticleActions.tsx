@@ -63,25 +63,6 @@ export const LorgarArticleActions = ({ articleSlug, title, url }: LorgarArticleA
 
   return (
     <div className="lorgar-share">
-      <div aria-label="Article reactions" className="lorgar-share__reactions">
-        <span>Reactions:</span>
-        {(['like', 'discuss'] as const).map((reactionType) => (
-          <button
-            aria-label={reactionLabels[reactionType]}
-            disabled={pendingReaction === reactionType}
-            key={reactionType}
-            onClick={() => void sendReaction(reactionType)}
-            type="button"
-          >
-            <span aria-hidden="true" className={`lorgar-share__${reactionType}`} />
-            {reactionCounts[reactionType] ? (
-              <small aria-label={`${reactionCounts[reactionType]} ${reactionType} reactions`}>
-                {reactionCounts[reactionType]}
-              </small>
-            ) : null}
-          </button>
-        ))}
-      </div>
       <div aria-label="Share article" className="lorgar-share__links">
         <span>Share:</span>
         <button aria-label="Copy article link" onClick={() => void copyLink()} type="button">
@@ -111,6 +92,25 @@ export const LorgarArticleActions = ({ articleSlug, title, url }: LorgarArticleA
         >
           in
         </a>
+      </div>
+      <div aria-label="Article reactions" className="lorgar-share__reactions">
+        <span>Reactions:</span>
+        {(['like', 'discuss'] as const).map((reactionType) => (
+          <button
+            aria-label={reactionLabels[reactionType]}
+            disabled={pendingReaction === reactionType}
+            key={reactionType}
+            onClick={() => void sendReaction(reactionType)}
+            type="button"
+          >
+            <span aria-hidden="true" className={`lorgar-share__${reactionType}`} />
+            {reactionCounts[reactionType] ? (
+              <small aria-label={`${reactionCounts[reactionType]} ${reactionType} reactions`}>
+                {reactionCounts[reactionType]}
+              </small>
+            ) : null}
+          </button>
+        ))}
       </div>
       {message ? <p className="lorgar-share__message">{message}</p> : null}
     </div>

@@ -439,6 +439,25 @@ export const publicSummaryText = ({
   return excerptArticleText(content, 520) || cleanedSummary || null
 }
 
+const publicLeadText = ({
+  content,
+  summary,
+}: {
+  content?: Article['content'] | BlogPost['content'] | null
+  summary?: null | string
+}) => {
+  const baseText = publicSummaryText({ content, summary })
+
+  if (!baseText) {
+    return null
+  }
+
+  const firstSentence = baseText.match(/^(.+?[.!?])(?:\s|$)/u)?.[1]?.trim()
+  const preferredText = firstSentence && firstSentence.length >= 90 ? firstSentence : baseText
+
+  return excerptArticleText(preferredText, 240) || preferredText
+}
+
 const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | 'tags'>) => {
   const values = [
     article.contentType,
@@ -466,6 +485,95 @@ const publicArticleAuthorNames = (authors?: Article['authors'] | BlogPost['autho
     .map((author) => author.name)
     .filter(Boolean)
     .join(', ') || defaultPublicAuthorName
+
+const contentUploadMedia = (content: Article['content'] | BlogPost['content'] | null | undefined) => {
+  const root = content?.root as LexicalNode | undefined
+  let found: Media | null = null
+
+  const visit = (node?: LexicalNode) => {
+    if (!node || found) {
+      return
+    }
+
+    if (node.type === 'upload' && isMedia(node.value)) {
+      found = node.value
+      return
+    }
+
+    node.children?.forEach(visit)
+  }
+
+  visit(root)
+
+  return found
+}
+
+const primaryImageFromContent = (content?: Article['content'] | BlogPost['content'] | null) => {
+  const directUpload = contentUploadMedia(content)
+
+  if (directUpload) {
+    return directUpload
+  }
+
+  const imageBlock = collectBlockFields(content, 'imageBlock')
+    .map(imageBlockFromFields)
+    .map((item) => item.image)
+    .find(isMedia)
+
+  if (imageBlock) {
+    return imageBlock
+  }
+
+  const imageRow = collectBlockFields(content, 'imageRow')
+    .flatMap(imageRowFromFields)
+    .map((item) => item.image)
+    .find(isMedia)
+
+  if (imageRow) {
+    return imageRow
+  }
+
+  return null
+}
+
+const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage'>) =>
+  (isMedia(article.coverImage) ? article.coverImage : null) || primaryImageFromContent(article.content)
+
+const articleReadingTime = ({
+  content,
+  languageCode,
+}: {
+  content?: Article['content'] | BlogPost['content'] | null
+  languageCode?: null | string
+}) => {
+  const text = excerptArticleText(content, 12000)
+
+  if (!text) {
+    return null
+  }
+
+  const wordCount = text
+    .split(/\s+/u)
+    .map((word) => word.trim())
+    .filter(Boolean).length
+
+  if (!wordCount) {
+    return null
+  }
+
+  const minutes = Math.max(1, Math.round(wordCount / 210))
+  const code = normalizeArticleLanguageCode(languageCode)
+
+  if (code === 'ru') {
+    return `${minutes} мин чтения`
+  }
+
+  if (code === 'uk') {
+    return `${minutes} хв читання`
+  }
+
+  return `${minutes} min read`
+}
 
 const parseURL = (value: string) => {
   try {
@@ -1730,16 +1838,17 @@ const LorgarHeader = ({
 
 const LorgarBlogCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
-  const summary = publicSummaryText({ content: article.content, summary: article.summary })
+  const summary = publicLeadText({ content: article.content, summary: article.summary })
+  const image = articlePrimaryImage(article)
 
   return (
     <Link className="lorgar-blog-card" href={href} prefetch={false}>
-      {isMedia(article.coverImage) ? (
+      {isMedia(image) ? (
         <SafeImage
-          alt={article.coverImage.alt || article.title}
+          alt={image.alt || article.title}
           className="lorgar-blog-card__image"
-          fileName={article.coverImage.filename}
-          src={mediaURL(article.coverImage)}
+          fileName={image.filename}
+          src={mediaURL(image)}
         />
       ) : null}
       <span className="lorgar-blog-card__date">
@@ -1786,12 +1895,17 @@ export const LorgarArticlesIndexLayout = ({
   </div>
 )
 
-const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' }) => (
+const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' | 'read' }) => (
   <svg aria-hidden="true" className="lorgar-meta__icon" fill="none" viewBox="0 0 24 24">
     {type === 'date' ? (
       <>
         <path d="M7 3v4M17 3v4M4.5 9h15" />
         <path d="M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z" />
+      </>
+    ) : type === 'read' ? (
+      <>
+        <path d="M12 6.5v5l3.5 2" />
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
       </>
     ) : (
       <>
@@ -1811,6 +1925,7 @@ const LorgarMeta = ({
 }) => {
   const date = formatArticleMetaDate(publishedAt, article.languageCode)
   const authorNames = publicArticleAuthorNames(article.authors)
+  const readTime = articleReadingTime({ content: article.content, languageCode: article.languageCode })
 
   return (
     <div className="lorgar-meta">
@@ -1818,6 +1933,12 @@ const LorgarMeta = ({
         <span>
           <LorgarMetaIcon type="date" />
           <time dateTime={publishedAt || undefined}>{date}</time>
+        </span>
+      ) : null}
+      {readTime ? (
+        <span>
+          <LorgarMetaIcon type="read" />
+          {readTime}
         </span>
       ) : null}
       <span>
@@ -1845,14 +1966,15 @@ const LorgarArticleShare = ({
 const LorgarSidebarCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const publishedDate = formatDate(article.publishedAt || article.createdAt, article.languageCode)
+  const image = articlePrimaryImage(article)
 
   return (
     <Link className="lorgar-sidebar-card" href={href} prefetch={false}>
-      {isMedia(article.coverImage) ? (
+      {isMedia(image) ? (
         <SafeImage
-          alt={article.coverImage.alt || article.title}
-          fileName={article.coverImage.filename}
-          src={mediaURL(article.coverImage)}
+          alt={image.alt || article.title}
+          fileName={image.filename}
+          src={mediaURL(image)}
         />
       ) : null}
       <span>
@@ -1873,10 +1995,13 @@ const LorgarArticleSidebar = ({
   const currentID = String(article.id)
   const currentLanguageCode = inferArticleLanguageCode(article)
   const siblingArticles = recentArticles.filter(
-    (candidate) => String(candidate.id) !== currentID && inferArticleLanguageCode(candidate) === currentLanguageCode,
+    (candidate) =>
+      String(candidate.id) !== currentID &&
+      inferArticleLanguageCode(candidate) === currentLanguageCode &&
+      Boolean(articlePrimaryImage(candidate)),
   )
-  const recent = siblingArticles.slice(0, 4)
-  const popular = siblingArticles.slice(4, 8)
+  const recent = siblingArticles.slice(0, 3)
+  const popular = siblingArticles.slice(3, 6)
   const topics = publicArticleTags(article).slice(0, 6)
   const fallbackTopic = article.contentType || article.category || 'Article'
 
@@ -1913,54 +2038,6 @@ const LorgarArticleSidebar = ({
         </section>
       ) : null}
     </aside>
-  )
-}
-
-const LorgarRelatedArticleCard = ({ article }: { article: Article }) => {
-  const href = articlePublicPath(article.slug) || '/articles'
-  const summary = article.summary || excerptArticleText(article.content, 180)
-
-  return (
-    <Link className="lorgar-related-card" href={href} prefetch={false}>
-      {isMedia(article.coverImage) ? (
-        <SafeImage
-          alt={article.coverImage.alt || article.title}
-          fileName={article.coverImage.filename}
-          src={mediaURL(article.coverImage)}
-        />
-      ) : null}
-      <span>
-        <strong>{article.title}</strong>
-        {summary ? <p>{summary}</p> : null}
-      </span>
-    </Link>
-  )
-}
-
-const LorgarRelatedPosts = ({
-  currentArticle,
-  recentArticles,
-}: {
-  currentArticle: Article
-  recentArticles: Article[]
-}) => {
-  const relatedArticles = recentArticles
-    .filter((article) => String(article.id) !== String(currentArticle.id))
-    .slice(0, 3)
-
-  if (!relatedArticles.length) {
-    return null
-  }
-
-  return (
-    <section className="lorgar-related" aria-label="Related posts">
-      <h2>Related posts</h2>
-      <div>
-        {relatedArticles.map((article) => (
-          <LorgarRelatedArticleCard article={article} key={article.id} />
-        ))}
-      </div>
-    </section>
   )
 }
 
@@ -2035,6 +2112,8 @@ export const LorgarArticleLayout = ({
   const navigationLabels = publicArticleNavigationLabels(article.languageCode)
   const publishedDate = article.publishedAt || article.createdAt
   const tags = publicArticleTags(article)
+  const coverImage = articlePrimaryImage(article)
+  const leadSummary = publicLeadText({ content: article.content, summary })
 
   return (
     <div className="public-content public-content--lorgar">
@@ -2064,16 +2143,14 @@ export const LorgarArticleLayout = ({
               </div>
             ) : null}
             <h1>{article.title}</h1>
-            {summary ? <p className="lorgar-article-summary">{summary}</p> : null}
+            {leadSummary ? <p className="lorgar-article-summary">{leadSummary}</p> : null}
             <LorgarMeta article={article} publishedAt={publishedDate} />
-            <ArticleLanguageSwitcher alternates={translations} />
-            {isMedia(article.coverImage) ? (
-              <PublicImage alt={article.coverImage.alt || article.title} className="lorgar-article-cover" media={article.coverImage} />
+            {isMedia(coverImage) ? (
+              <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
             ) : null}
             <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} />
             <div className="lorgar-article-body">{children}</div>
             <LorgarCTA />
-            <LorgarRelatedPosts currentArticle={article} recentArticles={recentArticles} />
             <LorgarSubscribe languageCode={article.languageCode} />
           </article>
           <LorgarArticleSidebar article={article} recentArticles={recentArticles} />

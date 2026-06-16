@@ -3313,9 +3313,141 @@ main:has(.public-content--lorgar),
   width: 893px;
 }
 
+.public-content--lorgar .lorgar-share {
+  align-items: center;
+  border-bottom: 1px solid rgba(124, 139, 194, 0.32);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+  margin: 0 0 42px;
+  padding: 0 0 18px;
+}
+
+.public-content--lorgar .lorgar-share__links,
+.public-content--lorgar .lorgar-share__reactions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.public-content--lorgar .lorgar-share__links > span,
+.public-content--lorgar .lorgar-share__reactions > span {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.public-content--lorgar .lorgar-share button,
+.public-content--lorgar .lorgar-share a {
+  background: rgba(123, 53, 255, 0.18);
+  border: 1px solid rgba(139, 98, 255, 0.68);
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 11px;
+  font-weight: 600;
+  height: 32px;
+  min-width: 32px;
+  width: 32px;
+}
+
+.public-content--lorgar .lorgar-share button {
+  padding: 0 9px;
+  width: auto;
+}
+
+.public-content--lorgar .lorgar-share button small {
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+.public-content--lorgar .lorgar-share__message {
+  color: #9da9ca;
+  font-size: 12px;
+  margin: -2px 0 0;
+  text-align: left;
+}
+
+.public-content--lorgar .lorgar-share__like::before {
+  content: "Like";
+  font-size: 10px;
+}
+
+.public-content--lorgar .lorgar-share__discuss::before {
+  content: "Chat";
+  font-size: 10px;
+}
+
+.public-content--lorgar .lorgar-share__link::before {
+  content: "URL";
+  font-size: 10px;
+}
+
+.public-content--lorgar .lorgar-article-body {
+  color: #d7def3;
+  max-width: 893px;
+}
+
+.public-content--lorgar .public-content__richtext h2 {
+  font-size: 34px;
+  line-height: 1.08;
+  margin: 44px 0 18px;
+}
+
+.public-content--lorgar .public-content__richtext p,
+.public-content--lorgar .public-content__richtext li {
+  color: #d7def3;
+  font-size: 16px;
+  line-height: 1.72;
+  margin: 0 0 20px;
+}
+
+.public-content--lorgar .public-content__richtext blockquote,
+.public-content--lorgar .public-content__callout {
+  background: #111629;
+  border: 1px solid rgba(124, 139, 194, 0.35);
+  border-left: 4px solid #7b35ff;
+  border-radius: 16px;
+  margin: 38px 0;
+  padding: 28px 30px;
+}
+
+.public-content--lorgar .public-content__callout strong,
+.public-content--lorgar .public-content__richtext blockquote strong {
+  color: #d88cff;
+  display: block;
+  font-family: var(--lorgar-font-display);
+  font-size: 26px;
+  line-height: 1;
+  margin: 0 0 16px;
+}
+
+.public-content--lorgar .public-content__callout p,
+.public-content--lorgar .public-content__richtext blockquote p {
+  margin: 0;
+}
+
+.public-content--lorgar .lorgar-cta-strip {
+  margin: 36px 0 24px;
+  max-width: 893px;
+}
+
+.public-content--lorgar .lorgar-subscribe {
+  margin: 0;
+  max-width: 893px;
+}
+
+.public-content--lorgar .lorgar-related {
+  display: none;
+}
+
 .public-content--lorgar .lorgar-sidebar {
   display: grid;
-  gap: 64px;
+  gap: 28px;
   max-height: none;
   overflow: visible;
   padding: 14px 0 0;
@@ -3350,7 +3482,7 @@ main:has(.public-content--lorgar),
 
 .public-content--lorgar .lorgar-sidebar__cards {
   display: grid;
-  gap: 41px;
+  gap: 18px;
 }
 
 .public-content--lorgar .lorgar-sidebar-card {
@@ -3386,6 +3518,26 @@ main:has(.public-content--lorgar),
   font-size: 14px;
   font-weight: 700;
   margin-top: 10px;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card {
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card strong {
+  display: -webkit-box;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card p {
+  display: -webkit-box;
+  line-clamp: 7;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 7;
+  overflow: hidden;
 }
 
 .public-content--lorgar .lorgar-footer {
