@@ -427,9 +427,12 @@ export const publicSummaryText = ({
   content?: Article['content'] | BlogPost['content'] | null
   summary?: null | string
 }) => {
+  const summaryHadMediaURL =
+    typeof summary === 'string' &&
+    /https?:\/\/[^\s<>"']*(?:\/wp-content\/uploads\/|\/api\/media\/|\.mp4|\.mov|\.webm)/iu.test(summary)
   const cleanedSummary = excerptArticleText(summary, 520)
 
-  if (cleanedSummary && !isLikelyTruncatedArticleText(cleanedSummary)) {
+  if (cleanedSummary && !summaryHadMediaURL && !isLikelyTruncatedArticleText(cleanedSummary)) {
     return cleanedSummary
   }
 
