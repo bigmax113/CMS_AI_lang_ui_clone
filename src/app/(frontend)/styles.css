@@ -3193,11 +3193,41 @@ main:has(.public-content--lorgar),
 .public-content--lorgar .lorgar-header__tools {
   align-items: center;
   display: flex;
-  gap: 0;
+  gap: 14px;
 }
 
 .public-content--lorgar .lorgar-header__search {
-  display: none;
+  display: inline-flex;
+  padding: 0;
+  position: relative;
+  width: auto;
+}
+
+.public-content--lorgar .lorgar-header__search summary {
+  align-items: center;
+  background: rgba(20, 24, 42, 0.96);
+  border: 1px solid rgba(124, 139, 194, 0.32);
+  border-radius: 16px;
+  display: inline-flex;
+  height: 54px;
+  justify-content: center;
+  width: 54px;
+}
+
+.public-content--lorgar .lorgar-header__search form {
+  top: calc(100% + 14px);
+}
+
+.public-content--lorgar .lorgar-header__search span {
+  border-color: #ffffff;
+  height: 19px;
+  width: 19px;
+}
+
+.public-content--lorgar .lorgar-header__search span::after {
+  background: #ffffff;
+  left: 15px;
+  top: 15px;
 }
 
 .public-content--lorgar .lorgar-header__language {
@@ -3207,9 +3237,20 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar .lorgar-header__language summary {
+  align-items: center;
+  background: rgba(20, 24, 42, 0.96);
+  border: 1px solid rgba(124, 139, 194, 0.32);
+  border-radius: 16px;
   gap: 8px;
+  height: 54px;
   min-height: 0;
-  padding: 0;
+  justify-content: center;
+  min-width: 78px;
+  padding: 0 18px;
+}
+
+.public-content--lorgar .lorgar-header__language div {
+  margin-top: 14px;
 }
 
 .public-content--lorgar .lorgar-article-shell {
