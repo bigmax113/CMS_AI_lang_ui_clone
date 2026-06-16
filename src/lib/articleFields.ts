@@ -16,6 +16,8 @@ const htmlEntities: Record<string, string> = {
 const terminalSentencePunctuation = /[.!?]["')\]]?$/u
 const commonSentenceEnd = /[.!?]["')\]]?(?=\s|$)/gu
 const danglingEnglishWord = /\b(?:a|an|and|as|at|by|for|from|in|into|of|on|or|the|to|with)$/iu
+const mediaURLText =
+  /https?:\/\/[^\s<>"']*(?:\/wp-content\/uploads\/|\/api\/media\/|\.mp4|\.mov|\.webm)[^\s<>"']*/giu
 
 const decodeArticleTextEntities = (value: string): string =>
   value
@@ -33,6 +35,7 @@ const decodeArticleTextEntities = (value: string): string =>
 
 const normalizeArticleText = (value: string): string | undefined => {
   const text = decodeArticleTextEntities(value)
+    .replace(mediaURLText, ' ')
     .replace(/<[^>]+>/gu, ' ')
     .replace(/\s*\[(?:\u2026|\.{3}|&hellip;|&#8230;|&#x2026;)\]\s*$/iu, '')
     .replace(/\s+/gu, ' ')

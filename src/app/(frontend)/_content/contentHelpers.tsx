@@ -427,11 +427,13 @@ export const publicSummaryText = ({
   content?: Article['content'] | BlogPost['content'] | null
   summary?: null | string
 }) => {
-  if (summary && !isLikelyTruncatedArticleText(summary)) {
-    return summary
+  const cleanedSummary = excerptArticleText(summary, 520)
+
+  if (cleanedSummary && !isLikelyTruncatedArticleText(cleanedSummary)) {
+    return cleanedSummary
   }
 
-  return excerptArticleText(content, 520) || summary || null
+  return excerptArticleText(content, 520) || cleanedSummary || null
 }
 
 const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | 'tags'>) => {
