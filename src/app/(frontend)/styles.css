@@ -3180,6 +3180,7 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar .lorgar-header__nav a,
+.public-content--lorgar .lorgar-nav-dropdown summary,
 .public-content--lorgar .lorgar-header__language summary {
   color: #ffffff;
   font-family: var(--lorgar-font-display);
@@ -3188,6 +3189,12 @@ main:has(.public-content--lorgar),
   letter-spacing: 0;
   line-height: 1;
   text-transform: none;
+}
+
+.public-content--lorgar .lorgar-header__nav a:hover,
+.public-content--lorgar .lorgar-nav-dropdown summary:hover,
+.public-content--lorgar .lorgar-header__language summary:hover {
+  color: #b996ff;
 }
 
 .public-content--lorgar .lorgar-header__tools {

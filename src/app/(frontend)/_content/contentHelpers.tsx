@@ -1555,6 +1555,7 @@ const lorgarSolutions = [
 ]
 
 const lorgarProducts = [
+  { href: 'https://lorgar.com/products', label: 'All Products' },
   { href: 'https://lorgar.com/category/pc', label: 'PC' },
   { href: 'https://lorgar.com/category/monitors', label: 'Monitors' },
   { href: 'https://lorgar.com/category/gaming-mice', label: 'Mice' },
@@ -1570,12 +1571,12 @@ const lorgarProducts = [
   { href: 'https://lorgar.com/category/gaming-accessories', label: 'Racing Accessories' },
 ]
 
-const lorgarMainLinks = [
-  { href: '/articles', label: 'News' },
-  { href: 'https://lorgar.com/solutions', label: 'Solutions' },
-  { href: 'https://lorgar.com/partnerships', label: 'Partnerships' },
-  { href: 'https://lorgar.com/company', label: 'Company' },
-  { href: 'https://lorgar.com/events', label: 'Events' },
+const lorgarEsports = [
+  { href: 'https://lorgar.com/rankings', label: 'LORGAR Rankings' },
+  { href: 'https://lorgar.com/passion', label: 'Passion' },
+  { href: 'https://lorgar.com/astralesports', label: 'Astral Esports' },
+  { href: 'https://lorgar.com/stake-ranked', label: 'Stake Ranked' },
+  { href: 'https://lorgar.com/ap-performance-lab', label: 'A&P Performance Lab' },
 ]
 
 const lorgarFooterLinks = [
@@ -1718,13 +1719,56 @@ const LorgarNavDropdown = ({
   </details>
 )
 
+type LorgarPrimaryNavItem =
+  | {
+      href: string
+      internal?: boolean
+      label: string
+      type: 'link'
+    }
+  | {
+      items: Array<{ href: string; label: string }>
+      label: string
+      type: 'dropdown'
+    }
+
+const lorgarPrimaryNavItems: LorgarPrimaryNavItem[] = [
+  { items: lorgarSolutions, label: 'Solutions', type: 'dropdown' },
+  { items: lorgarProducts, label: 'Products', type: 'dropdown' },
+  { href: 'https://lorgar.com/for-users', label: 'For Users', type: 'link' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform', type: 'link' },
+  { items: lorgarEsports, label: 'Esports', type: 'dropdown' },
+  { href: '/articles', internal: true, label: 'Blog', type: 'link' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy', type: 'link' },
+  { href: 'https://lorgar.com/about', label: 'About', type: 'link' },
+]
+
+const LorgarPrimaryNavLink = ({
+  href,
+  internal,
+  label,
+}: {
+  href: string
+  internal?: boolean
+  label: string
+}) =>
+  internal ? (
+    <Link href={href} prefetch={false}>
+      {label}
+    </Link>
+  ) : (
+    <ExternalLink href={href}>{label}</ExternalLink>
+  )
+
 const LorgarPrimaryNav = ({ className }: { className?: string }) => (
   <nav aria-label="Primary" className={className}>
-    {lorgarMainLinks.map((item) => (
-      <ExternalLink href={item.href} key={`${item.href}-${item.label}`}>
-        {item.label}
-      </ExternalLink>
-    ))}
+    {lorgarPrimaryNavItems.map((item) =>
+      item.type === 'dropdown' ? (
+        <LorgarNavDropdown items={item.items} key={item.label} label={item.label} />
+      ) : (
+        <LorgarPrimaryNavLink href={item.href} internal={item.internal} key={`${item.href}-${item.label}`} label={item.label} />
+      ),
+    )}
   </nav>
 )
 
