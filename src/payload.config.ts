@@ -73,6 +73,582 @@ const richTextParagraph = ({ text }: { text: string }) => ({
   },
 })
 
+type SeedRichTextBlock =
+  | {
+      text: string
+      type: 'paragraph'
+    }
+  | {
+      tag: 'h2' | 'h3'
+      text: string
+      type: 'heading'
+    }
+
+const richTextDocument = (blocks: readonly SeedRichTextBlock[]) => ({
+  root: {
+    children: blocks.map((block) =>
+      block.type === 'heading'
+        ? {
+            children: [
+              {
+                text: block.text,
+                type: 'text' as const,
+              },
+            ],
+            direction: null,
+            format: '' as const,
+            indent: 0,
+            tag: block.tag,
+            type: 'heading' as const,
+            version: 1,
+          }
+        : {
+            children: [
+              {
+                text: block.text,
+                type: 'text' as const,
+              },
+            ],
+            direction: null,
+            format: '' as const,
+            indent: 0,
+            type: 'paragraph' as const,
+            version: 1,
+          },
+    ),
+    direction: null,
+    format: '' as const,
+    indent: 0,
+    type: 'root' as const,
+    version: 1,
+  },
+})
+
+const resolveSeedPublicAssetPath = (assetPath: string) =>
+  path.resolve(process.cwd(), 'public', assetPath.replace(/^\/+/u, ''))
+
+const seedMediaDefinitions = [
+  {
+    alt: 'LORGAR gaming chair hero',
+    externalImageURL: '/lorgar-blog-hero.webp',
+    filename: 'lorgar-blog-hero.webp',
+    mimeType: 'image/webp',
+  },
+  {
+    alt: 'LORGAR esports team and event stage',
+    externalImageURL: '/seo/grok-test-blog.jpeg',
+    filename: 'lorgar-esports-stage.jpeg',
+    mimeType: 'image/jpeg',
+  },
+  {
+    alt: 'LORGAR product detail close-up',
+    externalImageURL: '/seo/grok-test-blog-inline-1.jpeg',
+    filename: 'lorgar-product-closeup-1.jpeg',
+    mimeType: 'image/jpeg',
+  },
+  {
+    alt: 'LORGAR product and audience showcase',
+    externalImageURL: '/seo/grok-test-blog-inline-2.jpeg',
+    filename: 'lorgar-product-closeup-2.jpeg',
+    mimeType: 'image/jpeg',
+  },
+] as const
+
+const seedArticleDefinitions = [
+  {
+    blocks: [
+      {
+        text: 'From May 22-24, the Lithuanian Exhibition and Congress Centre LITEXPO welcomed thousands of visitors for Comic Con Baltics 2026, bringing together gaming communities, creators, and leading entertainment brands.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Why this activation mattered',
+        type: 'heading' as const,
+      },
+      {
+        text: 'LORGAR used the event to demonstrate complete gaming-ready setups, hands-on product testing, and a stronger brand presence inside one of the region’s most visible community stages.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'release-note',
+    contentType: 'news',
+    coverImageKey: 'lorgar-esports-stage.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-26T09:00:00.000Z',
+    slug: 'lorgar-powers-the-rainbow-six-siege-experience-at-comic-con-baltics-2026',
+    summary:
+      'From May 22-24, the Lithuanian Exhibition and Congress Centre LITEXPO welcomed 36,900 visitors for the annual Comic Con Baltics 2026, where LORGAR delivered a complete Rainbow Six Siege experience.',
+    tags: ['esports', 'events', 'products', 'rainbow-six-siege', 'rankings', 'passion', 'stake-ranked'],
+    title: 'LORGAR Powers the Rainbow Six Siege Experience at Comic Con Baltics 2026',
+  },
+  {
+    blocks: [
+      {
+        text: 'LORGAR continues to bring its Ready To Play ecosystem into real competitive environments by equipping the A&P Performance Lab bootcamp base in Riga with desks, seating, and peripherals built for long practice blocks.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Bootcamp-ready environment',
+        type: 'heading' as const,
+      },
+      {
+        text: 'The installation was designed to support repeatable performance routines, fast changeovers, and comfortable day-long use for competitive teams and training staff.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'release-note',
+    contentType: 'news',
+    coverImageKey: 'lorgar-product-closeup-2.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-24T09:00:00.000Z',
+    slug: 'lorgar-fully-equips-ap-performance-lab-bootcamp-base-in-riga',
+    summary:
+      'LORGAR fully equips the A&P Performance Lab bootcamp base in Riga with a coordinated ecosystem of competitive gaming hardware and furniture.',
+    tags: ['esports', 'platform', 'performance-lab', 'partners', 'astral-esports'],
+    title: 'LORGAR Fully Equips A&P Performance Lab Bootcamp Base in Riga',
+  },
+  {
+    blocks: [
+      {
+        text: 'Choosing a gaming mouse starts with fit, sensor consistency, weight balance, and the way the shell supports your grip during longer sessions.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Key selection criteria',
+        type: 'heading' as const,
+      },
+      {
+        text: 'Editors and buyers should compare polling rate, switch feel, cable drag or wireless latency, and the software controls that make the mouse easier to adapt for different play styles.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-1.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-22T09:00:00.000Z',
+    slug: 'how-to-choose-a-gaming-mouse-weight-sensor-polling-rate-and-more',
+    summary:
+      'A practical guide to choosing a gaming mouse by weight, sensor quality, polling rate, grip support, and everyday comfort.',
+    tags: ['for-users', 'products', 'gaming-mice', 'mouse-buying-guide', 'gaming-mousepads', 'gaming-accessories'],
+    title: 'How to Choose a Gaming Mouse: Weight, Sensor, Polling Rate and More',
+  },
+  {
+    blocks: [
+      {
+        text: 'A streaming solution needs clean audio, consistent lighting, stable desk space, and accessories that reduce friction when a creator switches between gaming and live production.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Building a balanced streaming desk',
+        type: 'heading' as const,
+      },
+      {
+        text: 'The best streaming solution combines a microphone, webcam, lighting, and ergonomic placement so the setup remains practical during longer recording and broadcast sessions.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'internal-guide',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-2.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-20T09:00:00.000Z',
+    slug: 'streaming-solution-for-creator-setups',
+    summary:
+      'A streaming solution blueprint for creators who need a practical mix of camera, microphone, desk, and comfort hardware.',
+    tags: ['solutions', 'streaming-solution', 'for-users', 'webcams', 'gaming-microphones', 'gaming-accessories'],
+    title: 'Streaming Solution for Creator Setups',
+  },
+  {
+    blocks: [
+      {
+        text: 'A PC gaming solution should balance monitor response, desk footprint, cable management, input devices, and a seating position that supports both ranked play and everyday use.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'What makes a strong PC gaming solution',
+        type: 'heading' as const,
+      },
+      {
+        text: 'Instead of building around isolated parts, this guide looks at the full PC gaming solution: screen, chair, microphone, headset, and the accessories that keep the setup cohesive.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-blog-hero.webp',
+    languageCode: 'en',
+    publishedAt: '2026-05-18T09:00:00.000Z',
+    slug: 'pc-gaming-solution-for-competitive-and-everyday-play',
+    summary:
+      'A PC gaming solution guide that connects monitors, desks, chairs, microphones, and accessories into one practical setup.',
+    tags: ['solutions', 'pc-gaming-solution', 'products', 'pc', 'monitors', 'gaming-desks', 'gaming-controllers'],
+    title: 'PC Gaming Solution for Competitive and Everyday Play',
+  },
+  {
+    blocks: [
+      {
+        text: 'The Sim Racing Flex Solution is built for players who want a modular cockpit foundation that can evolve with pedals, wheel bases, seating, and accessory mounts over time.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Flexible growth path',
+        type: 'heading' as const,
+      },
+      {
+        text: 'It focuses on entry comfort, reliable structural support, and the ability to scale without replacing the full foundation too early.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-1.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-16T09:00:00.000Z',
+    slug: 'sim-racing-flex-solution-modular-cockpit-starter-guide',
+    summary:
+      'A Sim Racing Flex Solution overview for players who need a modular cockpit starter configuration with room to grow.',
+    tags: ['solutions', 'sim-racing-flex-solution', 'racing-cockpits', 'for-users'],
+    title: 'Sim Racing Flex Solution: Modular Cockpit Starter Guide',
+  },
+  {
+    blocks: [
+      {
+        text: 'The Sim Racing Pro Solution targets higher-load setups that demand stronger rigidity, more precise positioning, and upgrade headroom for advanced wheel and pedal combinations.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Performance-first cockpit design',
+        type: 'heading' as const,
+      },
+      {
+        text: 'This article explains how a Sim Racing Pro Solution keeps ergonomics, mounting stability, and long-session comfort in balance for experienced drivers.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-2.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-14T09:00:00.000Z',
+    slug: 'sim-racing-pro-solution-performance-cockpit-build',
+    summary:
+      'A Sim Racing Pro Solution guide for advanced cockpit builds focused on rigidity, adjustability, and repeatable comfort.',
+    tags: ['solutions', 'sim-racing-pro-solution', 'racing-cockpits', 'products'],
+    title: 'Sim Racing Pro Solution: Performance Cockpit Build',
+  },
+  {
+    blocks: [
+      {
+        text: 'The CHA41 series expands the gaming chair lineup with a focus on long-session support, durable materials, and a clearer fit between everyday comfort and competitive use.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Built for long sessions',
+        type: 'heading' as const,
+      },
+      {
+        text: 'Cold-moulded foam, full-metal framing, and fabric finishes help position the CHA41 as a practical chair family for users who need comfort without losing visual identity.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'news',
+    coverImageKey: 'lorgar-blog-hero.webp',
+    languageCode: 'en',
+    publishedAt: '2026-05-11T09:00:00.000Z',
+    slug: 'lorgar-introduces-the-cha41-gaming-chair-series-built-for-long-sessions-designed-to-last',
+    summary:
+      'LORGAR expands its gaming furniture line with the CHA41 gaming chair series built for long sessions, lasting comfort, and ergonomic support.',
+    tags: ['products', 'gaming-chairs', 'chairs'],
+    title: 'LORGAR Introduces the CHA41 Gaming Chair Series - Built for Long Sessions, Designed to Last',
+  },
+  {
+    blocks: [
+      {
+        text: 'The LORGAR platform keeps products, event activations, retailer stories, and user guides connected through a single editorial ecosystem that scales across categories and markets.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'One ecosystem for content and products',
+        type: 'heading' as const,
+      },
+      {
+        text: 'This update highlights how the platform brings product launches, esports partnerships, and educational content into one coherent brand surface.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'knowledge-base',
+    contentType: 'article',
+    coverImageKey: 'lorgar-esports-stage.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-09T09:00:00.000Z',
+    slug: 'whats-new-in-the-lorgar-platform-ecosystem',
+    summary:
+      'A closer look at the LORGAR platform ecosystem and the way it connects product content, partnerships, and user-facing stories.',
+    tags: ['platform', 'about', 'ecosystem'],
+    title: 'What’s New in the LORGAR Platform Ecosystem',
+  },
+  {
+    blocks: [
+      {
+        text: 'Gaming headsets should be judged by comfort over time, positional clarity, voice pickup, and the way the tuning supports both everyday listening and competitive sessions.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'What to compare before buying',
+        type: 'heading' as const,
+      },
+      {
+        text: 'This guide covers earcup fit, clamp force, microphone behavior, and the practical tradeoffs between closed, open, wired, and wireless headset designs.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-2.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-07T09:00:00.000Z',
+    slug: 'how-to-choose-a-gaming-headset-for-daily-play-and-tournaments',
+    summary:
+      'How to choose a gaming headset by comfort, positional clarity, microphone quality, and daily usability.',
+    tags: ['for-users', 'products', 'gaming-headsets'],
+    title: 'How to Choose a Gaming Headset for Daily Play and Tournaments',
+  },
+  {
+    blocks: [
+      {
+        text: 'Gaming keyboards influence comfort, consistency, and confidence through switch feel, layout, stabilizer quality, and the way the board fits the rest of the setup.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Finding the right keyboard profile',
+        type: 'heading' as const,
+      },
+      {
+        text: 'We compare full-size and compact layouts, acoustic behavior, keycap feel, and the details that matter once a keyboard becomes part of a daily gaming routine.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'product-content',
+    contentType: 'guide',
+    coverImageKey: 'lorgar-product-closeup-1.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-05T09:00:00.000Z',
+    slug: 'how-to-choose-a-gaming-keyboard-for-precision-and-comfort',
+    summary:
+      'A practical guide to choosing a gaming keyboard by switch feel, layout, sound, and long-session comfort.',
+    tags: ['for-users', 'products', 'gaming-keyboards'],
+    title: 'How to Choose a Gaming Keyboard for Precision and Comfort',
+  },
+  {
+    blocks: [
+      {
+        text: 'A brand story matters when it explains how products, support, events, and community activations fit together in a way that feels coherent across different regions and audiences.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'About LORGAR',
+        type: 'heading' as const,
+      },
+      {
+        text: 'This article outlines how the brand builds ready-to-play ecosystems across content, hardware, partnerships, and competitive gaming visibility.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'knowledge-base',
+    contentType: 'article',
+    coverImageKey: 'lorgar-esports-stage.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-03T09:00:00.000Z',
+    slug: 'about-lorgar-how-the-brand-builds-ready-to-play-ecosystems',
+    summary:
+      'About LORGAR: how the brand connects products, communities, and editorial storytelling into one ready-to-play ecosystem.',
+    tags: ['about', 'platform'],
+    title: 'About LORGAR: How the Brand Builds Ready-To-Play Ecosystems',
+  },
+  {
+    blocks: [
+      {
+        text: 'Where to buy should be more than a static list. It should explain regional availability, partner coverage, and the types of retail experiences readers can expect when moving from blog content into purchase research.',
+        type: 'paragraph' as const,
+      },
+      {
+        tag: 'h2' as const,
+        text: 'Where to buy LORGAR',
+        type: 'heading' as const,
+      },
+      {
+        text: 'This guide outlines how partner and retail availability can be presented as a useful continuation of product and brand content rather than a disconnected destination.',
+        type: 'paragraph' as const,
+      },
+    ],
+    category: 'knowledge-base',
+    contentType: 'article',
+    coverImageKey: 'lorgar-product-closeup-1.jpeg',
+    languageCode: 'en',
+    publishedAt: '2026-05-01T09:00:00.000Z',
+    slug: 'where-to-buy-lorgar-partner-and-retail-availability-guide',
+    summary:
+      'Where to buy LORGAR: a guide to partner and retail availability for readers moving from editorial content into purchase research.',
+    tags: ['where-to-buy', 'partners'],
+    title: 'Where to Buy LORGAR: Partner and Retail Availability Guide',
+  },
+] as const
+
+const ensureSeedMediaDocument = async (
+  payload: any,
+  {
+    alt,
+    externalImageURL,
+    filename,
+    mimeType,
+  }: {
+    alt: string
+    externalImageURL: string
+    filename: string
+    mimeType: string
+  },
+) => {
+  const existing = await payload.find({
+    collection: mediaSlug,
+    limit: 1,
+    where: {
+      filename: {
+        equals: filename,
+      },
+    },
+  })
+  const mediaDoc = existing.docs[0]
+
+  if (mediaDoc) {
+    return payload.update({
+      collection: mediaSlug,
+      data: {
+        alt,
+        externalImageURL,
+        mimeType,
+      },
+      id: mediaDoc.id,
+    })
+  }
+
+  return payload.create({
+    collection: mediaSlug,
+    data: {
+      alt,
+      externalImageURL,
+      filename,
+      mimeType,
+    },
+    filePath: resolveSeedPublicAssetPath(externalImageURL),
+  })
+}
+
+export const ensureLorgarFrontendSeed = async (payload: any) => {
+  const demoAuthors = await payload.find({
+    collection: authorsSlug,
+    limit: 1,
+    where: {
+      name: {
+        equals: 'ASBIS Editorial Team',
+      },
+    },
+  })
+
+  let demoAuthorID = demoAuthors.docs[0]?.id
+
+  if (!demoAuthorID) {
+    const author = await payload.create({
+      collection: authorsSlug,
+      data: {
+        name: 'ASBIS Editorial Team',
+        role: 'Content team',
+        shortDescription:
+          'Editorial owner for product guides, knowledge base materials, and AI-assisted CMS content tests.',
+        slug: 'asbis-editorial-team',
+        status: 'active',
+      },
+    })
+
+    demoAuthorID = author.id
+  }
+
+  const seedMediaByKey = Object.fromEntries(
+    await Promise.all(
+      seedMediaDefinitions.map(async (definition) => [
+        definition.filename,
+        await ensureSeedMediaDocument(payload, definition),
+      ]),
+    ),
+  )
+
+  for (const definition of seedArticleDefinitions) {
+    const existing = await payload.find({
+      collection: articlesSlug,
+      limit: 1,
+      where: {
+        slug: {
+          equals: definition.slug,
+        },
+      },
+    })
+    const coverImage = seedMediaByKey[definition.coverImageKey]
+    const data = {
+      authors: [demoAuthorID],
+      category: definition.category,
+      content: richTextDocument(definition.blocks),
+      contentType: definition.contentType,
+      coverImage: coverImage?.id,
+      languageCode: definition.languageCode,
+      owner: 'LORGAR Editorial',
+      publishedAt: definition.publishedAt,
+      seo: {
+        description: definition.summary,
+        image: coverImage?.id,
+        title: definition.title,
+      },
+      slug: definition.slug,
+      status: 'published' as const,
+      summary: definition.summary,
+      tags: definition.tags.map((tag) => ({ tag })),
+      title: definition.title,
+      translationGroup: definition.slug,
+    }
+
+    if (existing.docs[0]) {
+      await payload.update({
+        collection: articlesSlug,
+        data,
+        id: existing.docs[0].id,
+      })
+    } else {
+      await payload.create({
+        collection: articlesSlug,
+        data,
+      })
+    }
+  }
+
+  return {
+    authorID: demoAuthorID,
+    articleCount: seedArticleDefinitions.length,
+    mediaCount: seedMediaDefinitions.length,
+  }
+}
+
 export default buildConfig({
   admin: {
     user: usersSlug,
@@ -124,8 +700,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || '',
     },
-    prodMigrations: migrations,
-    push: process.env.PAYLOAD_DB_PUSH !== 'false',
+    prodMigrations: process.env.PAYLOAD_RUN_MIGRATIONS === 'true' ? migrations : undefined,
+    push: false,
     schemaName: databaseSchemaName,
   }),
   onInit: async (payload) => {
@@ -152,26 +728,12 @@ export default buildConfig({
     }
 
     for (const [filename, externalImageURL] of Object.entries(plugPlayDemoImages)) {
-      const media = await payload.find({
-        collection: mediaSlug,
-        limit: 1,
-        where: {
-          filename: {
-            equals: filename,
-          },
-        },
+      await ensureSeedMediaDocument(payload, {
+        alt: filename,
+        externalImageURL,
+        filename,
+        mimeType: 'image/jpeg',
       })
-      const mediaDoc = media.docs[0]
-
-      if (mediaDoc && mediaDoc.externalImageURL !== externalImageURL) {
-        await payload.update({
-          collection: mediaSlug,
-          data: {
-            externalImageURL,
-          },
-          id: mediaDoc.id,
-        })
-      }
     }
 
     const demoProjects = await payload.find({
@@ -276,33 +838,7 @@ export default buildConfig({
       })
     }
 
-    const demoAuthors = await payload.find({
-      collection: authorsSlug,
-      limit: 1,
-      where: {
-        name: {
-          equals: 'ASBIS Editorial Team',
-        },
-      },
-    })
-
-    let demoAuthorID = demoAuthors.docs[0]?.id
-
-    if (!demoAuthorID) {
-      const author = await payload.create({
-        collection: authorsSlug,
-        data: {
-          name: 'ASBIS Editorial Team',
-          role: 'Content team',
-          shortDescription:
-            'Editorial owner for product guides, knowledge base materials, and AI-assisted CMS content tests.',
-          slug: 'asbis-editorial-team',
-          status: 'active',
-        },
-      })
-
-      demoAuthorID = author.id
-    }
+    const { authorID: demoAuthorID } = await ensureLorgarFrontendSeed(payload)
 
     const demoArticles = await payload.find({
       collection: articlesSlug,

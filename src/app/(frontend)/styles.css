@@ -3668,3 +3668,315 @@ main:has(.public-content--lorgar),
     grid-template-columns: 86px minmax(0, 1fr);
   }
 }
+
+/* Final Figma-structured overrides sourced from parsed Lorgar.fig artifacts. */
+.public-content--lorgar .lorgar-header__brand {
+  gap: 0;
+}
+
+.public-content--lorgar .lorgar-header__blog-label {
+  display: none;
+}
+
+.public-content--lorgar .lorgar-header__search {
+  display: inline-flex;
+}
+
+.public-content--lorgar .lorgar-blog-hero {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  margin: 0 0 48px;
+  padding: 58px 0 34px;
+}
+
+.public-content--lorgar .lorgar-blog-hero h1 {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1.02;
+  margin: 0;
+}
+
+.public-content--lorgar .lorgar-blog-hero p {
+  color: #9da9ca;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 18px 0 0;
+  max-width: 640px;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-grid {
+  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card {
+  background: #111629;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  cursor: pointer;
+  display: grid;
+  gap: 20px;
+  min-height: 475px;
+  padding: 16px;
+  position: relative;
+  text-decoration: none;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card:hover {
+  border-color: rgba(182, 71, 255, 0.72);
+  box-shadow: 0 0 0 1px rgba(182, 71, 255, 0.24);
+  transform: translateY(-2px);
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__image,
+.public-content--lorgar.public-content--index .lorgar-blog-card .public-content__image-missing {
+  aspect-ratio: 281 / 179;
+  border-radius: 14px;
+  height: auto;
+  width: 100%;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__date {
+  color: #7e8bad;
+  font-family: var(--lorgar-font-display);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card strong {
+  color: #ffffff;
+  display: block;
+  font-family: var(--lorgar-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card p {
+  color: #9da9ca;
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.public-content--lorgar .lorgar-article-kicker {
+  margin: 0 0 20px;
+}
+
+.public-content--lorgar .lorgar-article-kicker span {
+  background: rgba(123, 53, 255, 0.18);
+  border: 1px solid rgba(182, 71, 255, 0.72);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-family: var(--lorgar-font-display);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  min-height: 29px;
+  padding: 8px 16px;
+}
+
+.public-content--lorgar .lorgar-related {
+  display: block;
+  margin: 44px 0 32px;
+  max-width: 893px;
+  padding-top: 0;
+}
+
+.public-content--lorgar .lorgar-related h2 {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  margin: 0 0 24px;
+  text-transform: none;
+}
+
+.public-content--lorgar .lorgar-related > div {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.public-content--lorgar .lorgar-related-card {
+  background: #111629;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  display: grid;
+  gap: 18px;
+  min-height: 475px;
+  padding: 16px;
+  text-decoration: none;
+}
+
+.public-content--lorgar .lorgar-related-card__image,
+.public-content--lorgar .lorgar-related-card .public-content__image-missing {
+  aspect-ratio: 281 / 179;
+  border-radius: 14px;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.public-content--lorgar .lorgar-related-card span {
+  display: grid;
+  gap: 14px;
+}
+
+.public-content--lorgar .lorgar-related-card strong {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.08;
+  text-align: left;
+}
+
+.public-content--lorgar .lorgar-related-card p {
+  color: #9da9ca;
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.public-content--lorgar .lorgar-subscribe {
+  align-items: center;
+  background: #111629;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  grid-template-columns: 396px minmax(0, 1fr);
+  margin-top: 0;
+  padding: 45px 47px;
+}
+
+.public-content--lorgar .lorgar-subscribe form {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 207px) 106px;
+  justify-content: end;
+}
+
+.public-content--lorgar .lorgar-subscribe button {
+  min-width: 106px;
+}
+
+.public-content--lorgar .lorgar-sidebar {
+  gap: 32px;
+  padding-top: 0;
+}
+
+.public-content--lorgar .lorgar-sidebar__panel {
+  background: #111629;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 30px 28px;
+}
+
+.public-content--lorgar .lorgar-sidebar__panel:first-child {
+  min-height: 182px;
+}
+
+.public-content--lorgar .lorgar-sidebar__panel h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.public-content--lorgar .lorgar-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  display: grid;
+  gap: 26px;
+  grid-template-columns: 132px minmax(0, 1fr) auto;
+  margin: 0 auto;
+  max-width: 1416px;
+  padding: 80px 0 56px;
+}
+
+.public-content--lorgar .lorgar-footer__logo img {
+  width: 132px;
+}
+
+.public-content--lorgar .lorgar-footer__nav {
+  align-items: center;
+  gap: 22px 32px;
+  justify-content: center;
+}
+
+.public-content--lorgar .lorgar-footer__nav a,
+.public-content--lorgar .lorgar-footer__legal a,
+.public-content--lorgar .lorgar-footer__legal span {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: none;
+}
+
+.public-content--lorgar .lorgar-footer__legal {
+  border-top: 0;
+  color: #9da9ca;
+  font-size: 12px;
+  gap: 12px 22px;
+  justify-content: flex-start;
+  padding-top: 0;
+  text-align: left;
+}
+
+@media (max-width: 1500px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-grid,
+  .public-content--lorgar .lorgar-related > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-content--lorgar .lorgar-subscribe {
+    grid-template-columns: 1fr;
+  }
+
+  .public-content--lorgar .lorgar-subscribe form {
+    justify-content: start;
+  }
+
+  .public-content--lorgar .lorgar-footer {
+    margin-left: 48px;
+    margin-right: 48px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-grid,
+  .public-content--lorgar .lorgar-related > div {
+    grid-template-columns: 1fr;
+  }
+
+  .public-content--lorgar .lorgar-footer {
+    grid-template-columns: 1fr;
+    padding: 56px 0 42px;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav,
+  .public-content--lorgar .lorgar-footer__social,
+  .public-content--lorgar .lorgar-footer__legal {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .public-content--lorgar .lorgar-blog-hero h1,
+  .public-content--lorgar .lorgar-article-main > h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .public-content--lorgar .lorgar-subscribe {
+    padding: 24px 20px;
+  }
+
+  .public-content--lorgar .lorgar-subscribe form {
+    grid-template-columns: 1fr;
+  }
+}
