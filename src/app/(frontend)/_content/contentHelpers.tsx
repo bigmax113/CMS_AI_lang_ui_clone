@@ -1547,60 +1547,36 @@ export const ArticleLanguageSwitcher = ({
   )
 }
 
-const localSectionPath = ({
-  pathname,
-  query,
-  tag,
-}: {
-  pathname: string
-  query?: null | string
-  tag?: null | string
-}) => {
-  const params = new URLSearchParams()
-
-  if (query?.trim()) {
-    params.set('q', query.trim())
-  }
-
-  if (tag?.trim()) {
-    params.set('tag', tag.trim())
-  }
-
-  const queryString = params.toString()
-
-  return `${pathname}${queryString ? `?${queryString}` : ''}`
-}
-
 const lorgarSolutions = [
-  { href: localSectionPath({ pathname: '/solutions', tag: 'streaming-solution' }), label: 'Streaming Solution' },
-  { href: localSectionPath({ pathname: '/solutions', tag: 'pc-gaming-solution' }), label: 'PC Gaming Solution' },
-  { href: localSectionPath({ pathname: '/solutions', tag: 'sim-racing-flex-solution' }), label: 'Sim Racing Flex Solution' },
-  { href: localSectionPath({ pathname: '/solutions', tag: 'sim-racing-pro-solution' }), label: 'Sim Racing Pro Solution' },
+  { href: 'https://lorgar.com/solutions/streaming-solution', label: 'Streaming Solution' },
+  { href: 'https://lorgar.com/solutions/pc-gaming-solution', label: 'PC Gaming Solution' },
+  { href: 'https://lorgar.com/solutions/sim-racing-flex-solution', label: 'Sim Racing Flex Solution' },
+  { href: 'https://lorgar.com/solutions/sim-racing-pro-solution', label: 'Sim Racing Pro Solution' },
 ]
 
 const lorgarProducts = [
-  { href: localSectionPath({ pathname: '/products', tag: 'products' }), label: 'All Products' },
-  { href: localSectionPath({ pathname: '/products', tag: 'pc' }), label: 'PC' },
-  { href: localSectionPath({ pathname: '/products', tag: 'monitors' }), label: 'Monitors' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-mice' }), label: 'Mice' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-keyboards' }), label: 'Keyboards' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-headsets' }), label: 'Headsets' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-controllers' }), label: 'Controllers' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-mousepads' }), label: 'Mouse pads' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-chairs' }), label: 'Chairs' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-desks' }), label: 'Desks' },
-  { href: localSectionPath({ pathname: '/products', tag: 'webcams' }), label: 'Webcams' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-microphones' }), label: 'Microphones' },
-  { href: localSectionPath({ pathname: '/products', tag: 'racing-cockpits' }), label: 'Racing Cockpits' },
-  { href: localSectionPath({ pathname: '/products', tag: 'gaming-accessories' }), label: 'Racing Accessories' },
+  { href: 'https://lorgar.com/products', label: 'All Products' },
+  { href: 'https://lorgar.com/products/pc', label: 'PC' },
+  { href: 'https://lorgar.com/products/monitors', label: 'Monitors' },
+  { href: 'https://lorgar.com/products/gaming-mice', label: 'Mice' },
+  { href: 'https://lorgar.com/products/gaming-keyboards', label: 'Keyboards' },
+  { href: 'https://lorgar.com/products/gaming-headsets', label: 'Headsets' },
+  { href: 'https://lorgar.com/products/gaming-controllers', label: 'Controllers' },
+  { href: 'https://lorgar.com/products/gaming-mousepads', label: 'Mouse pads' },
+  { href: 'https://lorgar.com/products/gaming-chairs', label: 'Chairs' },
+  { href: 'https://lorgar.com/products/gaming-desks', label: 'Desks' },
+  { href: 'https://lorgar.com/products/webcams', label: 'Webcams' },
+  { href: 'https://lorgar.com/products/gaming-microphones', label: 'Microphones' },
+  { href: 'https://lorgar.com/products/racing-cockpits', label: 'Racing Cockpits' },
+  { href: 'https://lorgar.com/products/gaming-accessories', label: 'Racing Accessories' },
 ]
 
 const lorgarFooterLinks = [
-  { href: '/for-users', label: 'For Users' },
-  { href: localSectionPath({ pathname: '/for-users', query: 'partners' }), label: 'For Partners' },
-  { href: '/platform', label: 'LORGAR Platform' },
-  { href: '/where-to-buy', label: 'Where To Buy' },
-  { href: '/about', label: 'About LORGAR' },
+  { href: 'https://lorgar.com/for-users', label: 'For Users' },
+  { href: 'https://lorgar.com/for-partners', label: 'For Partners' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy' },
+  { href: 'https://lorgar.com/about', label: 'About LORGAR' },
 ]
 
 const lorgarPolicyLinks = [
@@ -1727,9 +1703,9 @@ const LorgarNavDropdown = ({
     <summary>{label}</summary>
     <div>
       {items.map((item) => (
-        <Link href={item.href} key={item.href} prefetch={false}>
+        <ExternalLink href={item.href} key={item.href}>
           {item.label}
-        </Link>
+        </ExternalLink>
       ))}
     </div>
   </details>
@@ -1751,9 +1727,9 @@ type LorgarPrimaryNavItem =
 const lorgarPrimaryNavItems: LorgarPrimaryNavItem[] = [
   { items: lorgarSolutions, label: 'Solutions', type: 'dropdown' },
   { items: lorgarProducts, label: 'Products', type: 'dropdown' },
-  { href: '/for-users', internal: true, label: 'For Users', type: 'link' },
-  { href: '/platform', internal: true, label: 'LORGAR Platform', type: 'link' },
-  { href: '/where-to-buy', internal: true, label: 'Where To Buy', type: 'link' },
+  { href: 'https://lorgar.com/for-users', label: 'For Users', type: 'link' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform', type: 'link' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy', type: 'link' },
 ]
 
 const LorgarPrimaryNavLink = ({
