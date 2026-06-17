@@ -2014,7 +2014,7 @@ const LorgarBlogCard = ({
       ) : null}
       <strong className="lorgar-blog-card__title">{article.title}</strong>
       {summary ? <p>{summary}</p> : null}
-      <span className="lorgar-blog-card__more">{priority === 'feature' ? 'Read more' : 'View more'}</span>
+      <span className="lorgar-blog-card__more">View more</span>
     </Link>
   )
 }
