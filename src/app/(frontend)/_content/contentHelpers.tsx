@@ -1794,7 +1794,7 @@ const LorgarNavDropdown = ({
   items: Array<{ href: string; label: string }>
   label: string
 }) => (
-  <details className="lorgar-nav-dropdown" data-lorgar-exclusive-menu="">
+  <details className="lorgar-nav-dropdown" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
     <summary>
       <span>{label}</span>
       <LorgarChevronDownIcon />
@@ -1936,7 +1936,7 @@ const LorgarHeader = ({
       <LorgarBrand className="lorgar-header__brand" />
       <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
-        <details className="lorgar-header__search" data-lorgar-exclusive-menu="">
+        <details className="lorgar-header__search" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
           <summary aria-label="Open article search">
             <LorgarSearchIcon />
           </summary>
@@ -1946,7 +1946,7 @@ const LorgarHeader = ({
             <button type="submit">Search</button>
           </form>
         </details>
-        <details className="lorgar-header__language" data-lorgar-exclusive-menu="">
+        <details className="lorgar-header__language" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
           <summary>
             <span>{figmaDisplayCode}</span>
             <LorgarChevronDownIcon />
@@ -1961,7 +1961,7 @@ const LorgarHeader = ({
             )}
           </div>
         </details>
-        <details className="lorgar-header__mobile-menu" data-lorgar-exclusive-menu="">
+        <details className="lorgar-header__mobile-menu" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
           <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
           <LorgarPrimaryNav className="lorgar-header__mobile-nav" />
         </details>
