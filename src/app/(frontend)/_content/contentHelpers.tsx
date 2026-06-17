@@ -1416,7 +1416,7 @@ const articleMatchesTagQuery = (article: Article, tagQuery?: null | string) => {
 
 export const listPublishedArticles = async ({
   languageCode,
-  limit = 500,
+  limit = 1000,
   searchQuery,
   tagQuery,
 }: {
@@ -1445,16 +1445,28 @@ export const listPublishedArticles = async ({
   const where: Where = {
     and: whereClauses,
   }
-  const result = await payload.find({
-    collection: 'articles',
-    depth: 1,
-    limit,
-    overrideAccess: true,
-    sort: '-publishedAt',
-    where,
-  })
+  const docs: Article[] = []
+  const pageLimit = Math.min(Math.max(limit, 1), 100)
+  let page = 1
+  let totalPages = 1
 
-  return result.docs.filter(
+  do {
+    const result = await payload.find({
+      collection: 'articles',
+      depth: 1,
+      limit: pageLimit,
+      overrideAccess: true,
+      page,
+      sort: '-publishedAt',
+      where,
+    })
+
+    docs.push(...result.docs)
+    totalPages = result.totalPages || 1
+    page += 1
+  } while (page <= totalPages && docs.length < limit)
+
+  return docs.slice(0, limit).filter(
     (article) => articleMatchesSearchQuery(article, searchQuery) && articleMatchesTagQuery(article, tagQuery),
   )
 }
@@ -1644,7 +1656,6 @@ const LorgarLogo = ({ className }: { className?: string }) => (
 const LorgarBlogBadge = ({ className }: { className?: string }) => (
   <span aria-hidden="true" className={className}>
     <img alt="" className="lorgar-blog-badge__shape" height={42} src="/lorgar-figma/blog-badge.svg" width={59} />
-    <span className="lorgar-blog-badge__text">BLOG</span>
   </span>
 )
 

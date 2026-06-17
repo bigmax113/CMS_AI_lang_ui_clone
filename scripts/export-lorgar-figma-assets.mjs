@@ -103,8 +103,10 @@ function renderClipPath(nodeRef, parentMatrix) {
   }
 
   const matrix = multiply(parentMatrix, node.transform || identity())
-  const vectorMatrix = multiply(matrix, vectorGeometryScale(node))
-  const vectorPaths = getNodePaths(node)
+  const resolved = resolveVectorNodePaths(doc, node)
+  const resolvedPaths = [...(resolved.fill || []), ...(resolved.stroke || [])]
+  const vectorPaths = resolvedPaths.length ? resolvedPaths : getVectorNetworkPaths(node)
+  const vectorMatrix = resolvedPaths.length ? matrix : multiply(matrix, vectorGeometryScale(node))
   const own = vectorPaths
     .map((path) => `<path d="${escapeXML(path.svgPath)}" transform="${matrixToSVG(vectorMatrix)}"/>`)
     .join('')
@@ -124,9 +126,12 @@ function renderOwnGeometry(node, matrix) {
   const fills = getVisiblePaints(node.fillPaints)
   const strokes = getVisiblePaints(node.strokePaints)
   const resolved = resolveVectorNodePaths(doc, node)
-  const fillPaths = [...(resolved.fill || []), ...getVectorNetworkPaths(node, 'fill')]
-  const strokePaths = [...(resolved.stroke || []), ...getVectorNetworkPaths(node, 'stroke')]
-  const vectorMatrix = multiply(matrix, vectorGeometryScale(node))
+  const hasResolvedFill = Boolean(resolved.fill?.length)
+  const hasResolvedStroke = Boolean(resolved.stroke?.length)
+  const fillPaths = hasResolvedFill ? resolved.fill : getVectorNetworkPaths(node, 'fill')
+  const strokePaths = hasResolvedStroke ? resolved.stroke : getVectorNetworkPaths(node, 'stroke')
+  const fillMatrix = hasResolvedFill ? matrix : multiply(matrix, vectorGeometryScale(node))
+  const strokeMatrix = hasResolvedStroke ? matrix : multiply(matrix, vectorGeometryScale(node))
 
   for (const paint of fills) {
     if (paint.type === 'IMAGE') {
@@ -140,7 +145,7 @@ function renderOwnGeometry(node, matrix) {
 
     for (const path of fillPaths) {
       output.push(
-        `<path d="${escapeXML(path.svgPath)}" fill="${paintToColor(paint)}" fill-rule="${svgFillRule(path.windingRule)}" transform="${matrixToSVG(vectorMatrix)}"${paintOpacity(paint)}/>`,
+        `<path d="${escapeXML(path.svgPath)}" fill="${paintToColor(paint)}" fill-rule="${svgFillRule(path.windingRule)}" transform="${matrixToSVG(fillMatrix)}"${paintOpacity(paint)}/>`,
       )
     }
   }
@@ -153,14 +158,14 @@ function renderOwnGeometry(node, matrix) {
     for (const path of strokePaths) {
       if (path.open) {
         output.push(
-          `<path d="${escapeXML(path.svgPath)}" fill="none" stroke="${paintToColor(paint)}" stroke-width="${round(node.strokeWeight || 1)}" stroke-linecap="${svgStrokeCap(node.strokeCap)}" stroke-linejoin="${svgStrokeJoin(node.strokeJoin)}" transform="${matrixToSVG(vectorMatrix)}"${paintOpacity(paint)}/>`,
+          `<path d="${escapeXML(path.svgPath)}" fill="none" stroke="${paintToColor(paint)}" stroke-width="${round(node.strokeWeight || 1)}" stroke-linecap="${svgStrokeCap(node.strokeCap)}" stroke-linejoin="${svgStrokeJoin(node.strokeJoin)}" transform="${matrixToSVG(strokeMatrix)}"${paintOpacity(paint)}/>`,
         )
 
         continue
       }
 
       output.push(
-        `<path d="${escapeXML(path.svgPath)}" fill="${paintToColor(paint)}" fill-rule="${svgFillRule(path.windingRule)}" transform="${matrixToSVG(vectorMatrix)}"${paintOpacity(paint)}/>`,
+        `<path d="${escapeXML(path.svgPath)}" fill="${paintToColor(paint)}" fill-rule="${svgFillRule(path.windingRule)}" transform="${matrixToSVG(strokeMatrix)}"${paintOpacity(paint)}/>`,
       )
     }
   }
@@ -188,7 +193,9 @@ function vectorGeometryScale(node) {
 function getNodePaths(node) {
   const resolved = resolveVectorNodePaths(doc, node)
 
-  return [...(resolved.fill || []), ...(resolved.stroke || []), ...getVectorNetworkPaths(node)]
+  const resolvedPaths = [...(resolved.fill || []), ...(resolved.stroke || [])]
+
+  return resolvedPaths.length ? resolvedPaths : getVectorNetworkPaths(node)
 }
 
 function getVectorNetworkPaths(node, mode = 'all') {
