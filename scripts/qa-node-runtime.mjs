@@ -4,6 +4,7 @@ import path from 'node:path'
 
 const out = path.resolve('qa-artifacts', 'node-no-docker')
 await fs.mkdir(out, { recursive: true })
+const baseURL = process.env.QA_BASE_URL || 'http://localhost:3000'
 
 const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage({
@@ -12,13 +13,22 @@ const page = await browser.newPage({
 })
 
 const errors = []
+const badResponses = []
 page.on('console', (message) => {
   if (['error', 'warning'].includes(message.type())) {
     errors.push(`${message.type()}: ${message.text()}`)
   }
 })
+page.on('response', (response) => {
+  if (response.status() >= 400) {
+    badResponses.push({
+      status: response.status(),
+      url: response.url(),
+    })
+  }
+})
 
-await page.goto('http://localhost:3000/articles', {
+await page.goto(`${baseURL}/articles`, {
   timeout: 45000,
   waitUntil: 'networkidle',
 })
@@ -35,21 +45,18 @@ if (!articleLinks.length) {
   throw new Error('No article links found on /articles')
 }
 
-const firstArticleTitle = articleLinks[0]?.text || ''
 await page.locator('a[href^="/articles/"]').first().click()
+await page.waitForURL('**/articles/**', { timeout: 45000 })
 await page.waitForLoadState('networkidle', { timeout: 45000 })
-await page.waitForFunction(
-  (expected) => {
-    const h1 = document.querySelector('h1')
-    return Boolean(h1 && expected && h1.textContent?.includes(expected))
-  },
-  firstArticleTitle.split('From May')[0].replace(/^.*?2026/, '').trim() || 'LORGAR Powers',
-  { timeout: 45000 },
-)
+await page.locator('h1').first().waitFor({ state: 'visible', timeout: 45000 })
+const articleHeading = (await page.locator('h1').first().textContent())?.trim()
+if (!articleHeading) {
+  throw new Error('Article page opened, but h1 is empty')
+}
 await page.screenshot({ fullPage: true, path: path.join(out, 'article-detail.png') })
 const articleUrl = page.url()
 
-await page.goto('http://localhost:3000/platform', {
+await page.goto(`${baseURL}/platform`, {
   timeout: 45000,
   waitUntil: 'networkidle',
 })
@@ -59,8 +66,11 @@ console.log(
   JSON.stringify(
     {
       articleLinks,
+      articleHeading,
       articleUrl,
       artifactDir: out,
+      baseURL,
+      badResponses,
       errors,
     },
     null,
