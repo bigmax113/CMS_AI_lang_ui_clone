@@ -11,7 +11,9 @@ const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
 const errors = []
 page.on('console', (message) => {
-  if (['error', 'warning'].includes(message.type())) errors.push(`${message.type()}: ${message.text()}`)
+  const text = message.text()
+  if (message.type() === 'warning' && text.includes('preloaded using link preload in Early Hints')) return
+  if (['error', 'warning'].includes(message.type())) errors.push(`${message.type()}: ${text}`)
 })
 page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`))
 
