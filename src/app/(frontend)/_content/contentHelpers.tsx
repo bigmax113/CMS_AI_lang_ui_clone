@@ -477,6 +477,13 @@ const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | '
   return [...new Set(values)].slice(0, 8)
 }
 
+const lorgarTopicFilters = [
+  { label: 'Blog Post', tagQuery: 'Blog Post' },
+  { label: 'Product Content', tagQuery: 'Product Content' },
+  { label: 'All', tagQuery: null },
+  { label: 'Featured', tagQuery: 'Featured' },
+] as const
+
 const publicArticleAuthors = (authors?: Article['authors'] | BlogPost['authors'] | null) =>
   authorListFromValue(authors)
 
@@ -1380,6 +1387,14 @@ export const findPreviewArticleBySlug = async ({
 }
 
 const normalizedFilterText = (value?: null | string) => value?.trim().toLowerCase()
+const normalizedTopicFilterText = (value?: null | string) =>
+  normalizedFilterText(value)?.replace(/[-_]+/gu, ' ').replace(/\s+/gu, ' ')
+
+const topicFilterAliases: Record<string, string[]> = {
+  'blog post': ['article', 'blog post'],
+  featured: ['featured'],
+  'product content': ['product content'],
+}
 
 const articleMatchesSearchQuery = (article: Article, searchQuery?: null | string) => {
   const query = normalizedFilterText(searchQuery)
@@ -1405,13 +1420,19 @@ const articleMatchesSearchQuery = (article: Article, searchQuery?: null | string
 }
 
 const articleMatchesTagQuery = (article: Article, tagQuery?: null | string) => {
-  const query = normalizedFilterText(tagQuery)
+  const query = normalizedTopicFilterText(tagQuery)
 
-  if (!query) {
+  if (!query || query === 'all') {
     return true
   }
 
-  return publicArticleTags(article).some((tag) => tag.toLowerCase() === query)
+  const acceptedQueries = topicFilterAliases[query] || [query]
+
+  return publicArticleTags(article).some((tag) => {
+    const normalizedTag = normalizedTopicFilterText(tag)
+
+    return Boolean(normalizedTag && acceptedQueries.includes(normalizedTag))
+  })
 }
 
 export const listPublishedArticles = async ({
@@ -2039,14 +2060,7 @@ export const LorgarArticlesIndexLayout = ({
 }) => {
   const isFilteredView = Boolean(searchQuery || tagQuery)
   const heroTitle = isFilteredView ? pageTitle : 'Blog'
-  const topics = [
-    ...new Set(
-      articles
-        .flatMap((article) => publicArticleTags(article))
-        .filter(Boolean)
-        .slice(0, 12),
-    ),
-  ]
+  const activeTopicQuery = normalizedTopicFilterText(tagQuery)
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
@@ -2061,22 +2075,25 @@ export const LorgarArticlesIndexLayout = ({
         </section>
         <section className="lorgar-blog-list" aria-label="Articles">
           <div className="lorgar-blog-list__intro">
-            {topics.length ? (
-              <nav aria-label="Topics" className="lorgar-blog-topics">
-                <strong>Topics</strong>
-                {topics.map((topic) => (
+            <nav aria-label="Topics" className="lorgar-blog-topics">
+              <strong>Topics</strong>
+              {lorgarTopicFilters.map((topic) => {
+                const topicQuery = normalizedTopicFilterText(topic.tagQuery)
+                const isActive = topicQuery ? activeTopicQuery === topicQuery : !activeTopicQuery
+
+                return (
                   <Link
-                    aria-current={tagQuery?.toLowerCase() === topic.toLowerCase() ? 'page' : undefined}
-                    className={tagQuery?.toLowerCase() === topic.toLowerCase() ? 'is-active' : undefined}
-                    href={lorgarArticlesPath({ languageCode, searchQuery, tagQuery: topic })}
-                    key={topic}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={isActive ? 'is-active' : undefined}
+                    href={lorgarArticlesPath({ languageCode, searchQuery, tagQuery: topic.tagQuery })}
+                    key={topic.label}
                     prefetch={false}
                   >
-                    {topic}
+                    {topic.label}
                   </Link>
-                ))}
-              </nav>
-            ) : null}
+                )
+              })}
+            </nav>
             <div>
               <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
               <h2>{isFilteredView ? resultLabel || 'Results' : 'Latest news'}</h2>
