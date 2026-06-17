@@ -5,7 +5,24 @@ import { nodeId, parseFig } from 'openfig-core'
 
 const defaultInputPath = 'C:/AI_model/xml/Lorgar.fig'
 const defaultOutputDir = path.resolve('figma_source', 'parsed')
-const targetFrameIds = ['15:6649', '21:8835', '58:1411', '98:7943', '98:8397', '113:11942', '113:13285']
+const targetFrameIds = [
+  '15:6649',
+  '21:8835',
+  '58:1411',
+  '98:7943',
+  '98:8397',
+  '113:11942',
+  '113:13285',
+  // Updated Lorgar Blog.fig main listing and states.
+  '193:16434',
+  '193:20699',
+  '193:20884',
+  '200:9604',
+  '200:10886',
+  '200:11124',
+  '207:9017',
+  '214:16687',
+]
 
 const figPath = process.argv[2] || defaultInputPath
 const outputDir = process.argv[3] ? path.resolve(process.argv[3]) : defaultOutputDir

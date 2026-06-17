@@ -1971,13 +1971,28 @@ const LorgarHeader = ({
   )
 }
 
-const LorgarBlogCard = ({ article }: { article: Article }) => {
+const LorgarBlogCard = ({
+  article,
+  priority = 'standard',
+}: {
+  article: Article
+  priority?: 'feature' | 'standard' | 'wide'
+}) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const summary = publicLeadText({ content: article.content, summary: article.summary })
   const image = articlePrimaryImage(article)
+  const tags = publicArticleTags(article).slice(0, 2)
+  const readTime = articleReadingTime({ content: article.content, languageCode: article.languageCode })
+  const cardClassName = [
+    'lorgar-blog-card',
+    `lorgar-blog-card--${priority}`,
+    !isMedia(image) ? 'lorgar-blog-card--text-only' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <a className="lorgar-blog-card" href={href}>
+    <Link className={cardClassName} href={href} prefetch={false}>
       {isMedia(image) ? (
         <SafeImage
           alt={image.alt || article.title}
@@ -1986,12 +2001,21 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
           src={mediaURL(image)}
         />
       ) : null}
-      <span className="lorgar-blog-card__date">
-        {formatDate(article.publishedAt || article.createdAt, article.languageCode)}
+      <span className="lorgar-blog-card__meta">
+        <span>{formatDate(article.publishedAt || article.createdAt, article.languageCode)}</span>
+        {readTime ? <span>{readTime}</span> : null}
       </span>
-      <strong>{article.title}</strong>
+      {tags.length ? (
+        <span className="lorgar-blog-card__tags">
+          {tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </span>
+      ) : null}
+      <strong className="lorgar-blog-card__title">{article.title}</strong>
       {summary ? <p>{summary}</p> : null}
-    </a>
+      <span className="lorgar-blog-card__more">{priority === 'feature' ? 'Read more' : 'View more'}</span>
+    </Link>
   )
 }
 
@@ -2013,28 +2037,84 @@ export const LorgarArticlesIndexLayout = ({
   tagQuery?: null | string
 }) => {
   const isFilteredView = Boolean(searchQuery || tagQuery)
-  const heroTitle = isFilteredView ? pageTitle : 'READY TO PLAY STORIES'
+  const heroTitle = isFilteredView ? pageTitle : 'LORGAR Blog'
   const heroIntro =
     pageIntro ||
     (isFilteredView
       ? null
       : 'News, product updates, esports highlights, and practical gaming guides from the LORGAR ecosystem.')
+  const topics = [
+    ...new Set(
+      articles
+        .flatMap((article) => publicArticleTags(article))
+        .filter(Boolean)
+        .slice(0, 12),
+    ),
+  ]
+  const cardPriorities = [
+    'feature',
+    'standard',
+    'standard',
+    'standard',
+    'wide',
+    'standard',
+    'standard',
+    'feature',
+    'standard',
+    'standard',
+    'wide',
+    'standard',
+  ] as const
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
       <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
       <main className="lorgar-blog-index">
-        <section className="lorgar-blog-hero" aria-label="LORGAR blog">
-          <span className="lorgar-blog-hero__eyebrow">LORGAR BLOG</span>
-          <h1>{heroTitle}</h1>
-          {heroIntro ? <p>{heroIntro}</p> : null}
+        <section className="lorgar-blog-cover" aria-label="LORGAR blog">
+          <div className="lorgar-blog-cover__inner">
+            <span className="lorgar-blog-cover__eyebrow">Blog</span>
+            <h1>{heroTitle}</h1>
+            {heroIntro ? <p>{heroIntro}</p> : null}
+          </div>
         </section>
         <section className="lorgar-blog-list" aria-label="Articles">
-          {isFilteredView ? <p className="public-content__results-note">{resultLabel}</p> : null}
+          <div className="lorgar-blog-list__intro">
+            <div>
+              <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
+              <h2>{isFilteredView ? resultLabel || 'Results' : 'Latest news'}</h2>
+            </div>
+            {topics.length ? (
+              <nav aria-label="Topics" className="lorgar-blog-topics">
+                <Link
+                  aria-current={!tagQuery ? 'page' : undefined}
+                  className={!tagQuery ? 'is-active' : undefined}
+                  href={lorgarArticlesPath({ languageCode, searchQuery })}
+                  prefetch={false}
+                >
+                  All
+                </Link>
+                {topics.map((topic) => (
+                  <Link
+                    aria-current={tagQuery?.toLowerCase() === topic.toLowerCase() ? 'page' : undefined}
+                    className={tagQuery?.toLowerCase() === topic.toLowerCase() ? 'is-active' : undefined}
+                    href={lorgarArticlesPath({ languageCode, searchQuery, tagQuery: topic })}
+                    key={topic}
+                    prefetch={false}
+                  >
+                    {topic}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
+          </div>
           {articles.length ? (
-            <div className="lorgar-blog-grid">
-              {articles.map((article) => (
-                <LorgarBlogCard article={article} key={article.id} />
+            <div className="lorgar-blog-mosaic">
+              {articles.map((article, index) => (
+                <LorgarBlogCard
+                  article={article}
+                  key={article.id}
+                  priority={cardPriorities[index % cardPriorities.length]}
+                />
               ))}
             </div>
           ) : (

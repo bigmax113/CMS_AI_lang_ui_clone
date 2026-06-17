@@ -668,13 +668,13 @@ export function AiDocsWorkbench() {
   return (
     <main className={styles.shell}>
       <aside className={styles.sidebar}>
-        <a className={styles.brand} href="/ai">
+        <Link className={styles.brand} href="/ai" prefetch={false}>
           <span className={styles.logo}>P</span>
           <span>
             <strong>Payload AI</strong>
             <small>{t('brandSubtitle')}</small>
           </span>
-        </a>
+        </Link>
 
         <nav className={styles.nav}>
           <button
