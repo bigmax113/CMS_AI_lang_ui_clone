@@ -1548,27 +1548,27 @@ export const ArticleLanguageSwitcher = ({
 }
 
 const lorgarSolutions = [
-  { href: 'https://lorgar.com/solutions/streaming-solution', label: 'Streaming Solution' },
-  { href: 'https://lorgar.com/solutions/pc-gaming-solution', label: 'PC Gaming Solution' },
-  { href: 'https://lorgar.com/solutions/sim-racing-flex-solution', label: 'Sim Racing Flex Solution' },
-  { href: 'https://lorgar.com/solutions/sim-racing-pro-solution', label: 'Sim Racing Pro Solution' },
+  { href: 'https://lorgar.com/streaming', label: 'Streaming Solution' },
+  { href: 'https://lorgar.com/pc-gaming', label: 'PC Gaming Solution' },
+  { href: 'https://lorgar.com/sim-racing-flex', label: 'Sim Racing Flex Solution' },
+  { href: 'https://lorgar.com/sim-racing-pro', label: 'Sim Racing Pro Solution' },
 ]
 
 const lorgarProducts = [
   { href: 'https://lorgar.com/products', label: 'All Products' },
-  { href: 'https://lorgar.com/products/pc', label: 'PC' },
-  { href: 'https://lorgar.com/products/monitors', label: 'Monitors' },
-  { href: 'https://lorgar.com/products/gaming-mice', label: 'Mice' },
-  { href: 'https://lorgar.com/products/gaming-keyboards', label: 'Keyboards' },
-  { href: 'https://lorgar.com/products/gaming-headsets', label: 'Headsets' },
-  { href: 'https://lorgar.com/products/gaming-controllers', label: 'Controllers' },
-  { href: 'https://lorgar.com/products/gaming-mousepads', label: 'Mouse pads' },
-  { href: 'https://lorgar.com/products/gaming-chairs', label: 'Chairs' },
-  { href: 'https://lorgar.com/products/gaming-desks', label: 'Desks' },
-  { href: 'https://lorgar.com/products/webcams', label: 'Webcams' },
-  { href: 'https://lorgar.com/products/gaming-microphones', label: 'Microphones' },
-  { href: 'https://lorgar.com/products/racing-cockpits', label: 'Racing Cockpits' },
-  { href: 'https://lorgar.com/products/gaming-accessories', label: 'Racing Accessories' },
+  { href: 'https://lorgar.com/category/pc', label: 'PC' },
+  { href: 'https://lorgar.com/category/monitors', label: 'Monitors' },
+  { href: 'https://lorgar.com/category/gaming-mice', label: 'Mice' },
+  { href: 'https://lorgar.com/category/gaming-keyboards', label: 'Keyboards' },
+  { href: 'https://lorgar.com/category/gaming-headsets', label: 'Headsets' },
+  { href: 'https://lorgar.com/category/gaming-controllers', label: 'Controllers' },
+  { href: 'https://lorgar.com/category/gaming-mousepads', label: 'Mouse pads' },
+  { href: 'https://lorgar.com/category/gaming-chairs', label: 'Chairs' },
+  { href: 'https://lorgar.com/category/gaming-desks', label: 'Desks' },
+  { href: 'https://lorgar.com/category/web-cameras', label: 'Webcams' },
+  { href: 'https://lorgar.com/category/gaming-microphones', label: 'Microphones' },
+  { href: 'https://lorgar.com/category/gaming-racing-cockpits', label: 'Racing Cockpits' },
+  { href: 'https://lorgar.com/category/gaming-accessories', label: 'Racing Accessories' },
 ]
 
 const lorgarFooterLinks = [
