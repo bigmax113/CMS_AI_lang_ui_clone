@@ -1878,7 +1878,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
   const image = articlePrimaryImage(article)
 
   return (
-    <Link className="lorgar-blog-card" href={href} prefetch={false}>
+    <a className="lorgar-blog-card" href={href}>
       {isMedia(image) ? (
         <SafeImage
           alt={image.alt || article.title}
@@ -1892,7 +1892,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
       </span>
       <strong>{article.title}</strong>
       {summary ? <p>{summary}</p> : null}
-    </Link>
+    </a>
   )
 }
 
@@ -1930,9 +1930,10 @@ export const LorgarArticlesIndexLayout = ({
           </div>
         ) : (
           <p className="public-content__empty">No published articles match this search and language filter.</p>
-        )}
+      )}
       </section>
     </main>
+    <LorgarFooter />
   </div>
 )
 
