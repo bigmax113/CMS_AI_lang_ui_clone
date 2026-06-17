@@ -1595,14 +1595,6 @@ const lorgarProducts = [
   { href: localSectionPath({ pathname: '/products', tag: 'gaming-accessories' }), label: 'Racing Accessories' },
 ]
 
-const lorgarEsports = [
-  { href: localSectionPath({ pathname: '/esports', tag: 'rankings' }), label: 'LORGAR Rankings' },
-  { href: localSectionPath({ pathname: '/esports', tag: 'passion' }), label: 'Passion' },
-  { href: localSectionPath({ pathname: '/esports', tag: 'astral-esports' }), label: 'Astral Esports' },
-  { href: localSectionPath({ pathname: '/esports', tag: 'stake-ranked' }), label: 'Stake Ranked' },
-  { href: localSectionPath({ pathname: '/esports', tag: 'performance-lab' }), label: 'A&P Performance Lab' },
-]
-
 const lorgarFooterLinks = [
   { href: '/for-users', label: 'For Users' },
   { href: localSectionPath({ pathname: '/for-users', query: 'partners' }), label: 'For Partners' },
@@ -1761,10 +1753,7 @@ const lorgarPrimaryNavItems: LorgarPrimaryNavItem[] = [
   { items: lorgarProducts, label: 'Products', type: 'dropdown' },
   { href: '/for-users', internal: true, label: 'For Users', type: 'link' },
   { href: '/platform', internal: true, label: 'LORGAR Platform', type: 'link' },
-  { items: lorgarEsports, label: 'Esports', type: 'dropdown' },
-  { href: '/articles', internal: true, label: 'Blog', type: 'link' },
   { href: '/where-to-buy', internal: true, label: 'Where To Buy', type: 'link' },
-  { href: '/about', internal: true, label: 'About', type: 'link' },
 ]
 
 const LorgarPrimaryNavLink = ({
@@ -1863,12 +1852,16 @@ const LorgarHeader = ({
 }) => {
   const currentCode = normalizeArticleLanguageCode(languageCode)
   const currentDisplayCode = articleLanguageDisplayCodeByCode[currentCode] || currentCode.toUpperCase()
+  const figmaDisplayCode = currentDisplayCode
+    ? `${currentDisplayCode.slice(0, 1).toUpperCase()}${currentDisplayCode.slice(1).toLowerCase()}`
+    : 'En'
   const languageLinks = lorgarLanguageLinks({ alternates, currentCode, searchQuery })
 
   return (
     <header className="lorgar-header">
       <Link aria-label="LORGAR blog home" className="lorgar-header__brand" href="/articles">
         <LorgarLogo className="lorgar-header__logo" />
+        <span className="lorgar-header__blog-label">Blog</span>
       </Link>
       <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
@@ -1883,7 +1876,7 @@ const LorgarHeader = ({
           </form>
         </details>
         <details className="lorgar-header__language">
-          <summary>{currentDisplayCode}</summary>
+          <summary>{figmaDisplayCode}</summary>
           <div>
             {languageLinks.map((alternate) =>
               alternate.isCurrent ? (
@@ -2140,6 +2133,7 @@ const LorgarFooter = () => (
   <footer className="lorgar-footer">
     <Link className="lorgar-footer__logo" href="/articles" prefetch={false}>
       <LorgarLogo />
+      <span>Blog</span>
     </Link>
     <nav aria-label="Footer" className="lorgar-footer__nav">
       {lorgarFooterLinks.map((item) => (

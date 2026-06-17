@@ -3123,7 +3123,7 @@ main:has(.public-content--lorgar),
   --lorgar-accent: #b647ff;
   --lorgar-font-display: "Oswald", "Arial Narrow", Impact, sans-serif;
   background:
-    linear-gradient(to bottom, transparent 0 68px, var(--lorgar-border) 68px 69px, transparent 69px),
+    linear-gradient(to bottom, transparent 0 82px, var(--lorgar-border) 82px 83px, transparent 83px),
     var(--lorgar-bg);
   color: var(--lorgar-text);
   padding: 0;
@@ -3143,40 +3143,51 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar .lorgar-header {
+  width: min(1400px, calc(100% - 520px));
+}
+
+.public-content--lorgar .lorgar-header {
   align-items: center;
   border: 0;
   display: grid;
-  gap: 32px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  height: 68px;
-  min-height: 68px;
+  gap: 0;
+  grid-template-columns: 247px 616px 132px;
+  height: 82px;
+  justify-content: space-between;
+  min-height: 82px;
   padding: 0;
 }
 
 .public-content--lorgar .lorgar-header__brand {
   align-items: center;
   display: inline-flex;
-  gap: 44px;
+  gap: 56px;
+  height: 42px;
+  max-width: none;
+  width: 247px;
 }
 
 .public-content--lorgar .lorgar-header__logo {
   height: auto;
-  width: 124px;
+  width: 132px;
 }
 
 .public-content--lorgar .lorgar-header__blog-label {
   color: #ffffff;
   font-family: var(--lorgar-font-display);
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 400;
   line-height: 1;
+  text-transform: none;
 }
 
 .public-content--lorgar .lorgar-header__nav {
   align-items: center;
   display: flex;
-  gap: 34px;
-  justify-content: flex-end;
+  gap: 32px;
+  height: 24px;
+  justify-content: space-between;
+  width: 616px;
 }
 
 .public-content--lorgar .lorgar-header__nav a,
@@ -3184,11 +3195,11 @@ main:has(.public-content--lorgar),
 .public-content--lorgar .lorgar-header__language summary {
   color: #ffffff;
   font-family: var(--lorgar-font-display);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 400;
   letter-spacing: 0;
   line-height: 1;
-  text-transform: none;
+  text-transform: uppercase;
 }
 
 .public-content--lorgar .lorgar-header__nav a:hover,
@@ -3200,7 +3211,10 @@ main:has(.public-content--lorgar),
 .public-content--lorgar .lorgar-header__tools {
   align-items: center;
   display: flex;
-  gap: 14px;
+  gap: 32px;
+  height: 24px;
+  justify-content: flex-end;
+  width: 132px;
 }
 
 .public-content--lorgar .lorgar-header__search {
@@ -3212,13 +3226,13 @@ main:has(.public-content--lorgar),
 
 .public-content--lorgar .lorgar-header__search summary {
   align-items: center;
-  background: rgba(20, 24, 42, 0.96);
-  border: 1px solid rgba(124, 139, 194, 0.32);
-  border-radius: 16px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   display: inline-flex;
-  height: 54px;
+  height: 24px;
   justify-content: center;
-  width: 54px;
+  width: 24px;
 }
 
 .public-content--lorgar .lorgar-header__search form {
@@ -3227,14 +3241,14 @@ main:has(.public-content--lorgar),
 
 .public-content--lorgar .lorgar-header__search span {
   border-color: #ffffff;
-  height: 19px;
-  width: 19px;
+  height: 18px;
+  width: 18px;
 }
 
 .public-content--lorgar .lorgar-header__search span::after {
   background: #ffffff;
-  left: 15px;
-  top: 15px;
+  left: 14px;
+  top: 14px;
 }
 
 .public-content--lorgar .lorgar-header__language {
@@ -3245,15 +3259,16 @@ main:has(.public-content--lorgar),
 
 .public-content--lorgar .lorgar-header__language summary {
   align-items: center;
-  background: rgba(20, 24, 42, 0.96);
-  border: 1px solid rgba(124, 139, 194, 0.32);
-  border-radius: 16px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   gap: 8px;
-  height: 54px;
+  height: 24px;
   min-height: 0;
   justify-content: center;
-  min-width: 78px;
-  padding: 0 18px;
+  min-width: 48px;
+  padding: 0;
+  text-transform: none;
 }
 
 .public-content--lorgar .lorgar-header__language div {
@@ -3261,7 +3276,7 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar .lorgar-article-shell {
-  padding: 104px 0 96px;
+  padding: 70px 0 96px;
 }
 
 .public-content--lorgar .lorgar-article-grid {
@@ -3671,21 +3686,27 @@ main:has(.public-content--lorgar),
 
 /* Final Figma-structured overrides sourced from parsed Lorgar.fig artifacts. */
 .public-content--lorgar .lorgar-header__brand {
-  gap: 0;
+  gap: 56px;
 }
 
 .public-content--lorgar .lorgar-header__blog-label {
-  display: none;
+  display: inline-flex;
 }
 
 .public-content--lorgar .lorgar-header__search {
   display: inline-flex;
 }
 
+.public-content--lorgar.public-content--index .lorgar-blog-index {
+  width: min(893px, calc(100% - 504px));
+}
+
 .public-content--lorgar .lorgar-blog-hero {
+  background: transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   margin: 0 0 48px;
-  padding: 58px 0 34px;
+  min-height: 0;
+  padding: 70px 0 34px;
 }
 
 .public-content--lorgar .lorgar-blog-hero h1 {
@@ -3707,7 +3728,7 @@ main:has(.public-content--lorgar),
 
 .public-content--lorgar.public-content--index .lorgar-blog-grid {
   gap: 24px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .public-content--lorgar.public-content--index .lorgar-blog-card {
@@ -3890,14 +3911,30 @@ main:has(.public-content--lorgar),
   border-top: 1px solid rgba(255, 255, 255, 0.3);
   display: grid;
   gap: 26px;
-  grid-template-columns: 132px minmax(0, 1fr) auto;
+  grid-template-columns: 247px minmax(0, 1fr) auto;
   margin: 0 auto;
   max-width: 1416px;
   padding: 80px 0 56px;
 }
 
+.public-content--lorgar .lorgar-footer__logo {
+  align-items: center;
+  display: inline-flex;
+  gap: 56px;
+  text-decoration: none;
+}
+
 .public-content--lorgar .lorgar-footer__logo img {
   width: 132px;
+}
+
+.public-content--lorgar .lorgar-footer__logo span {
+  color: #ffffff;
+  font-family: var(--lorgar-font-display);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: none;
 }
 
 .public-content--lorgar .lorgar-footer__nav {
@@ -3930,7 +3967,12 @@ main:has(.public-content--lorgar),
 @media (max-width: 1500px) {
   .public-content--lorgar.public-content--index .lorgar-blog-grid,
   .public-content--lorgar .lorgar-related > div {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .public-content--lorgar .lorgar-blog-index {
+    max-width: 893px;
+    width: auto;
   }
 
   .public-content--lorgar .lorgar-subscribe {
@@ -3951,7 +3993,7 @@ main:has(.public-content--lorgar),
 @media (max-width: 1180px) {
   .public-content--lorgar.public-content--index .lorgar-blog-grid,
   .public-content--lorgar .lorgar-related > div {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .public-content--lorgar .lorgar-footer {
@@ -3967,6 +4009,11 @@ main:has(.public-content--lorgar),
 }
 
 @media (max-width: 720px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-grid,
+  .public-content--lorgar .lorgar-related > div {
+    grid-template-columns: 1fr;
+  }
+
   .public-content--lorgar .lorgar-blog-hero h1,
   .public-content--lorgar .lorgar-article-main > h1 {
     font-size: clamp(42px, 13vw, 58px);
