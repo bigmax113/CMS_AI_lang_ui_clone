@@ -28,6 +28,7 @@ const header = await page.evaluate(() => {
   const footerLabels = Array.from(document.querySelectorAll('.lorgar-footer__nav a, .lorgar-footer__legal a, .lorgar-footer__legal span')).map((element) =>
     element.textContent?.trim(),
   )
+  const heroTitle = document.querySelector('.lorgar-blog-hero h1')?.textContent?.trim() || ''
   return {
     blogBadgeCount: document.querySelectorAll('.lorgar-blog-badge').length,
     brandBlogHref: brandBlog?.getAttribute('href'),
@@ -36,6 +37,7 @@ const header = await page.evaluate(() => {
     footerLogoHref: footerLogo?.getAttribute('href'),
     footerLabels,
     footerSocialCount: document.querySelectorAll('.lorgar-footer__social a svg').length,
+    heroTitle,
     languageChevron: Boolean(languageChevron),
     searchIcon: Boolean(searchIcon),
   }
@@ -71,6 +73,7 @@ const report = {
     header.brandBlogHref === '/articles' &&
     header.footerLogoHref === 'https://lorgar.com' &&
     header.footerBlogHref === '/articles' &&
+    header.heroTitle !== 'Blog' &&
     header.searchIcon &&
     header.languageChevron &&
     header.footerSocialCount >= 7 &&

@@ -2011,30 +2011,41 @@ export const LorgarArticlesIndexLayout = ({
   resultLabel?: null | string
   searchQuery?: null | string
   tagQuery?: null | string
-}) => (
-  <div className="public-content public-content--lorgar public-content--index">
-    <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
-    <main className="lorgar-blog-index">
-      <section className="lorgar-blog-hero" aria-label="LORGAR blog">
-        <h1>{pageTitle}</h1>
-        {pageIntro ? <p>{pageIntro}</p> : null}
-      </section>
-      <section className="lorgar-blog-list" aria-label="Articles">
-        {searchQuery || tagQuery ? <p className="public-content__results-note">{resultLabel}</p> : null}
-        {articles.length ? (
-          <div className="lorgar-blog-grid">
-            {articles.map((article) => (
-              <LorgarBlogCard article={article} key={article.id} />
-            ))}
-          </div>
-        ) : (
-          <p className="public-content__empty">No published articles match this search and language filter.</p>
-      )}
-      </section>
-    </main>
-    <LorgarFooter />
-  </div>
-)
+}) => {
+  const isFilteredView = Boolean(searchQuery || tagQuery)
+  const heroTitle = isFilteredView ? pageTitle : 'READY TO PLAY STORIES'
+  const heroIntro =
+    pageIntro ||
+    (isFilteredView
+      ? null
+      : 'News, product updates, esports highlights, and practical gaming guides from the LORGAR ecosystem.')
+
+  return (
+    <div className="public-content public-content--lorgar public-content--index">
+      <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
+      <main className="lorgar-blog-index">
+        <section className="lorgar-blog-hero" aria-label="LORGAR blog">
+          <span className="lorgar-blog-hero__eyebrow">LORGAR BLOG</span>
+          <h1>{heroTitle}</h1>
+          {heroIntro ? <p>{heroIntro}</p> : null}
+        </section>
+        <section className="lorgar-blog-list" aria-label="Articles">
+          {isFilteredView ? <p className="public-content__results-note">{resultLabel}</p> : null}
+          {articles.length ? (
+            <div className="lorgar-blog-grid">
+              {articles.map((article) => (
+                <LorgarBlogCard article={article} key={article.id} />
+              ))}
+            </div>
+          ) : (
+            <p className="public-content__empty">No published articles match this search and language filter.</p>
+          )}
+        </section>
+      </main>
+      <LorgarFooter />
+    </div>
+  )
+}
 
 const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' | 'read' }) => (
   <svg aria-hidden="true" className="lorgar-meta__icon" fill="none" viewBox="0 0 24 24">

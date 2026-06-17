@@ -3706,24 +3706,41 @@ main:has(.public-content--lorgar),
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   margin: 0 0 48px;
   min-height: 0;
-  padding: 70px 0 34px;
+  padding: 74px 0 44px;
+  text-align: left;
+}
+
+.public-content--lorgar .lorgar-blog-hero__eyebrow {
+  align-items: center;
+  border: 1px solid rgba(161, 0, 255, 0.7);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-family: var(--lorgar-font-display);
+  font-size: 14px;
+  line-height: 1;
+  margin-bottom: 26px;
+  padding: 10px 18px 9px;
+  text-transform: uppercase;
 }
 
 .public-content--lorgar .lorgar-blog-hero h1 {
   color: #ffffff;
   font-family: var(--lorgar-font-display);
-  font-size: 64px;
+  font-size: clamp(68px, 6.4vw, 104px);
   font-weight: 600;
-  line-height: 1.02;
+  line-height: 0.96;
   margin: 0;
+  max-width: 760px;
+  text-transform: uppercase;
 }
 
 .public-content--lorgar .lorgar-blog-hero p {
-  color: #9da9ca;
-  font-size: 16px;
-  line-height: 1.5;
-  margin: 18px 0 0;
-  max-width: 640px;
+  color: #c6d2ff;
+  font-size: 22px;
+  line-height: 1.45;
+  margin: 28px 0 0;
+  max-width: 820px;
 }
 
 .public-content--lorgar.public-content--index .lorgar-blog-grid {
