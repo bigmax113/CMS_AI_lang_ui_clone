@@ -4027,3 +4027,124 @@ main:has(.public-content--lorgar),
     grid-template-columns: 1fr;
   }
 }
+
+/* LORGAR Figma header/footer asset and interaction fixes. */
+.public-content--lorgar .lorgar-header__brand,
+.public-content--lorgar .lorgar-footer__logo {
+  align-items: center;
+  display: inline-flex;
+  gap: 56px;
+}
+
+.public-content--lorgar .lorgar-brand__logo,
+.public-content--lorgar .lorgar-brand__blog {
+  align-items: center;
+  color: inherit;
+  display: inline-flex;
+  flex: 0 0 auto;
+  line-height: 0;
+  text-decoration: none;
+}
+
+.public-content--lorgar .lorgar-brand__logo:hover,
+.public-content--lorgar .lorgar-brand__blog:hover {
+  opacity: 0.82;
+}
+
+.public-content--lorgar .lorgar-blog-badge {
+  display: block;
+  height: 24px;
+  width: 42px;
+}
+
+.public-content--lorgar .lorgar-header__icon,
+.public-content--lorgar .lorgar-header__chevron {
+  color: #ffffff;
+  display: block;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.public-content--lorgar .lorgar-header__icon {
+  height: 24px;
+  width: 24px;
+}
+
+.public-content--lorgar .lorgar-header__chevron {
+  height: 8px;
+  width: 12px;
+}
+
+.public-content--lorgar .lorgar-nav-dropdown summary,
+.public-content--lorgar .lorgar-header__language summary {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.public-content--lorgar .lorgar-nav-dropdown summary::after,
+.public-content--lorgar .lorgar-header__language summary::after,
+.public-content--lorgar .lorgar-header__search span,
+.public-content--lorgar .lorgar-header__search span::after {
+  content: none;
+  display: none;
+}
+
+.public-content--lorgar .lorgar-footer {
+  align-items: center;
+  row-gap: 34px;
+}
+
+.public-content--lorgar .lorgar-footer__logo .lorgar-header__logo {
+  width: 132px;
+}
+
+.public-content--lorgar .lorgar-footer__nav a,
+.public-content--lorgar .lorgar-footer__legal a,
+.public-content--lorgar .lorgar-footer__legal span {
+  text-transform: uppercase;
+}
+
+.public-content--lorgar .lorgar-footer__social {
+  gap: 18px;
+  justify-content: flex-end;
+}
+
+.public-content--lorgar .lorgar-footer__social a {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.public-content--lorgar .lorgar-footer__social .lorgar-ui-icon {
+  height: 16px;
+  width: 16px;
+}
+
+.public-content--lorgar .lorgar-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  justify-content: center;
+  row-gap: 14px;
+}
+
+@media (max-width: 1180px) {
+  .public-content--lorgar .lorgar-footer__legal {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .public-content--lorgar .lorgar-header__brand,
+  .public-content--lorgar .lorgar-footer__logo {
+    gap: 24px;
+  }
+}

@@ -1572,17 +1572,17 @@ const lorgarProducts = [
 ]
 
 const lorgarFooterLinks = [
-  { href: 'https://lorgar.com/for-users', label: 'For Users' },
-  { href: 'https://lorgar.com/for-partners', label: 'For Partners' },
-  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform' },
-  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy' },
-  { href: 'https://lorgar.com/about', label: 'About LORGAR' },
+  { href: 'https://lorgar.com/for-users', label: 'FOR USERS' },
+  { href: 'https://lorgar.com/for-partners', label: 'FOR PARTNERS' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR PLATFORM' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'WHERE TO BUY' },
+  { href: 'https://lorgar.com/about', label: 'ABOUT LORGAR' },
 ]
 
 const lorgarPolicyLinks = [
-  { href: 'https://lorgar.com/warranty-terms', label: 'Warranty Policy and Warranty Cards' },
-  { href: 'https://lorgar.com/privacy-policy', label: 'Privacy Policy' },
-  { href: 'https://lorgar.com/cookies-policy', label: 'Cookies policy' },
+  { href: 'https://lorgar.com/warranty-terms', label: 'WARRANTY POLICY AND WARRANTY CARDS' },
+  { href: 'https://lorgar.com/privacy-policy', label: 'PRIVACY POLICY' },
+  { href: 'https://lorgar.com/cookies-policy', label: 'COOKIES POLICY' },
 ]
 
 type LorgarIconName =
@@ -1614,17 +1614,25 @@ const lorgarSocialLinks: Array<{
 ]
 
 const ExternalLink = ({
+  ariaLabel,
   children,
   className,
   href,
   newTab = false,
 }: {
+  ariaLabel?: string
   children: React.ReactNode
   className?: string
   href: string
   newTab?: boolean
 }) => (
-  <a className={className} href={href} rel={newTab ? 'noreferrer' : undefined} target={newTab ? '_blank' : undefined}>
+  <a
+    aria-label={ariaLabel}
+    className={className}
+    href={href}
+    rel={newTab ? 'noreferrer' : undefined}
+    target={newTab ? '_blank' : undefined}
+  >
     {children}
   </a>
 )
@@ -1633,28 +1641,95 @@ const LorgarLogo = ({ className }: { className?: string }) => (
   <img alt="LORGAR Ready To Play" className={className} height={72} src="/lorgar-logo.svg" width={260} />
 )
 
+const LorgarBlogBadge = ({ className }: { className?: string }) => (
+  <svg aria-label="Blog" className={className} fill="none" role="img" viewBox="0 0 73 42">
+    <path
+      d="M0 6.4C0 2.865 2.865 0 6.4 0h60.2C70.135 0 73 2.865 73 6.4v25.2c0 3.535-2.865 6.4-6.4 6.4H45.8L36.5 42l-9.3-4H6.4C2.865 38 0 35.135 0 31.6V6.4Z"
+      fill="#A100FF"
+    />
+    <text
+      fill="#FFFFFF"
+      fontFamily="Impact, 'Arial Black', sans-serif"
+      fontSize="16"
+      fontWeight="900"
+      letterSpacing="0"
+      x="14"
+      y="24.5"
+    >
+      BLOG
+    </text>
+  </svg>
+)
+
+const LorgarBrand = ({ className }: { className?: string }) => (
+  <div className={className}>
+    <ExternalLink ariaLabel="Open LORGAR official site" className="lorgar-brand__logo" href="https://lorgar.com">
+      <LorgarLogo className="lorgar-header__logo" />
+    </ExternalLink>
+    <Link aria-label="Open LORGAR blog" className="lorgar-brand__blog" href="/articles" prefetch={false}>
+      <LorgarBlogBadge className="lorgar-blog-badge" />
+    </Link>
+  </div>
+)
+
+const LorgarSearchIcon = () => (
+  <svg aria-hidden="true" className="lorgar-header__icon" fill="none" viewBox="0 0 24 24">
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m16 16 5 5" />
+  </svg>
+)
+
+const LorgarChevronDownIcon = () => (
+  <svg aria-hidden="true" className="lorgar-header__chevron" fill="none" viewBox="0 0 12 8">
+    <path d="m1 1.25 5 5 5-5" />
+  </svg>
+)
+
 const LorgarIcon = ({ name }: { name: LorgarIconName }) => {
-  const letterIcon: Partial<Record<LorgarIconName, string>> = {
-    facebook: 'f',
-    linkedin: 'in',
-    tiktok: 'tt',
-    whatsapp: 'wa',
-    x: 'x',
-    youtube: 'yt',
-  }
-
-  if (letterIcon[name]) {
-    return (
-      <svg aria-hidden="true" className="lorgar-ui-icon" viewBox="0 0 24 24">
-        <text dominantBaseline="central" textAnchor="middle" x="12" y="12">
-          {letterIcon[name]}
-        </text>
-      </svg>
-    )
-  }
-
   return (
     <svg aria-hidden="true" className="lorgar-ui-icon" fill="none" viewBox="0 0 24 24">
+      {name === 'youtube' ? (
+        <>
+          <rect height="13" rx="4" width="18" x="3" y="5.5" />
+          <path d="m10.4 9.3 4.8 2.7-4.8 2.7V9.3Z" fill="currentColor" stroke="none" />
+        </>
+      ) : null}
+      {name === 'facebook' ? (
+        <path
+          d="M14 8.1h2V5h-2.4C10.7 5 9 6.8 9 9.7V12H6.7v3.4H9V21h3.6v-5.6H15l.5-3.4h-2.9V9.9c0-1 .5-1.8 1.4-1.8Z"
+          fill="currentColor"
+          stroke="none"
+        />
+      ) : null}
+      {name === 'linkedin' ? (
+        <>
+          <rect fill="currentColor" height="10" rx=".6" stroke="none" width="3" x="5" y="9" />
+          <circle cx="6.5" cy="6.5" fill="currentColor" r="1.7" stroke="none" />
+          <path
+            d="M10 9h3v1.4c.6-.9 1.6-1.6 3.1-1.6 2.4 0 3.9 1.6 3.9 4.7V19h-3v-5c0-1.5-.6-2.3-1.8-2.3-1.3 0-2.2.9-2.2 2.5V19h-3V9Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </>
+      ) : null}
+      {name === 'tiktok' ? (
+        <path
+          d="M14.4 4c.5 2.2 1.8 3.7 4.1 4.1v3.1a7.1 7.1 0 0 1-3.9-1.2v5.5c0 3-2.1 5.5-5.4 5.5A5.2 5.2 0 0 1 4 15.8c0-3 2.3-5.2 5.4-5.2.4 0 .8 0 1.1.1v3.2c-.3-.1-.7-.2-1.1-.2-1.3 0-2.2.9-2.2 2.1 0 1.3 1 2.1 2.2 2.1 1.4 0 2.1-.8 2.1-2.4V4h2.9Z"
+          fill="currentColor"
+          stroke="none"
+        />
+      ) : null}
+      {name === 'whatsapp' ? (
+        <>
+          <path d="M4.4 20 5.5 16.2A8 8 0 1 1 8.8 19L4.4 20Z" />
+          <path
+            d="M9.1 8.4c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.8 1.8c.1.3 0 .5-.1.7l-.5.6c.6 1.1 1.5 2 2.7 2.7l.7-.6c.2-.2.4-.2.7-.1l1.7.8c.3.1.4.3.4.6v.5c0 .3-.1.5-.4.7-.6.4-1.2.6-2 .6-2.7 0-7.1-3.5-7.1-7 0-.8.3-1.5.6-2Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </>
+      ) : null}
+      {name === 'x' ? <path d="m5 5 14 14M19 5 5 19" /> : null}
       {name === 'like' ? (
         <>
           <path d="M8 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3v11Z" />
@@ -1692,6 +1767,26 @@ const LorgarIcon = ({ name }: { name: LorgarIconName }) => {
   )
 }
 
+const LorgarExclusiveMenuScript = () => (
+  <script
+    dangerouslySetInnerHTML={{
+      __html: `(() => {
+  if (window.__lorgarExclusiveMenus) return;
+  window.__lorgarExclusiveMenus = true;
+  document.addEventListener('toggle', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLDetailsElement) || !target.open || !target.matches('[data-lorgar-exclusive-menu]')) return;
+    const root = target.closest('.lorgar-header');
+    if (!root) return;
+    root.querySelectorAll('details[data-lorgar-exclusive-menu][open]').forEach((details) => {
+      if (details !== target) details.open = false;
+    });
+  }, true);
+})();`,
+    }}
+  />
+)
+
 const LorgarNavDropdown = ({
   items,
   label,
@@ -1699,8 +1794,11 @@ const LorgarNavDropdown = ({
   items: Array<{ href: string; label: string }>
   label: string
 }) => (
-  <details className="lorgar-nav-dropdown">
-    <summary>{label}</summary>
+  <details className="lorgar-nav-dropdown" data-lorgar-exclusive-menu="">
+    <summary>
+      <span>{label}</span>
+      <LorgarChevronDownIcon />
+    </summary>
     <div>
       {items.map((item) => (
         <ExternalLink href={item.href} key={item.href}>
@@ -1835,15 +1933,12 @@ const LorgarHeader = ({
 
   return (
     <header className="lorgar-header">
-      <Link aria-label="LORGAR blog home" className="lorgar-header__brand" href="/articles">
-        <LorgarLogo className="lorgar-header__logo" />
-        <span className="lorgar-header__blog-label">Blog</span>
-      </Link>
+      <LorgarBrand className="lorgar-header__brand" />
       <LorgarPrimaryNav className="lorgar-header__nav" />
       <div className="lorgar-header__tools">
-        <details className="lorgar-header__search">
+        <details className="lorgar-header__search" data-lorgar-exclusive-menu="">
           <summary aria-label="Open article search">
-            <span aria-hidden="true" />
+            <LorgarSearchIcon />
           </summary>
           <form action="/articles" role="search">
             <input aria-label="Search articles" defaultValue={searchQuery || ''} name="q" placeholder="Search" type="search" />
@@ -1851,8 +1946,11 @@ const LorgarHeader = ({
             <button type="submit">Search</button>
           </form>
         </details>
-        <details className="lorgar-header__language">
-          <summary>{figmaDisplayCode}</summary>
+        <details className="lorgar-header__language" data-lorgar-exclusive-menu="">
+          <summary>
+            <span>{figmaDisplayCode}</span>
+            <LorgarChevronDownIcon />
+          </summary>
           <div>
             {languageLinks.map((alternate) =>
               alternate.isCurrent ? (
@@ -1863,11 +1961,12 @@ const LorgarHeader = ({
             )}
           </div>
         </details>
-        <details className="lorgar-header__mobile-menu">
+        <details className="lorgar-header__mobile-menu" data-lorgar-exclusive-menu="">
           <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
           <LorgarPrimaryNav className="lorgar-header__mobile-nav" />
         </details>
       </div>
+      <LorgarExclusiveMenuScript />
     </header>
   )
 }
@@ -2108,15 +2207,12 @@ const LorgarSubscribe = ({ languageCode }: { languageCode?: null | string }) => 
 
 const LorgarFooter = () => (
   <footer className="lorgar-footer">
-    <Link className="lorgar-footer__logo" href="/articles" prefetch={false}>
-      <LorgarLogo />
-      <span>Blog</span>
-    </Link>
+    <LorgarBrand className="lorgar-footer__logo" />
     <nav aria-label="Footer" className="lorgar-footer__nav">
       {lorgarFooterLinks.map((item) => (
-        <Link href={item.href} key={item.href} prefetch={false}>
+        <ExternalLink href={item.href} key={item.href}>
           {item.label}
-        </Link>
+        </ExternalLink>
       ))}
     </nav>
     <div className="lorgar-footer__social" aria-label="Social links">
@@ -2128,7 +2224,7 @@ const LorgarFooter = () => (
       ))}
     </div>
     <div className="lorgar-footer__legal">
-      <span>&copy; LORGAR 2026, All rights reserved</span>
+      <span>&copy; LORGAR 2026, ALL RIGHTS RESERVED</span>
       {lorgarPolicyLinks.map((item) => (
         <ExternalLink href={item.href} key={item.href}>
           {item.label}
