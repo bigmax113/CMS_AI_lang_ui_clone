@@ -1638,27 +1638,14 @@ const ExternalLink = ({
 )
 
 const LorgarLogo = ({ className }: { className?: string }) => (
-  <img alt="LORGAR Ready To Play" className={className} height={72} src="/lorgar-logo.svg" width={260} />
+  <img alt="LORGAR Ready To Play" className={className} height={42} src="/lorgar-figma/logo.svg" width={132} />
 )
 
 const LorgarBlogBadge = ({ className }: { className?: string }) => (
-  <svg aria-label="Blog" className={className} fill="none" role="img" viewBox="0 0 73 42">
-    <path
-      d="M0 6.4C0 2.865 2.865 0 6.4 0h60.2C70.135 0 73 2.865 73 6.4v25.2c0 3.535-2.865 6.4-6.4 6.4H45.8L36.5 42l-9.3-4H6.4C2.865 38 0 35.135 0 31.6V6.4Z"
-      fill="#A100FF"
-    />
-    <text
-      fill="#FFFFFF"
-      fontFamily="Impact, 'Arial Black', sans-serif"
-      fontSize="16"
-      fontWeight="900"
-      letterSpacing="0"
-      x="14"
-      y="24.5"
-    >
-      BLOG
-    </text>
-  </svg>
+  <span aria-hidden="true" className={className}>
+    <img alt="" className="lorgar-blog-badge__shape" height={42} src="/lorgar-figma/blog-badge.svg" width={59} />
+    <span className="lorgar-blog-badge__text">BLOG</span>
+  </span>
 )
 
 const LorgarBrand = ({ className }: { className?: string }) => (
@@ -1673,19 +1660,30 @@ const LorgarBrand = ({ className }: { className?: string }) => (
 )
 
 const LorgarSearchIcon = () => (
-  <svg aria-hidden="true" className="lorgar-header__icon" fill="none" viewBox="0 0 24 24">
-    <circle cx="10.5" cy="10.5" r="6.5" />
-    <path d="m16 16 5 5" />
-  </svg>
+  <img alt="" aria-hidden="true" className="lorgar-header__icon" src="/lorgar-figma/search.svg" />
 )
 
 const LorgarChevronDownIcon = () => (
-  <svg aria-hidden="true" className="lorgar-header__chevron" fill="none" viewBox="0 0 12 8">
-    <path d="m1 1.25 5 5 5-5" />
-  </svg>
+  <img alt="" aria-hidden="true" className="lorgar-header__chevron" src="/lorgar-figma/chevron-down.svg" />
 )
 
+const lorgarFigmaSocialIconSrc: Partial<Record<LorgarIconName, string>> = {
+  facebook: '/lorgar-figma/social-facebook.svg',
+  instagram: '/lorgar-figma/social-instagram.svg',
+  linkedin: '/lorgar-figma/social-linkedin.svg',
+  telegram: '/lorgar-figma/social-telegram.svg',
+  tiktok: '/lorgar-figma/social-tiktok.svg',
+  whatsapp: '/lorgar-figma/social-whatsapp.svg',
+  youtube: '/lorgar-figma/social-youtube.svg',
+}
+
 const LorgarIcon = ({ name }: { name: LorgarIconName }) => {
+  const figmaIconSrc = lorgarFigmaSocialIconSrc[name]
+
+  if (figmaIconSrc) {
+    return <img alt="" aria-hidden="true" className="lorgar-ui-icon" src={figmaIconSrc} />
+  }
+
   return (
     <svg aria-hidden="true" className="lorgar-ui-icon" fill="none" viewBox="0 0 24 24">
       {name === 'youtube' ? (
@@ -1971,28 +1969,16 @@ const LorgarHeader = ({
   )
 }
 
-const LorgarBlogCard = ({
-  article,
-  priority = 'standard',
-}: {
-  article: Article
-  priority?: 'feature' | 'standard' | 'wide'
-}) => {
+const LorgarBlogCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
-  const summary = publicLeadText({ content: article.content, summary: article.summary })
   const image = articlePrimaryImage(article)
-  const tags = publicArticleTags(article).slice(0, 2)
-  const readTime = articleReadingTime({ content: article.content, languageCode: article.languageCode })
-  const cardClassName = [
-    'lorgar-blog-card',
-    `lorgar-blog-card--${priority}`,
-    !isMedia(image) ? 'lorgar-blog-card--text-only' : '',
-  ]
+  const date = formatDate(article.publishedAt || article.createdAt, article.languageCode)
+  const cardClassName = ['lorgar-blog-card', !isMedia(image) ? 'lorgar-blog-card--text-only' : '']
     .filter(Boolean)
     .join(' ')
 
   return (
-    <Link className={cardClassName} href={href} prefetch={false}>
+    <a className={cardClassName} href={href}>
       {isMedia(image) ? (
         <SafeImage
           alt={image.alt || article.title}
@@ -2001,21 +1987,25 @@ const LorgarBlogCard = ({
           src={mediaURL(image)}
         />
       ) : null}
-      <span className="lorgar-blog-card__meta">
-        <span>{formatDate(article.publishedAt || article.createdAt, article.languageCode)}</span>
-        {readTime ? <span>{readTime}</span> : null}
-      </span>
-      {tags.length ? (
-        <span className="lorgar-blog-card__tags">
-          {tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </span>
-      ) : null}
       <strong className="lorgar-blog-card__title">{article.title}</strong>
-      {summary ? <p>{summary}</p> : null}
-      <span className="lorgar-blog-card__more">View more</span>
-    </Link>
+      <span className="lorgar-blog-card__footer">
+        <span className="lorgar-blog-card__stats">
+          <span>
+            <img alt="" aria-hidden="true" className="lorgar-card-meta-icon" src="/lorgar-figma/eye.svg" />
+            1248 views
+          </span>
+          <span className="lorgar-blog-card__divider" aria-hidden="true" />
+          <span>
+            <img alt="" aria-hidden="true" className="lorgar-card-meta-icon" src="/lorgar-figma/calendar.svg" />
+            <time dateTime={article.publishedAt || article.createdAt || undefined}>{date}</time>
+          </span>
+        </span>
+        <span className="lorgar-blog-card__more">
+          Read more
+          <img alt="" aria-hidden="true" className="lorgar-card-arrow" src="/lorgar-figma/arrow-right-mini.svg" />
+        </span>
+      </span>
+    </a>
   )
 }
 
@@ -2037,12 +2027,7 @@ export const LorgarArticlesIndexLayout = ({
   tagQuery?: null | string
 }) => {
   const isFilteredView = Boolean(searchQuery || tagQuery)
-  const heroTitle = isFilteredView ? pageTitle : 'LORGAR Blog'
-  const heroIntro =
-    pageIntro ||
-    (isFilteredView
-      ? null
-      : 'News, product updates, esports highlights, and practical gaming guides from the LORGAR ecosystem.')
+  const heroTitle = isFilteredView ? pageTitle : 'Blog'
   const topics = [
     ...new Set(
       articles
@@ -2051,20 +2036,6 @@ export const LorgarArticlesIndexLayout = ({
         .slice(0, 12),
     ),
   ]
-  const cardPriorities = [
-    'feature',
-    'standard',
-    'standard',
-    'standard',
-    'wide',
-    'standard',
-    'standard',
-    'feature',
-    'standard',
-    'standard',
-    'wide',
-    'standard',
-  ] as const
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
@@ -2074,25 +2045,14 @@ export const LorgarArticlesIndexLayout = ({
           <div className="lorgar-blog-cover__inner">
             <span className="lorgar-blog-cover__eyebrow">Blog</span>
             <h1>{heroTitle}</h1>
-            {heroIntro ? <p>{heroIntro}</p> : null}
+            {pageIntro ? <p>{pageIntro}</p> : null}
           </div>
         </section>
         <section className="lorgar-blog-list" aria-label="Articles">
           <div className="lorgar-blog-list__intro">
-            <div>
-              <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
-              <h2>{isFilteredView ? resultLabel || 'Results' : 'Latest news'}</h2>
-            </div>
             {topics.length ? (
               <nav aria-label="Topics" className="lorgar-blog-topics">
-                <Link
-                  aria-current={!tagQuery ? 'page' : undefined}
-                  className={!tagQuery ? 'is-active' : undefined}
-                  href={lorgarArticlesPath({ languageCode, searchQuery })}
-                  prefetch={false}
-                >
-                  All
-                </Link>
+                <strong>Topics</strong>
                 {topics.map((topic) => (
                   <Link
                     aria-current={tagQuery?.toLowerCase() === topic.toLowerCase() ? 'page' : undefined}
@@ -2106,15 +2066,15 @@ export const LorgarArticlesIndexLayout = ({
                 ))}
               </nav>
             ) : null}
+            <div>
+              <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
+              <h2>{isFilteredView ? resultLabel || 'Results' : 'Latest news'}</h2>
+            </div>
           </div>
           {articles.length ? (
             <div className="lorgar-blog-mosaic">
               {articles.map((article, index) => (
-                <LorgarBlogCard
-                  article={article}
-                  key={article.id}
-                  priority={cardPriorities[index % cardPriorities.length]}
-                />
+                <LorgarBlogCard article={article} key={article.id || `${article.slug}-${index}`} />
               ))}
             </div>
           ) : (
