@@ -7590,3 +7590,17 @@ main:has(.public-content--lorgar),
     width: 34px !important;
   }
 }
+
+@media (max-width: 900px) {
+  .public-content--lorgar .lorgar-header__language div {
+    left: 16px !important;
+    max-height: calc(100vh - 104px) !important;
+    max-width: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    position: fixed !important;
+    right: 16px !important;
+    top: 80px !important;
+    width: auto !important;
+  }
+}
