@@ -7604,3 +7604,63 @@ main:has(.public-content--lorgar),
     width: auto !important;
   }
 }
+
+/* v13 article sidebar guard: preserve Figma columns, but never let sidebar cards be clipped by shell math. */
+.public-content--lorgar .lorgar-article-shell {
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+.public-content--lorgar .lorgar-article-grid,
+.public-content--lorgar .lorgar-article-main,
+.public-content--lorgar .lorgar-sidebar,
+.public-content--lorgar .lorgar-sidebar__panel,
+.public-content--lorgar .lorgar-sidebar-card {
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.public-content--lorgar .lorgar-sidebar {
+  overflow: visible !important;
+}
+
+.public-content--lorgar .lorgar-topic-list {
+  flex-wrap: wrap !important;
+  max-width: 100% !important;
+}
+
+.public-content--lorgar .lorgar-topic-list a {
+  max-width: 100% !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 901px) {
+  .public-content--lorgar .lorgar-article-shell {
+    width: min(1416px, calc(100% - 96px)) !important;
+  }
+}
+
+@media (max-width: 1516px) and (min-width: 1181px) {
+  .public-content--lorgar .lorgar-article-shell {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: calc(100% - 96px) !important;
+  }
+
+  .public-content--lorgar .lorgar-article-grid {
+    gap: clamp(40px, 3.5vw, 52px) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(336px, 360px) !important;
+  }
+
+  .public-content--lorgar .lorgar-sidebar-card {
+    gap: 24px !important;
+    grid-template-columns: minmax(130px, 45%) minmax(0, 1fr) !important;
+  }
+
+  .public-content--lorgar .lorgar-sidebar-card img,
+  .public-content--lorgar .lorgar-sidebar-card .public-content__image-missing {
+    height: auto !important;
+    width: 100% !important;
+  }
+}
