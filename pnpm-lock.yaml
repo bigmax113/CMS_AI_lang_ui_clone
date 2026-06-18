@@ -32,6 +32,9 @@ importers:
       payload:
         specifier: 3.82.1
         version: 3.82.1(graphql@16.14.0)(typescript@5.7.3)
+      pg:
+        specifier: 8.16.3
+        version: 8.16.3
       react:
         specifier: 19.2.6
         version: 19.2.6

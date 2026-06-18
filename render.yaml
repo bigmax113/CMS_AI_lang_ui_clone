@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     buildCommand: pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start
+    startCommand: pnpm deploy:migrate && pnpm start
     healthCheckPath: /ai
     envVars:
       - key: NODE_ENV
@@ -27,7 +27,7 @@ services:
       - key: PAYLOAD_DB_PUSH
         value: 'false'
       - key: PAYLOAD_RUN_MIGRATIONS
-        value: 'true'
+        value: 'false'
       - key: PAYLOAD_DB_SCHEMA
         value: cms_ai
       - key: AI_DOCS_DIR

@@ -9,6 +9,7 @@
     "ci": "pnpm build",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "deploy:migrate": "node scripts/run-deploy-migrations.mjs",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
@@ -31,6 +32,7 @@
     "graphql": "^16.8.1",
     "next": "16.2.6",
     "payload": "3.82.1",
+    "pg": "8.16.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "sharp": "0.34.2"
