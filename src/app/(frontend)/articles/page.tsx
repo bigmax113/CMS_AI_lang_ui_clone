@@ -24,7 +24,7 @@ type PageProps = {
 }
 
 const firstQueryValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value)
-const articlesPerPage = 16
+const articlesPerPage = 6
 
 const parsePage = (value: string | string[] | undefined) => {
   const page = Number.parseInt(firstQueryValue(value) || '1', 10)

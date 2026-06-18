@@ -478,10 +478,13 @@ const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | '
 }
 
 const lorgarTopicFilters = [
-  { label: 'Blog Post', tagQuery: 'Blog Post' },
-  { label: 'Product Content', tagQuery: 'Product Content' },
-  { label: 'All', tagQuery: null },
-  { label: 'Featured', tagQuery: 'Featured' },
+  { label: 'Partnerships', tagQuery: 'Partnerships' },
+  { label: 'Innovation', tagQuery: 'Innovation' },
+  { label: 'Corporate', tagQuery: 'Corporate' },
+  { label: 'Ecosystem', tagQuery: 'Ecosystem' },
+  { label: 'Cyprus', tagQuery: 'Cyprus' },
+  { label: 'Gaming devices', tagQuery: 'Gaming devices' },
+  { label: 'Gaming tournament', tagQuery: 'Gaming tournament' },
 ] as const
 
 const publicArticleAuthors = (authors?: Article['authors'] | BlogPost['authors'] | null) =>
@@ -1391,9 +1394,34 @@ const normalizedTopicFilterText = (value?: null | string) =>
   normalizedFilterText(value)?.replace(/[-_]+/gu, ' ').replace(/\s+/gu, ' ')
 
 const topicFilterAliases: Record<string, string[]> = {
-  'blog post': ['article', 'blog post'],
-  featured: ['featured'],
-  'product content': ['product content'],
+  corporate: ['company', 'corporate', 'lorgar'],
+  cyprus: ['cyprus', 'limassol'],
+  ecosystem: ['ecosystem', 'platform', 'ready to play'],
+  'gaming devices': [
+    'chair',
+    'device',
+    'devices',
+    'gaming device',
+    'gaming devices',
+    'headset',
+    'keyboard',
+    'mouse',
+    'mousepad',
+    'product',
+    'product content',
+    'racing cockpit',
+  ],
+  'gaming tournament': [
+    'comic con',
+    'competition',
+    'esports',
+    'gaming tournament',
+    'rankings',
+    'siege',
+    'tournament',
+  ],
+  innovation: ['ecosystem', 'innovation', 'platform', 'technology'],
+  partnerships: ['partner', 'partners', 'partnership', 'partnerships', 'technical partner'],
 }
 
 const articleMatchesSearchQuery = (article: Article, searchQuery?: null | string) => {
@@ -1427,11 +1455,30 @@ const articleMatchesTagQuery = (article: Article, tagQuery?: null | string) => {
   }
 
   const acceptedQueries = topicFilterAliases[query] || [query]
+  const tagText = article.tags?.map((tag) => tag.tag).filter(Boolean).join(' ') || ''
+  const searchableText = [
+    article.title,
+    article.summary,
+    article.category,
+    article.contentType,
+    article.slug,
+    tagText,
+    excerptArticleText(article.content, 4000),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
 
-  return publicArticleTags(article).some((tag) => {
-    const normalizedTag = normalizedTopicFilterText(tag)
+  return acceptedQueries.some((acceptedQuery) => {
+    if (searchableText.includes(acceptedQuery)) {
+      return true
+    }
 
-    return Boolean(normalizedTag && acceptedQueries.includes(normalizedTag))
+    return publicArticleTags(article).some((tag) => {
+      const normalizedTag = normalizedTopicFilterText(tag)
+
+      return Boolean(normalizedTag && acceptedQuery === normalizedTag)
+    })
   })
 }
 
@@ -2007,16 +2054,34 @@ const LorgarHeader = ({
   )
 }
 
+const lorgarCardFallbackImages = [
+  '/lorgar-figma/card-fallbacks/card-01.webp',
+  '/lorgar-figma/card-fallbacks/card-02.webp',
+  '/lorgar-figma/card-fallbacks/card-03.webp',
+  '/lorgar-figma/card-fallbacks/card-04.webp',
+  '/lorgar-figma/card-fallbacks/card-05.webp',
+  '/lorgar-figma/card-fallbacks/card-06.webp',
+  '/lorgar-figma/card-fallbacks/card-07.webp',
+  '/lorgar-figma/card-fallbacks/card-08.webp',
+]
+
+const stableStringHash = (value: string) =>
+  [...value].reduce((hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0, 0)
+
+const lorgarCardFallbackImage = (article: Article) => {
+  const key = `${article.slug || ''}:${article.title || ''}:${article.id || ''}`
+  const index = stableStringHash(key) % lorgarCardFallbackImages.length
+
+  return lorgarCardFallbackImages[index]
+}
+
 const LorgarBlogCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const image = articlePrimaryImage(article)
   const date = formatDate(article.publishedAt || article.createdAt, article.languageCode)
-  const cardClassName = ['lorgar-blog-card', !isMedia(image) ? 'lorgar-blog-card--text-only' : '']
-    .filter(Boolean)
-    .join(' ')
 
   return (
-    <a className={cardClassName} href={href}>
+    <a className="lorgar-blog-card" href={href}>
       {isMedia(image) ? (
         <SafeImage
           alt={image.alt || article.title}
@@ -2024,7 +2089,9 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
           fileName={image.filename}
           src={mediaURL(image)}
         />
-      ) : null}
+      ) : (
+        <img alt={article.title} className="lorgar-blog-card__image" src={lorgarCardFallbackImage(article)} />
+      )}
       <strong className="lorgar-blog-card__title">{article.title}</strong>
       <span className="lorgar-blog-card__footer">
         <span className="lorgar-blog-card__stats">
