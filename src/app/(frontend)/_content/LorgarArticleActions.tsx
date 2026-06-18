@@ -9,7 +9,6 @@ type LorgarArticleActionsProps = {
 }
 
 const reactionLabels = {
-  discuss: 'Discuss article',
   like: 'Like article',
 } as const
 
@@ -95,7 +94,7 @@ export const LorgarArticleActions = ({ articleSlug, title, url }: LorgarArticleA
       </div>
       <div aria-label="Article reactions" className="lorgar-share__reactions">
         <span>Reactions:</span>
-        {(['like', 'discuss'] as const).map((reactionType) => (
+        {(['like'] as const).map((reactionType) => (
           <button
             aria-label={reactionLabels[reactionType]}
             disabled={pendingReaction === reactionType}

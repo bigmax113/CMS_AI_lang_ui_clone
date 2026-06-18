@@ -6622,3 +6622,267 @@ main:has(.public-content--lorgar),
     writing-mode: horizontal-tb !important;
   }
 }
+
+/* Figma lock layer v7: fixes 10 final desktop overrides. Keep this block last. */
+.public-content--lorgar .lorgar-nav-dropdown summary::before,
+.public-content--lorgar .lorgar-nav-dropdown summary::after,
+.public-content--lorgar .lorgar-header__language summary::before,
+.public-content--lorgar .lorgar-header__language summary::after {
+  content: none !important;
+  display: none !important;
+}
+
+.public-content--lorgar .lorgar-header__chevron,
+.public-content--lorgar .lorgar-nav-dropdown .lorgar-header__chevron,
+.public-content--lorgar .lorgar-header__language .lorgar-header__chevron {
+  display: block !important;
+  flex: 0 0 auto !important;
+  height: 8px !important;
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+  width: 12px !important;
+}
+
+.public-content--lorgar .lorgar-header__search .lorgar-header__icon {
+  display: block !important;
+  height: 24px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  width: 24px !important;
+}
+
+.public-content--lorgar .lorgar-header__language summary {
+  font-size: 16px !important;
+  gap: 10px !important;
+  text-transform: uppercase !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
+  background: rgba(180, 62, 255, 0.18) !important;
+  border-color: rgba(180, 62, 255, 0.9) !important;
+  font-size: 16px !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  width: 28px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-card-meta-icon {
+  height: 20px !important;
+  width: 20px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-card-arrow {
+  display: inline-block !important;
+  height: 12px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  width: 12px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__more {
+  gap: 10px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination {
+  align-items: center !important;
+  display: grid !important;
+  gap: 22px !important;
+  justify-items: center !important;
+  margin: 44px auto 0 !important;
+  width: 100% !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__more {
+  align-items: center !important;
+  background: var(--lorgar-purple) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  border-radius: 999px !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  font-family: var(--lorgar-font-display) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  min-height: 42px !important;
+  min-width: 160px !important;
+  padding: 0 24px !important;
+  text-decoration: none !important;
+  text-transform: uppercase !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__more.is-disabled {
+  opacity: 0.45 !important;
+  pointer-events: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages {
+  align-items: center !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  justify-content: center !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages a,
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages span {
+  align-items: center !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  font-family: var(--lorgar-font-display) !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  justify-content: center !important;
+  min-height: 30px !important;
+  min-width: 30px !important;
+  text-decoration: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages .is-active {
+  background: rgba(180, 62, 255, 0.24) !important;
+  border: 1px solid rgba(180, 62, 255, 0.92) !important;
+  border-radius: 999px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages .is-disabled {
+  opacity: 0.36 !important;
+}
+
+.public-content--lorgar .lorgar-meta,
+.public-content--lorgar .lorgar-share,
+.public-content--lorgar .lorgar-cta-strip,
+.public-content--lorgar .lorgar-related {
+  border-bottom: 0 !important;
+  border-top: 0 !important;
+}
+
+.public-content--lorgar .lorgar-meta {
+  margin: 28px 0 !important;
+  padding: 0 !important;
+}
+
+.public-content--lorgar .lorgar-meta__icon {
+  color: var(--lorgar-purple) !important;
+  height: 22px !important;
+  width: 22px !important;
+}
+
+.public-content--lorgar .lorgar-share {
+  gap: 18px !important;
+  margin: 0 0 36px !important;
+  padding: 0 !important;
+}
+
+.public-content--lorgar .lorgar-share__links,
+.public-content--lorgar .lorgar-share__reactions {
+  gap: 14px !important;
+}
+
+.public-content--lorgar .lorgar-share button,
+.public-content--lorgar .lorgar-share a {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--lorgar-purple) !important;
+  height: auto !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+
+.public-content--lorgar .lorgar-share button:hover,
+.public-content--lorgar .lorgar-share a:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.public-content--lorgar .lorgar-share__like::before {
+  color: var(--lorgar-purple) !important;
+  content: "LIKE" !important;
+  font-family: var(--lorgar-font-display) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.public-content--lorgar .lorgar-share__discuss,
+.public-content--lorgar .lorgar-share__discuss::before {
+  content: none !important;
+  display: none !important;
+}
+
+.public-content--lorgar .lorgar-article-body,
+.public-content--lorgar .public-content__product-card,
+.public-content--lorgar .public-content__faq details,
+.public-content--lorgar .public-content__callout,
+.public-content--lorgar .public-content__cta,
+.public-content--lorgar .public-content__html-embed {
+  background: transparent !important;
+}
+
+.public-content--lorgar .lorgar-subscribe {
+  align-items: center !important;
+  background: #080e1a !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  gap: 24px !important;
+  grid-template-columns: auto minmax(260px, 1fr) minmax(320px, auto) !important;
+  margin: 34px 0 24px !important;
+}
+
+.public-content--lorgar .lorgar-subscribe__icon {
+  background: var(--lorgar-purple) !important;
+  height: 82px !important;
+  width: 82px !important;
+}
+
+.public-content--lorgar .lorgar-subscribe__icon .lorgar-ui-icon {
+  height: 34px !important;
+  width: 34px !important;
+}
+
+.public-content--lorgar .lorgar-subscribe form {
+  align-items: center !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 220px) 112px !important;
+  justify-content: end !important;
+}
+
+.public-content--lorgar .lorgar-footer {
+  border-top: 0 !important;
+}
+
+.public-content--lorgar .lorgar-footer__social {
+  gap: 18px !important;
+}
+
+.public-content--lorgar .lorgar-footer__social a {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  height: 38px !important;
+  width: 38px !important;
+}
+
+.public-content--lorgar .lorgar-footer__social .lorgar-ui-icon {
+  height: 24px !important;
+  width: 24px !important;
+}
+
+.public-content--lorgar .lorgar-footer__legal,
+.public-content--lorgar .lorgar-footer__legal a,
+.public-content--lorgar .lorgar-footer__legal span {
+  color: #7e879e !important;
+}
+
+@media (max-width: 900px) {
+  .public-content--lorgar .lorgar-subscribe {
+    grid-template-columns: 1fr !important;
+  }
+
+  .public-content--lorgar .lorgar-subscribe form {
+    grid-template-columns: 1fr !important;
+    justify-content: stretch !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-pagination {
+    margin-top: 34px !important;
+  }
+}

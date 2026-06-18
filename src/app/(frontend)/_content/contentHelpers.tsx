@@ -1891,10 +1891,12 @@ const LorgarPrimaryNav = ({ className }: { className?: string }) => (
 
 const lorgarArticlesPath = ({
   languageCode,
+  page,
   searchQuery,
   tagQuery,
 }: {
   languageCode?: null | string
+  page?: null | number
   searchQuery?: null | string
   tagQuery?: null | string
 }) => {
@@ -1913,6 +1915,10 @@ const lorgarArticlesPath = ({
 
   if (tag) {
     params.set('tag', tag)
+  }
+
+  if (page && page > 1) {
+    params.set('page', String(page))
   }
 
   const queryString = params.toString()
@@ -2041,11 +2047,107 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
   )
 }
 
+type LorgarArticlesPagination = {
+  currentPage: number
+  pageSize: number
+  totalItems: number
+  totalPages: number
+}
+
+const paginationSequence = ({ currentPage, totalPages }: Pick<LorgarArticlesPagination, 'currentPage' | 'totalPages'>) => {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }
+
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1].filter((page) => page >= 1 && page <= totalPages))
+  const sortedPages = [...pages].sort((left, right) => left - right)
+  const sequence: Array<'ellipsis' | number> = []
+
+  sortedPages.forEach((page, index) => {
+    const previous = sortedPages[index - 1]
+
+    if (previous && page - previous > 1) {
+      sequence.push('ellipsis')
+    }
+
+    sequence.push(page)
+  })
+
+  return sequence
+}
+
+const LorgarBlogPagination = ({
+  languageCode,
+  pagination,
+  searchQuery,
+  tagQuery,
+}: {
+  languageCode?: null | string
+  pagination: LorgarArticlesPagination
+  searchQuery?: null | string
+  tagQuery?: null | string
+}) => {
+  const { currentPage, totalPages } = pagination
+  const hasNextPage = currentPage < totalPages
+  const hasPreviousPage = currentPage > 1
+  const pageHref = (page: number) =>
+    lorgarArticlesPath({
+      languageCode,
+      page,
+      searchQuery,
+      tagQuery,
+    })
+
+  return (
+    <nav aria-label="Article pages" className="lorgar-blog-pagination">
+      {hasNextPage ? (
+        <Link className="lorgar-blog-pagination__more" href={pageHref(currentPage + 1)} prefetch={false}>
+          More articles
+        </Link>
+      ) : (
+        <span className="lorgar-blog-pagination__more is-disabled">More articles</span>
+      )}
+      <div className="lorgar-blog-pagination__pages">
+        {hasPreviousPage ? (
+          <Link aria-label="Previous page" href={pageHref(currentPage - 1)} prefetch={false}>
+            ‹
+          </Link>
+        ) : (
+          <span aria-hidden="true" className="is-disabled">‹</span>
+        )}
+        {paginationSequence({ currentPage, totalPages }).map((item, index) =>
+          item === 'ellipsis' ? (
+            <span aria-hidden="true" className="lorgar-blog-pagination__ellipsis" key={`ellipsis-${index}`}>
+              …
+            </span>
+          ) : item === currentPage ? (
+            <span aria-current="page" className="is-active" key={item}>
+              {item}
+            </span>
+          ) : (
+            <Link href={pageHref(item)} key={item} prefetch={false}>
+              {item}
+            </Link>
+          ),
+        )}
+        {hasNextPage ? (
+          <Link aria-label="Next page" href={pageHref(currentPage + 1)} prefetch={false}>
+            ›
+          </Link>
+        ) : (
+          <span aria-hidden="true" className="is-disabled">›</span>
+        )}
+      </div>
+    </nav>
+  )
+}
+
 export const LorgarArticlesIndexLayout = ({
   articles,
   languageCode,
   pageIntro,
   pageTitle = 'Blog',
+  pagination,
   resultLabel,
   searchQuery,
   tagQuery,
@@ -2054,6 +2156,7 @@ export const LorgarArticlesIndexLayout = ({
   languageCode?: null | string
   pageIntro?: null | string
   pageTitle?: string
+  pagination?: LorgarArticlesPagination
   resultLabel?: null | string
   searchQuery?: null | string
   tagQuery?: null | string
@@ -2077,6 +2180,16 @@ export const LorgarArticlesIndexLayout = ({
           <div className="lorgar-blog-list__intro">
             <nav aria-label="Topics" className="lorgar-blog-topics">
               <strong>Topics</strong>
+              {activeTopicQuery ? (
+                <Link
+                  aria-label="Clear selected topic"
+                  className="lorgar-blog-topics__clear"
+                  href={lorgarArticlesPath({ languageCode, searchQuery })}
+                  prefetch={false}
+                >
+                  ×
+                </Link>
+              ) : null}
               {lorgarTopicFilters.map((topic) => {
                 const topicQuery = normalizedTopicFilterText(topic.tagQuery)
                 const isActive = topicQuery ? activeTopicQuery === topicQuery : !activeTopicQuery
@@ -2108,6 +2221,14 @@ export const LorgarArticlesIndexLayout = ({
           ) : (
             <p className="public-content__empty">No published articles match this search and language filter.</p>
           )}
+          {pagination && pagination.totalPages > 1 ? (
+            <LorgarBlogPagination
+              languageCode={languageCode}
+              pagination={pagination}
+              searchQuery={searchQuery}
+              tagQuery={tagQuery}
+            />
+          ) : null}
         </section>
       </main>
       <LorgarFooter />
@@ -2115,17 +2236,12 @@ export const LorgarArticlesIndexLayout = ({
   )
 }
 
-const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' | 'read' }) => (
+const LorgarMetaIcon = ({ type }: { type: 'author' | 'date' }) => (
   <svg aria-hidden="true" className="lorgar-meta__icon" fill="none" viewBox="0 0 24 24">
     {type === 'date' ? (
       <>
         <path d="M7 3v4M17 3v4M4.5 9h15" />
         <path d="M6.5 5h11A2.5 2.5 0 0 1 20 7.5v10A2.5 2.5 0 0 1 17.5 20h-11A2.5 2.5 0 0 1 4 17.5v-10A2.5 2.5 0 0 1 6.5 5Z" />
-      </>
-    ) : type === 'read' ? (
-      <>
-        <path d="M12 6.5v5l3.5 2" />
-        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />
       </>
     ) : (
       <>
@@ -2145,7 +2261,6 @@ const LorgarMeta = ({
 }) => {
   const date = formatArticleMetaDate(publishedAt, article.languageCode)
   const authorNames = publicArticleAuthorNames(article.authors)
-  const readTime = articleReadingTime({ content: article.content, languageCode: article.languageCode })
 
   return (
     <div className="lorgar-meta">
@@ -2153,12 +2268,6 @@ const LorgarMeta = ({
         <span>
           <LorgarMetaIcon type="date" />
           <time dateTime={publishedAt || undefined}>{date}</time>
-        </span>
-      ) : null}
-      {readTime ? (
-        <span>
-          <LorgarMetaIcon type="read" />
-          {readTime}
         </span>
       ) : null}
       <span>
@@ -2419,6 +2528,7 @@ export const LorgarArticleLayout = ({
           <LorgarArticleSidebar article={article} recentArticles={recentArticles} />
         </div>
       </main>
+      <LorgarFooter />
     </div>
   )
 }
