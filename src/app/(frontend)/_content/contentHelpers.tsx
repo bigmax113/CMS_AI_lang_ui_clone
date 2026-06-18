@@ -2086,6 +2086,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
         <SafeImage
           alt={image.alt || article.title}
           className="lorgar-blog-card__image"
+          fallbackSrc={lorgarCardFallbackImage(article)}
           fileName={image.filename}
           src={mediaURL(image)}
         />

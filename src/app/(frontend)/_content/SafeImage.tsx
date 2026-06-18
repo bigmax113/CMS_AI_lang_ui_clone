@@ -6,19 +6,21 @@ export const SafeImage = ({
   alt,
   className,
   fileName,
+  fallbackSrc,
   loading = 'lazy',
   src,
 }: {
   alt: string
   className?: string
   fileName?: null | string
+  fallbackSrc?: null | string
   loading?: 'eager' | 'lazy'
   src?: null | string
 }) => {
-  const [failedSrc, setFailedSrc] = useState<null | string>(null)
-  const hasFailed = !src || failedSrc === src
+  const [shouldUseFallback, setShouldUseFallback] = useState(false)
+  const resolvedSrc = (!src || shouldUseFallback) && fallbackSrc ? fallbackSrc : src
 
-  if (hasFailed || !src) {
+  if (!resolvedSrc) {
     return (
       <div className={`public-content__image-missing ${className || ''}`}>
         <strong>Image unavailable</strong>
@@ -38,8 +40,12 @@ export const SafeImage = ({
       className={className}
       decoding="async"
       loading={loading}
-      onError={() => setFailedSrc(src)}
-      src={src}
+      onError={() => {
+        if (fallbackSrc && resolvedSrc !== fallbackSrc) {
+          setShouldUseFallback(true)
+        }
+      }}
+      src={resolvedSrc}
     />
   )
 }
