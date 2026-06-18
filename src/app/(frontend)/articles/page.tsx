@@ -24,6 +24,11 @@ type PageProps = {
 }
 
 const firstQueryValue = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value)
+const queryValues = (value: string | string[] | undefined) =>
+  (Array.isArray(value) ? value : value ? [value] : [])
+    .flatMap((item) => item.split(','))
+    .map((item) => item.trim())
+    .filter(Boolean)
 const articlesPerPage = 6
 
 const parsePage = (value: string | string[] | undefined) => {
@@ -35,14 +40,14 @@ const parsePage = (value: string | string[] | undefined) => {
 export default async function ArticlesIndexPage({ searchParams }: PageProps) {
   const query = await searchParams
   const searchQuery = firstQueryValue(query?.q)?.trim() || ''
-  const tagQuery = firstQueryValue(query?.tag)?.trim() || ''
+  const tagQueries = [...new Set(queryValues(query?.tag))]
   const requestedPage = parsePage(query?.page)
   const languageCode = normalizeArticleLanguageCode(firstQueryValue(query?.lang) || 'en')
   const allArticles = await listPublishedArticles({
     languageCode,
     limit: 1000,
     searchQuery,
-    tagQuery,
+    tagQueries,
   })
   const totalPages = Math.max(1, Math.ceil(allArticles.length / articlesPerPage))
   const currentPage = Math.min(requestedPage, totalPages)
@@ -51,7 +56,7 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
   const languageDisplayCode = articleLanguageDisplayCodeByCode[languageCode]
   const resultContext = [
     searchQuery ? `search "${searchQuery}"` : null,
-    tagQuery ? `topic "${tagQuery}"` : null,
+    tagQueries.length ? `topics ${tagQueries.map((tag) => `"${tag}"`).join(', ')}` : null,
   ].filter(Boolean).join(' and ')
   const resultLabel = resultContext
     ? `Results for ${resultContext} in ${languageLabel}`
@@ -69,7 +74,7 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
       }}
       resultLabel={resultLabel}
       searchQuery={searchQuery}
-      tagQuery={tagQuery}
+      tagQueries={tagQueries}
     />
   )
 }

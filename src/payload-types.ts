@@ -584,6 +584,10 @@ export interface Article {
   previewUrl?: string | null;
   publishedAt?: string | null;
   /**
+   * Public view count shown on LORGAR blog cards and used for Popular news sorting.
+   */
+  viewCount?: number | null;
+  /**
    * Short intro shown in cards, search results, and previews. Imported summaries are kept in full.
    */
   summary?: string | null;
@@ -1197,6 +1201,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   publicUrl?: T;
   previewUrl?: T;
   publishedAt?: T;
+  viewCount?: T;
   summary?: T;
   coverImage?: T;
   authors?: T;

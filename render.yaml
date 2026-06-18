@@ -27,7 +27,7 @@ services:
       - key: PAYLOAD_DB_PUSH
         value: 'false'
       - key: PAYLOAD_RUN_MIGRATIONS
-        value: 'false'
+        value: 'true'
       - key: PAYLOAD_DB_SCHEMA
         value: cms_ai
       - key: AI_DOCS_DIR

@@ -36,6 +36,7 @@ type LexicalNode = {
 
 const defaultSEOImagePath = '/seo/default-og.png'
 const defaultPublicAuthorName = process.env.DEFAULT_ARTICLE_AUTHOR_NAME || 'Matthew King'
+const defaultArticleViewCount = 1248
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -583,6 +584,30 @@ const articleReadingTime = ({
   }
 
   return `${minutes} min read`
+}
+
+const articleViewCount = (article: Pick<Article, 'id'> & { viewCount?: null | number }) =>
+  typeof article.viewCount === 'number' && Number.isFinite(article.viewCount)
+    ? Math.max(0, Math.round(article.viewCount))
+    : defaultArticleViewCount
+
+const formatArticleViewCount = (article: Pick<Article, 'id'> & { viewCount?: null | number }) =>
+  new Intl.NumberFormat('en-US').format(articleViewCount(article))
+
+const articlePublishedTime = (article: Pick<Article, 'createdAt' | 'publishedAt'>) => {
+  const value = article.publishedAt || article.createdAt
+  const time = value ? new Date(value).getTime() : 0
+
+  return Number.isFinite(time) ? time : 0
+}
+
+const compareArticlesByPublishedDateDesc = (left: Article, right: Article) =>
+  articlePublishedTime(right) - articlePublishedTime(left)
+
+const compareArticlesByViewsDesc = (left: Article, right: Article) => {
+  const viewsDifference = articleViewCount(right) - articleViewCount(left)
+
+  return viewsDifference || compareArticlesByPublishedDateDesc(left, right)
 }
 
 const parseURL = (value: string) => {
@@ -1393,6 +1418,30 @@ const normalizedFilterText = (value?: null | string) => value?.trim().toLowerCas
 const normalizedTopicFilterText = (value?: null | string) =>
   normalizedFilterText(value)?.replace(/[-_]+/gu, ' ').replace(/\s+/gu, ' ')
 
+const topicQueryValues = (value?: null | string | string[]) =>
+  (Array.isArray(value) ? value : value ? [value] : [])
+    .flatMap((item) => item.split(','))
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+const uniqueTopicQueries = (value?: null | string | string[]) => {
+  const seen = new Set<string>()
+  const queries: string[] = []
+
+  topicQueryValues(value).forEach((query) => {
+    const normalized = normalizedTopicFilterText(query)
+
+    if (!normalized || normalized === 'all' || seen.has(normalized)) {
+      return
+    }
+
+    seen.add(normalized)
+    queries.push(query)
+  })
+
+  return queries
+}
+
 const topicFilterAliases: Record<string, string[]> = {
   corporate: ['company', 'corporate', 'lorgar'],
   cyprus: ['cyprus', 'limassol'],
@@ -1482,16 +1531,24 @@ const articleMatchesTagQuery = (article: Article, tagQuery?: null | string) => {
   })
 }
 
+const articleMatchesTagQueries = (article: Article, tagQueries?: null | string | string[]) => {
+  const queries = uniqueTopicQueries(tagQueries)
+
+  return !queries.length || queries.some((query) => articleMatchesTagQuery(article, query))
+}
+
 export const listPublishedArticles = async ({
   languageCode,
   limit = 1000,
   searchQuery,
   tagQuery,
+  tagQueries,
 }: {
   languageCode?: ArticleLanguageCode | null
   limit?: number
   searchQuery?: null | string
   tagQuery?: null | string
+  tagQueries?: null | string[]
 } = {}) => {
   const payload = await getPayload({ config: configPromise })
   const whereClauses: Where[] = [
@@ -1535,7 +1592,9 @@ export const listPublishedArticles = async ({
   } while (page <= totalPages && docs.length < limit)
 
   return docs.slice(0, limit).filter(
-    (article) => articleMatchesSearchQuery(article, searchQuery) && articleMatchesTagQuery(article, tagQuery),
+    (article) =>
+      articleMatchesSearchQuery(article, searchQuery) &&
+      articleMatchesTagQueries(article, tagQueries?.length ? tagQueries : tagQuery),
   )
 }
 
@@ -1945,12 +2004,12 @@ const lorgarArticlesPath = ({
   languageCode?: null | string
   page?: null | number
   searchQuery?: null | string
-  tagQuery?: null | string
+  tagQuery?: null | string | string[]
 }) => {
   const params = new URLSearchParams()
   const normalizedLanguageCode = normalizeArticleLanguageCode(languageCode)
   const query = searchQuery?.trim()
-  const tag = tagQuery?.trim()
+  const tags = uniqueTopicQueries(tagQuery)
 
   if (normalizedLanguageCode) {
     params.set('lang', normalizedLanguageCode)
@@ -1960,8 +2019,8 @@ const lorgarArticlesPath = ({
     params.set('q', query)
   }
 
-  if (tag) {
-    params.set('tag', tag)
+  if (tags.length) {
+    params.set('tag', tags.join(','))
   }
 
   if (page && page > 1) {
@@ -2099,7 +2158,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
         <span className="lorgar-blog-card__stats">
           <span>
             <img alt="" aria-hidden="true" className="lorgar-card-meta-icon" src="/lorgar-figma/eye.svg" />
-            1248 views
+            {formatArticleViewCount(article)} views
           </span>
           <span className="lorgar-blog-card__divider" aria-hidden="true" />
           <span>
@@ -2150,11 +2209,13 @@ const LorgarBlogPagination = ({
   pagination,
   searchQuery,
   tagQuery,
+  tagQueries,
 }: {
   languageCode?: null | string
   pagination: LorgarArticlesPagination
   searchQuery?: null | string
   tagQuery?: null | string
+  tagQueries?: null | string[]
 }) => {
   const { currentPage, totalPages } = pagination
   const hasNextPage = currentPage < totalPages
@@ -2164,7 +2225,7 @@ const LorgarBlogPagination = ({
       languageCode,
       page,
       searchQuery,
-      tagQuery,
+      tagQuery: tagQueries?.length ? tagQueries : tagQuery,
     })
 
   return (
@@ -2220,6 +2281,7 @@ export const LorgarArticlesIndexLayout = ({
   resultLabel,
   searchQuery,
   tagQuery,
+  tagQueries,
 }: {
   articles: Article[]
   languageCode?: null | string
@@ -2229,10 +2291,24 @@ export const LorgarArticlesIndexLayout = ({
   resultLabel?: null | string
   searchQuery?: null | string
   tagQuery?: null | string
+  tagQueries?: null | string[]
 }) => {
-  const isFilteredView = Boolean(searchQuery || tagQuery)
+  const selectedTopicQueries = uniqueTopicQueries(tagQueries?.length ? tagQueries : tagQuery)
+  const selectedTopicSet = new Set(selectedTopicQueries.map((query) => normalizedTopicFilterText(query)))
+  const orderedTopicFilters = [
+    ...lorgarTopicFilters.filter((topic) => selectedTopicSet.has(normalizedTopicFilterText(topic.tagQuery))),
+    ...lorgarTopicFilters.filter((topic) => !selectedTopicSet.has(normalizedTopicFilterText(topic.tagQuery))),
+  ]
+  const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
   const heroTitle = isFilteredView ? pageTitle : 'Blog'
-  const activeTopicQuery = normalizedTopicFilterText(tagQuery)
+  const topicHref = (topicTagQuery: string) => {
+    const topicQuery = normalizedTopicFilterText(topicTagQuery)
+    const nextQueries = selectedTopicSet.has(topicQuery)
+      ? selectedTopicQueries.filter((query) => normalizedTopicFilterText(query) !== topicQuery)
+      : [...selectedTopicQueries, topicTagQuery]
+
+    return lorgarArticlesPath({ languageCode, searchQuery, tagQuery: nextQueries })
+  }
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
@@ -2249,32 +2325,33 @@ export const LorgarArticlesIndexLayout = ({
           <div className="lorgar-blog-list__intro">
             <nav aria-label="Topics" className="lorgar-blog-topics">
               <strong>Topics</strong>
-              {activeTopicQuery ? (
-                <Link
-                  aria-label="Clear selected topic"
-                  className="lorgar-blog-topics__clear"
-                  href={lorgarArticlesPath({ languageCode, searchQuery })}
-                  prefetch={false}
-                >
-                  ×
-                </Link>
-              ) : null}
-              {lorgarTopicFilters.map((topic) => {
+              {orderedTopicFilters.map((topic) => {
                 const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-                const isActive = topicQuery ? activeTopicQuery === topicQuery : !activeTopicQuery
+                const isActive = selectedTopicSet.has(topicQuery)
 
                 return (
                   <Link
                     aria-current={isActive ? 'page' : undefined}
                     className={isActive ? 'is-active' : undefined}
-                    href={lorgarArticlesPath({ languageCode, searchQuery, tagQuery: topic.tagQuery })}
+                    href={topicHref(topic.tagQuery)}
                     key={topic.label}
                     prefetch={false}
                   >
-                    {topic.label}
+                    <span>{topic.label}</span>
+                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">x</span> : null}
                   </Link>
                 )
               })}
+              {selectedTopicQueries.length ? (
+                <Link
+                  aria-label="Clear selected topics"
+                  className="lorgar-blog-topics__clear"
+                  href={lorgarArticlesPath({ languageCode, searchQuery })}
+                  prefetch={false}
+                >
+                  x
+                </Link>
+              ) : null}
             </nav>
             <div>
               <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
@@ -2295,7 +2372,7 @@ export const LorgarArticlesIndexLayout = ({
               languageCode={languageCode}
               pagination={pagination}
               searchQuery={searchQuery}
-              tagQuery={tagQuery}
+              tagQueries={selectedTopicQueries}
             />
           ) : null}
         </section>
@@ -2367,7 +2444,13 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
   const image = articlePrimaryImage(article)
 
   return (
-    <Link className="lorgar-sidebar-card" href={href} prefetch={false}>
+    <Link
+      className="lorgar-sidebar-card"
+      data-published-at={articlePublishedTime(article)}
+      data-view-count={articleViewCount(article)}
+      href={href}
+      prefetch={false}
+    >
       {isMedia(image) ? (
         <SafeImage
           alt={image.alt || article.title}
@@ -2398,8 +2481,8 @@ const LorgarArticleSidebar = ({
       inferArticleLanguageCode(candidate) === currentLanguageCode &&
       Boolean(articlePrimaryImage(candidate)),
   )
-  const recent = siblingArticles.slice(0, 3)
-  const popular = siblingArticles.slice(3, 6)
+  const recent = [...siblingArticles].sort(compareArticlesByPublishedDateDesc).slice(0, 3)
+  const popular = [...siblingArticles].sort(compareArticlesByViewsDesc).slice(0, 3)
   const topics = publicArticleTags(article).slice(0, 6)
   const fallbackTopic = article.contentType || article.category || 'Article'
 

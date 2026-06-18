@@ -384,6 +384,17 @@ export const ArticlesCollection: CollectionConfig = {
       },
     },
     {
+      name: 'viewCount',
+      type: 'number',
+      admin: {
+        description: 'Public view count shown on LORGAR blog cards and used for Popular news sorting.',
+        position: 'sidebar',
+      },
+      defaultValue: 1248,
+      label: 'Views',
+      min: 0,
+    },
+    {
       type: 'tabs',
       tabs: [
         {
