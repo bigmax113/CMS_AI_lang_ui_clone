@@ -2088,10 +2088,11 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
           className="lorgar-blog-card__image"
           fallbackSrc={lorgarCardFallbackImage(article)}
           fileName={image.filename}
+          loading="eager"
           src={mediaURL(image)}
         />
       ) : (
-        <img alt={article.title} className="lorgar-blog-card__image" src={lorgarCardFallbackImage(article)} />
+        <img alt={article.title} className="lorgar-blog-card__image" loading="eager" src={lorgarCardFallbackImage(article)} />
       )}
       <strong className="lorgar-blog-card__title">{article.title}</strong>
       <span className="lorgar-blog-card__footer">
