@@ -2231,17 +2231,17 @@ const LorgarBlogPagination = ({
   return (
     <nav aria-label="Article pages" className="lorgar-blog-pagination">
       {hasNextPage ? (
-        <Link className="lorgar-blog-pagination__more" href={pageHref(currentPage + 1)} prefetch={false}>
+        <a className="lorgar-blog-pagination__more" href={pageHref(currentPage + 1)}>
           More articles
-        </Link>
+        </a>
       ) : (
         <span className="lorgar-blog-pagination__more is-disabled">More articles</span>
       )}
       <div className="lorgar-blog-pagination__pages">
         {hasPreviousPage ? (
-          <Link aria-label="Previous page" href={pageHref(currentPage - 1)} prefetch={false}>
+          <a aria-label="Previous page" href={pageHref(currentPage - 1)}>
             ‹
-          </Link>
+          </a>
         ) : (
           <span aria-hidden="true" className="is-disabled">‹</span>
         )}
@@ -2255,15 +2255,15 @@ const LorgarBlogPagination = ({
               {item}
             </span>
           ) : (
-            <Link href={pageHref(item)} key={item} prefetch={false}>
+            <a href={pageHref(item)} key={item}>
               {item}
-            </Link>
+            </a>
           ),
         )}
         {hasNextPage ? (
-          <Link aria-label="Next page" href={pageHref(currentPage + 1)} prefetch={false}>
+          <a aria-label="Next page" href={pageHref(currentPage + 1)}>
             ›
-          </Link>
+          </a>
         ) : (
           <span aria-hidden="true" className="is-disabled">›</span>
         )}
@@ -2330,27 +2330,25 @@ export const LorgarArticlesIndexLayout = ({
                 const isActive = selectedTopicSet.has(topicQuery)
 
                 return (
-                  <Link
+                  <a
                     aria-current={isActive ? 'page' : undefined}
                     className={isActive ? 'is-active' : undefined}
                     href={topicHref(topic.tagQuery)}
                     key={topic.label}
-                    prefetch={false}
                   >
                     <span>{topic.label}</span>
                     {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">x</span> : null}
-                  </Link>
+                  </a>
                 )
               })}
               {selectedTopicQueries.length ? (
-                <Link
+                <a
                   aria-label="Clear selected topics"
                   className="lorgar-blog-topics__clear"
                   href={lorgarArticlesPath({ languageCode, searchQuery })}
-                  prefetch={false}
                 >
                   x
-                </Link>
+                </a>
               ) : null}
             </nav>
             <div>
