@@ -8131,6 +8131,13 @@ main:has(.public-content--lorgar),
     margin-top: 20px !important;
     min-width: 264px !important;
   }
+
+  .public-content--lorgar .lorgar-nav-dropdown:not([open]):not(:hover) > summary {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: #ffffff !important;
+  }
 }
 
 .public-content--lorgar.public-content--index .lorgar-blog-sort {
