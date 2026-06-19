@@ -2364,7 +2364,6 @@ export const LorgarArticlesIndexLayout = ({
                     key={topic.label}
                   >
                     <span>{topic.label}</span>
-                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">x</span> : null}
                   </a>
                 )
               })}
@@ -2374,7 +2373,7 @@ export const LorgarArticlesIndexLayout = ({
                   className="lorgar-blog-topics__clear"
                   href={lorgarArticlesPath({ languageCode, searchQuery, sortMode })}
                 >
-                  x
+                  Clear all filters
                 </a>
               ) : null}
             </nav>
@@ -2520,14 +2519,14 @@ const LorgarArticleSidebar = ({
 }) => {
   const currentID = String(article.id)
   const currentLanguageCode = inferArticleLanguageCode(article)
-  const siblingArticles = recentArticles.filter(
+  const sidebarArticles = recentArticles.filter(
     (candidate) =>
-      String(candidate.id) !== currentID &&
       inferArticleLanguageCode(candidate) === currentLanguageCode &&
       Boolean(articlePrimaryImage(candidate)),
   )
+  const siblingArticles = sidebarArticles.filter((candidate) => String(candidate.id) !== currentID)
   const recent = [...siblingArticles].sort(compareArticlesByPublishedDateDesc).slice(0, 3)
-  const popular = [...siblingArticles].sort(compareArticlesByViewsDesc).slice(0, 3)
+  const popular = [...sidebarArticles].sort(compareArticlesByViewsDesc).slice(0, 3)
   const topics = publicArticleTags(article).slice(0, 6)
   const fallbackTopic = article.contentType || article.category || 'Article'
 
@@ -2571,7 +2570,7 @@ const LorgarCTA = () => (
   <section className="lorgar-cta-strip" aria-label="Contact LORGAR">
     <strong>Interested in working with LORGAR?</strong>
     <div>
-      <Link href="/for-users" prefetch={false}>For partners</Link>
+      <Link href="/for-users" prefetch={false}>BECOME PARTNER</Link>
       <Link href="/about" prefetch={false}>Contact us</Link>
     </div>
   </section>
@@ -2692,7 +2691,6 @@ export const LorgarArticleLayout = ({
   const publishedDate = article.publishedAt || article.createdAt
   const coverImage = articlePrimaryImage(article)
   const kicker = article.contentType || article.category || 'Article'
-  const leadSummary = publicLeadText({ content: article.content, summary })
 
   return (
     <div className="public-content public-content--lorgar">
@@ -2711,7 +2709,6 @@ export const LorgarArticleLayout = ({
               <span>{kicker}</span>
             </div>
             <h1>{article.title}</h1>
-            {leadSummary ? <p className="lorgar-article-summary">{leadSummary}</p> : null}
             <LorgarMeta article={article} publishedAt={publishedDate} />
             {isMedia(coverImage) ? (
               <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
