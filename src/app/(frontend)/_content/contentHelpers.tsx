@@ -2117,7 +2117,7 @@ const LorgarHeader = ({
             )}
           </div>
         </details>
-        <details className="lorgar-header__mobile-menu" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
+        <details className="lorgar-header__mobile-menu">
           <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
           <LorgarPrimaryNav className="lorgar-header__mobile-nav" />
         </details>
