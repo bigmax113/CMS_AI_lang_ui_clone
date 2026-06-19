@@ -7825,18 +7825,20 @@ main:has(.public-content--lorgar),
 .public-content--lorgar .lorgar-header__nav a:hover,
 .public-content--lorgar .lorgar-header__nav a:focus-visible,
 .public-content--lorgar .lorgar-nav-dropdown summary:hover,
-.public-content--lorgar .lorgar-nav-dropdown summary:focus-visible,
+.public-content--lorgar .lorgar-nav-dropdown summary:focus-visible {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #c132ff !important;
+}
+
 .public-content--lorgar .lorgar-header__language summary:hover,
 .public-content--lorgar .lorgar-header__language summary:focus-visible {
-  background: #ffffff !important;
-  border-color: #ffffff !important;
   color: #c132ff !important;
 }
 
 .public-content--lorgar .lorgar-header__nav a,
-.public-content--lorgar .lorgar-nav-dropdown > summary,
-.public-content--lorgar .lorgar-header__language summary {
-  min-height: 52px !important;
+.public-content--lorgar .lorgar-nav-dropdown > summary {
+  min-height: 0 !important;
 }
 
 .public-content--lorgar .lorgar-header__chevron,

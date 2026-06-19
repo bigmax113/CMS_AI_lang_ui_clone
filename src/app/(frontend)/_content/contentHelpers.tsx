@@ -1823,11 +1823,13 @@ const lorgarFigmaSocialIconSrc: Partial<Record<LorgarIconName, string>> = {
   youtube: '/lorgar-figma/social-youtube.svg',
 }
 
+const lorgarFigmaSocialIconVersion = '20260619-social-icons-v2'
+
 const LorgarIcon = ({ name }: { name: LorgarIconName }) => {
   const figmaIconSrc = lorgarFigmaSocialIconSrc[name]
 
   if (figmaIconSrc) {
-    return <img alt="" aria-hidden="true" className="lorgar-ui-icon" src={figmaIconSrc} />
+    return <img alt="" aria-hidden="true" className="lorgar-ui-icon" src={`${figmaIconSrc}?v=${lorgarFigmaSocialIconVersion}`} />
   }
 
   return (
