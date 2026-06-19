@@ -1928,6 +1928,16 @@ const LorgarExclusiveMenuScript = () => (
       if (details !== target) details.open = false;
     });
   }, true);
+  document.addEventListener('mouseout', (event) => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const details = target.closest('details.lorgar-nav-dropdown[data-lorgar-exclusive-menu]');
+    if (!details || !details.open) return;
+    const related = event.relatedTarget;
+    if (related instanceof Node && details.contains(related)) return;
+    details.open = false;
+  }, true);
 })();`,
     }}
   />
@@ -2369,6 +2379,7 @@ export const LorgarArticlesIndexLayout = ({
                     key={topic.label}
                   >
                     <span>{topic.label}</span>
+                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
                   </a>
                 )
               })}
@@ -2537,7 +2548,7 @@ const LorgarArticleSidebar = ({
 
   return (
     <aside className="lorgar-sidebar" aria-label="Article sidebar">
-      <section className="lorgar-sidebar__panel">
+      <section className="lorgar-sidebar__panel lorgar-sidebar__panel--topics">
         <h2>Topics</h2>
         <div className="lorgar-topic-list">
           {(topics.length ? topics : [fallbackTopic]).map((tag) => (
@@ -2548,7 +2559,7 @@ const LorgarArticleSidebar = ({
         </div>
       </section>
       {recent.length ? (
-        <section className="lorgar-sidebar__panel">
+        <section className="lorgar-sidebar__panel lorgar-sidebar__panel--recent">
           <h2>Recent news</h2>
           <div className="lorgar-sidebar__cards">
             {recent.map((item) => (
@@ -2558,7 +2569,7 @@ const LorgarArticleSidebar = ({
         </section>
       ) : null}
       {popular.length ? (
-        <section className="lorgar-sidebar__panel">
+        <section className="lorgar-sidebar__panel lorgar-sidebar__panel--popular">
           <h2>Popular news</h2>
           <div className="lorgar-sidebar__cards">
             {popular.map((item) => (
