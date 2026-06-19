@@ -2167,6 +2167,9 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
       ) : (
         <img alt={article.title} className="lorgar-blog-card__image" loading="eager" src={lorgarCardFallbackImage(article)} />
       )}
+      <span aria-hidden="true" className="lorgar-blog-card__hover">
+        READ MORE
+      </span>
       <strong className="lorgar-blog-card__title">{article.title}</strong>
       <span className="lorgar-blog-card__footer">
         <span className="lorgar-blog-card__stats">

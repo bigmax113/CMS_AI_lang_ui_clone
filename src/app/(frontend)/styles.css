@@ -8033,3 +8033,69 @@ main:has(.public-content--lorgar),
     white-space: nowrap !important;
   }
 }
+
+/* Lorgar QA v12: verified interaction layer */
+.public-content--lorgar.public-content--index a.lorgar-blog-card::after {
+  content: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__hover {
+  align-items: center !important;
+  background: #c132ff !important;
+  border-radius: 4px !important;
+  box-shadow: 0 14px 36px rgba(193, 50, 255, 0.42) !important;
+  color: #ffffff !important;
+  display: inline-flex !important;
+  font-family: var(--lorgar-font-display) !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  height: 48px !important;
+  justify-content: center !important;
+  left: 50% !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  min-width: 148px !important;
+  opacity: 0 !important;
+  padding: 0 28px !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  text-transform: uppercase !important;
+  top: 266px !important;
+  transform: translate(-50%, -50%) !important;
+  transition: opacity 160ms ease !important;
+  z-index: 60 !important;
+}
+
+.public-content--lorgar.public-content--index a.lorgar-blog-card:hover .lorgar-blog-card__hover,
+.public-content--lorgar.public-content--index a.lorgar-blog-card:focus-visible .lorgar-blog-card__hover {
+  opacity: 1 !important;
+}
+
+@media (max-width: 900px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-card__hover,
+  .public-content--lorgar.public-content--index a.lorgar-blog-card::before,
+  .public-content--lorgar.public-content--index a.lorgar-blog-card::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  .public-content--lorgar .lorgar-header__mobile-menu[open] > .lorgar-header__mobile-nav {
+    background: #00040d !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.56) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    left: 16px !important;
+    max-height: calc(100dvh - 88px) !important;
+    overflow-y: auto !important;
+    padding: 14px !important;
+    position: fixed !important;
+    right: 16px !important;
+    top: 72px !important;
+    width: auto !important;
+    z-index: 9999 !important;
+  }
+}
