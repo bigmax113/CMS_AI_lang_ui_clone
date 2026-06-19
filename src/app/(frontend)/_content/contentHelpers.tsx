@@ -610,6 +610,8 @@ const compareArticlesByViewsDesc = (left: Article, right: Article) => {
   return viewsDifference || compareArticlesByPublishedDateDesc(left, right)
 }
 
+export type ArticleSortMode = 'latest' | 'views'
+
 const parseURL = (value: string) => {
   try {
     return new URL(value)
@@ -1541,12 +1543,14 @@ export const listPublishedArticles = async ({
   languageCode,
   limit = 1000,
   searchQuery,
+  sortMode = 'latest',
   tagQuery,
   tagQueries,
 }: {
   languageCode?: ArticleLanguageCode | null
   limit?: number
   searchQuery?: null | string
+  sortMode?: ArticleSortMode
   tagQuery?: null | string
   tagQueries?: null | string[]
 } = {}) => {
@@ -1591,10 +1595,14 @@ export const listPublishedArticles = async ({
     page += 1
   } while (page <= totalPages && docs.length < limit)
 
-  return docs.slice(0, limit).filter(
+  const filteredArticles = docs.slice(0, limit).filter(
     (article) =>
       articleMatchesSearchQuery(article, searchQuery) &&
       articleMatchesTagQueries(article, tagQueries?.length ? tagQueries : tagQuery),
+  )
+
+  return [...filteredArticles].sort(
+    sortMode === 'views' ? compareArticlesByViewsDesc : compareArticlesByPublishedDateDesc,
   )
 }
 
@@ -1999,11 +2007,13 @@ const lorgarArticlesPath = ({
   languageCode,
   page,
   searchQuery,
+  sortMode,
   tagQuery,
 }: {
   languageCode?: null | string
   page?: null | number
   searchQuery?: null | string
+  sortMode?: ArticleSortMode | null
   tagQuery?: null | string | string[]
 }) => {
   const params = new URLSearchParams()
@@ -2021,6 +2031,10 @@ const lorgarArticlesPath = ({
 
   if (tags.length) {
     params.set('tag', tags.join(','))
+  }
+
+  if (sortMode === 'views') {
+    params.set('sort', 'views')
   }
 
   if (page && page > 1) {
@@ -2208,12 +2222,14 @@ const LorgarBlogPagination = ({
   languageCode,
   pagination,
   searchQuery,
+  sortMode,
   tagQuery,
   tagQueries,
 }: {
   languageCode?: null | string
   pagination: LorgarArticlesPagination
   searchQuery?: null | string
+  sortMode?: ArticleSortMode
   tagQuery?: null | string
   tagQueries?: null | string[]
 }) => {
@@ -2225,6 +2241,7 @@ const LorgarBlogPagination = ({
       languageCode,
       page,
       searchQuery,
+      sortMode,
       tagQuery: tagQueries?.length ? tagQueries : tagQuery,
     })
 
@@ -2280,6 +2297,7 @@ export const LorgarArticlesIndexLayout = ({
   pagination,
   resultLabel,
   searchQuery,
+  sortMode = 'latest',
   tagQuery,
   tagQueries,
 }: {
@@ -2290,6 +2308,7 @@ export const LorgarArticlesIndexLayout = ({
   pagination?: LorgarArticlesPagination
   resultLabel?: null | string
   searchQuery?: null | string
+  sortMode?: ArticleSortMode
   tagQuery?: null | string
   tagQueries?: null | string[]
 }) => {
@@ -2300,6 +2319,7 @@ export const LorgarArticlesIndexLayout = ({
     ...lorgarTopicFilters.filter((topic) => !selectedTopicSet.has(normalizedTopicFilterText(topic.tagQuery))),
   ]
   const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
+  const isPopularSort = sortMode === 'views'
   const heroTitle = isFilteredView ? pageTitle : 'Blog'
   const topicHref = (topicTagQuery: string) => {
     const topicQuery = normalizedTopicFilterText(topicTagQuery)
@@ -2307,8 +2327,15 @@ export const LorgarArticlesIndexLayout = ({
       ? selectedTopicQueries.filter((query) => normalizedTopicFilterText(query) !== topicQuery)
       : [...selectedTopicQueries, topicTagQuery]
 
-    return lorgarArticlesPath({ languageCode, searchQuery, tagQuery: nextQueries })
+    return lorgarArticlesPath({ languageCode, searchQuery, sortMode, tagQuery: nextQueries })
   }
+  const sortHref = (nextSortMode: ArticleSortMode) =>
+    lorgarArticlesPath({
+      languageCode,
+      searchQuery,
+      sortMode: nextSortMode,
+      tagQuery: selectedTopicQueries,
+    })
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
@@ -2345,15 +2372,34 @@ export const LorgarArticlesIndexLayout = ({
                 <a
                   aria-label="Clear selected topics"
                   className="lorgar-blog-topics__clear"
-                  href={lorgarArticlesPath({ languageCode, searchQuery })}
+                  href={lorgarArticlesPath({ languageCode, searchQuery, sortMode })}
                 >
                   x
                 </a>
               ) : null}
             </nav>
+            <nav aria-label="Article sorting" className="lorgar-blog-sort">
+              <strong>Sort by</strong>
+              <a
+                aria-current={!isPopularSort ? 'page' : undefined}
+                className={!isPopularSort ? 'is-active' : undefined}
+                href={sortHref('latest')}
+              >
+                Latest
+              </a>
+              <a
+                aria-current={isPopularSort ? 'page' : undefined}
+                className={isPopularSort ? 'is-active' : undefined}
+                href={sortHref('views')}
+              >
+                Popular
+              </a>
+            </nav>
             <div>
-              <span className="lorgar-blog-list__kicker">{isFilteredView ? 'Filtered articles' : 'Latest news'}</span>
-              <h2>{isFilteredView ? resultLabel || 'Results' : 'Latest news'}</h2>
+              <span className="lorgar-blog-list__kicker">
+                {isFilteredView ? 'Filtered articles' : isPopularSort ? 'Popular news' : 'Latest news'}
+              </span>
+              <h2>{isFilteredView ? resultLabel || 'Results' : isPopularSort ? 'Popular news' : 'Latest news'}</h2>
             </div>
           </div>
           {articles.length ? (
@@ -2370,6 +2416,7 @@ export const LorgarArticlesIndexLayout = ({
               languageCode={languageCode}
               pagination={pagination}
               searchQuery={searchQuery}
+              sortMode={sortMode}
               tagQueries={selectedTopicQueries}
             />
           ) : null}

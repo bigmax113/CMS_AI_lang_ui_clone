@@ -5,6 +5,7 @@ import {
 } from '@/lib/articleTranslations'
 
 import {
+  type ArticleSortMode,
   LorgarArticlesIndexLayout,
   createSEOPageMetadata,
   listPublishedArticles,
@@ -30,6 +31,8 @@ const queryValues = (value: string | string[] | undefined) =>
     .map((item) => item.trim())
     .filter(Boolean)
 const articlesPerPage = 6
+const parseSortMode = (value: string | string[] | undefined): ArticleSortMode =>
+  firstQueryValue(value) === 'views' ? 'views' : 'latest'
 
 const parsePage = (value: string | string[] | undefined) => {
   const page = Number.parseInt(firstQueryValue(value) || '1', 10)
@@ -42,11 +45,13 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
   const searchQuery = firstQueryValue(query?.q)?.trim() || ''
   const tagQueries = [...new Set(queryValues(query?.tag))]
   const requestedPage = parsePage(query?.page)
+  const sortMode = parseSortMode(query?.sort)
   const languageCode = normalizeArticleLanguageCode(firstQueryValue(query?.lang) || 'en')
   const allArticles = await listPublishedArticles({
     languageCode,
     limit: 1000,
     searchQuery,
+    sortMode,
     tagQueries,
   })
   const totalPages = Math.max(1, Math.ceil(allArticles.length / articlesPerPage))
@@ -57,6 +62,7 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
   const resultContext = [
     searchQuery ? `search "${searchQuery}"` : null,
     tagQueries.length ? `topics ${tagQueries.map((tag) => `"${tag}"`).join(', ')}` : null,
+    sortMode === 'views' ? 'sorted by views' : null,
   ].filter(Boolean).join(' and ')
   const resultLabel = resultContext
     ? `Results for ${resultContext} in ${languageLabel}`
@@ -74,6 +80,7 @@ export default async function ArticlesIndexPage({ searchParams }: PageProps) {
       }}
       resultLabel={resultLabel}
       searchQuery={searchQuery}
+      sortMode={sortMode}
       tagQueries={tagQueries}
     />
   )
