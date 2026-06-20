@@ -8141,7 +8141,7 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar.public-content--index .lorgar-blog-sort {
-  display: none !important;
+  display: flex !important;
 }
 
 .public-content--lorgar.public-content--index .lorgar-blog-list__intro:has(.lorgar-blog-topics__clear) > div {

@@ -522,13 +522,14 @@ const contentUploadMedia = (content: Article['content'] | BlogPost['content'] | 
 const primaryImageFromContent = (content?: Article['content'] | BlogPost['content'] | null) => {
   const directUpload = contentUploadMedia(content)
 
-  if (directUpload) {
+  if (directUpload && !isBlockedLorgarFrontendMedia(directUpload)) {
     return directUpload
   }
 
   const imageBlock = collectBlockFields(content, 'imageBlock')
     .map(imageBlockFromFields)
     .map((item) => item.image)
+    .filter((image) => !isBlockedLorgarFrontendMedia(image))
     .find(isMedia)
 
   if (imageBlock) {
@@ -538,6 +539,7 @@ const primaryImageFromContent = (content?: Article['content'] | BlogPost['conten
   const imageRow = collectBlockFields(content, 'imageRow')
     .flatMap(imageRowFromFields)
     .map((item) => item.image)
+    .filter((image) => !isBlockedLorgarFrontendMedia(image))
     .find(isMedia)
 
   if (imageRow) {
@@ -547,8 +549,33 @@ const primaryImageFromContent = (content?: Article['content'] | BlogPost['conten
   return null
 }
 
+const isBlockedLorgarFrontendMedia = (media?: Media | null | number) => {
+  if (!isMedia(media)) {
+    return false
+  }
+
+  const persistedMedia = media as PersistedMedia
+  const fingerprint = [
+    persistedMedia.externalFileURL,
+    media.externalImageURL,
+    media.alt,
+    media.filename,
+    media.thumbnailURL,
+    media.url,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return /\bgrok-test-blog(?:-inline-\d+)?\.(?:jpe?g|png|webp)\b/u.test(fingerprint) ||
+    /\basbis\b/u.test(fingerprint) ||
+    /\bplugplay_750x350\b/u.test(fingerprint)
+}
+
 const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage'>) =>
-  (isMedia(article.coverImage) ? article.coverImage : null) || primaryImageFromContent(article.content)
+  (isMedia(article.coverImage) && !isBlockedLorgarFrontendMedia(article.coverImage)
+    ? article.coverImage
+    : null) || primaryImageFromContent(article.content)
 
 const articleReadingTime = ({
   content,
@@ -2188,14 +2215,13 @@ const LorgarHeader = ({
 }
 
 const lorgarCardFallbackImages = [
+  '/lorgar-blog-hero.webp',
   '/lorgar-figma/card-fallbacks/card-01.webp',
   '/lorgar-figma/card-fallbacks/card-02.webp',
-  '/lorgar-figma/card-fallbacks/card-03.webp',
   '/lorgar-figma/card-fallbacks/card-04.webp',
   '/lorgar-figma/card-fallbacks/card-05.webp',
   '/lorgar-figma/card-fallbacks/card-06.webp',
   '/lorgar-figma/card-fallbacks/card-07.webp',
-  '/lorgar-figma/card-fallbacks/card-08.webp',
 ]
 
 const stableStringHash = (value: string) =>
@@ -2203,6 +2229,36 @@ const stableStringHash = (value: string) =>
 
 const lorgarCardFallbackImage = (article: Article) => {
   const key = `${article.slug || ''}:${article.title || ''}:${article.id || ''}`
+  const lowerKey = key.toLowerCase()
+
+  if (/\b(?:cha41|chair|racing|cockpit)\b/u.test(lowerKey)) {
+    return '/lorgar-blog-hero.webp'
+  }
+
+  if (/\b(?:performance|bootcamp|lab|riga)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-01.webp'
+  }
+
+  if (/\b(?:mouse|mice|sensor|polling)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-06.webp'
+  }
+
+  if (/\b(?:headset|audio|streaming|creator)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-04.webp'
+  }
+
+  if (/\b(?:mousepad|mat)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-05.webp'
+  }
+
+  if (/\b(?:rainbow|siege|comic|rankings|trophy|tournament|esports|astral)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-07.webp'
+  }
+
+  if (/\b(?:platform|ecosystem|solution|setup)\b/u.test(lowerKey)) {
+    return '/lorgar-figma/card-fallbacks/card-01.webp'
+  }
+
   const index = stableStringHash(key) % lorgarCardFallbackImages.length
 
   return lorgarCardFallbackImages[index]
@@ -2565,7 +2621,9 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
           fileName={image.filename}
           src={mediaURL(image)}
         />
-      ) : null}
+      ) : (
+        <img alt={article.title} loading="lazy" src={lorgarCardFallbackImage(article)} />
+      )}
       <span>
         <strong>{article.title}</strong>
         {publishedDate ? <small>{publishedDate}</small> : null}
@@ -2585,8 +2643,7 @@ const LorgarArticleSidebar = ({
   const currentLanguageCode = inferArticleLanguageCode(article)
   const sidebarArticles = recentArticles.filter(
     (candidate) =>
-      inferArticleLanguageCode(candidate) === currentLanguageCode &&
-      Boolean(articlePrimaryImage(candidate)),
+      inferArticleLanguageCode(candidate) === currentLanguageCode,
   )
   const siblingArticles = sidebarArticles.filter((candidate) => String(candidate.id) !== currentID)
   const recent = [...siblingArticles].sort(compareArticlesByPublishedDateDesc).slice(0, 3)
@@ -2696,7 +2753,9 @@ const LorgarRelatedCard = ({ article }: { article: Article }) => {
           fileName={image.filename}
           src={mediaURL(image)}
         />
-      ) : null}
+      ) : (
+        <img alt={article.title} className="lorgar-related-card__image" loading="lazy" src={lorgarCardFallbackImage(article)} />
+      )}
       <span>
         <strong>{article.title}</strong>
         {summary ? <p>{summary}</p> : null}
@@ -2717,8 +2776,7 @@ const LorgarRelatedSection = ({
   const items = recentArticles.filter(
     (candidate) =>
       String(candidate.id) !== currentID &&
-      inferArticleLanguageCode(candidate) === currentLanguageCode &&
-      Boolean(articlePrimaryImage(candidate)),
+      inferArticleLanguageCode(candidate) === currentLanguageCode,
   )
 
   if (!items.length) {
@@ -2776,7 +2834,9 @@ export const LorgarArticleLayout = ({
             <LorgarMeta article={article} publishedAt={publishedDate} />
             {isMedia(coverImage) ? (
               <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
-            ) : null}
+            ) : (
+              <img alt={article.title} className="lorgar-article-cover" loading="eager" src={lorgarCardFallbackImage(article)} />
+            )}
             <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} />
             <div className="lorgar-article-body">{children}</div>
             <LorgarCTA />
