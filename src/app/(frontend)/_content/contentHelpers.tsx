@@ -1606,6 +1606,54 @@ export const listPublishedArticles = async ({
   )
 }
 
+export const listPublishedArticlesPage = async ({
+  languageCode,
+  limit = 6,
+  page = 1,
+  sortMode = 'latest',
+}: {
+  languageCode?: ArticleLanguageCode | null
+  limit?: number
+  page?: number
+  sortMode?: ArticleSortMode
+} = {}) => {
+  const payload = await getPayload({ config: configPromise })
+  const whereClauses: Where[] = [
+    {
+      status: {
+        equals: 'published',
+      },
+    },
+  ]
+
+  if (languageCode) {
+    whereClauses.push({
+      languageCode: {
+        equals: languageCode,
+      },
+    })
+  }
+
+  const result = await payload.find({
+    collection: 'articles',
+    depth: 1,
+    limit: Math.min(Math.max(limit, 1), 100),
+    overrideAccess: true,
+    page: Math.max(1, page),
+    sort: sortMode === 'views' ? '-viewCount' : '-publishedAt',
+    where: {
+      and: whereClauses,
+    },
+  })
+
+  return {
+    articles: result.docs,
+    currentPage: result.page || page,
+    totalItems: result.totalDocs || result.docs.length,
+    totalPages: result.totalPages || 1,
+  }
+}
+
 export type ArticleLanguageAlternate = {
   code: string
   displayCode: string
