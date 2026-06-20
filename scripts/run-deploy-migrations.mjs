@@ -4,6 +4,7 @@ const { Client } = pg
 
 const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL
 const schemaName = process.env.PAYLOAD_DB_SCHEMA || 'cms_ai'
+const migrationTimeoutMs = Number.parseInt(process.env.DEPLOY_MIGRATION_TIMEOUT_MS || '30000', 10)
 
 if (!connectionString) {
   console.log('[deploy-migrations] DATABASE_URL/POSTGRES_URL is not set; skipping.')
@@ -20,11 +21,17 @@ const schema = quoteIdent(schemaName)
 const client = new Client({
   connectionString,
   ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined,
+  connectionTimeoutMillis: Math.min(Math.max(migrationTimeoutMs, 5000), 30000),
+  query_timeout: migrationTimeoutMs,
+  statement_timeout: migrationTimeoutMs,
 })
 
-await client.connect()
+let connected = false
 
 try {
+  await client.connect()
+  connected = true
+
   await client.query(`
     ALTER TABLE ${schema}."articles"
       ADD COLUMN IF NOT EXISTS "view_count" numeric DEFAULT 1248;
@@ -87,6 +94,11 @@ try {
   `)
 
   console.log('[deploy-migrations] Article view count migration is ready.')
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error)
+  console.warn(`[deploy-migrations] Non-critical migration skipped: ${message}`)
 } finally {
-  await client.end()
+  if (connected) {
+    await client.end()
+  }
 }
