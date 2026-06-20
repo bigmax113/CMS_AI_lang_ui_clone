@@ -569,7 +569,9 @@ const isBlockedLorgarFrontendMedia = (media?: Media | null | number) => {
 
   return /\bgrok-test-blog(?:-inline-\d+)?\.(?:jpe?g|png|webp)\b/u.test(fingerprint) ||
     /\basbis\b/u.test(fingerprint) ||
-    /\bplugplay_750x350\b/u.test(fingerprint)
+    /\bplugplay_750x350\b/u.test(fingerprint) ||
+    /\b(?:lorgar-esports-stage|lorgar-product-closeup|lorgar-rankings-cover|lorgar-platform-cover)\b/u.test(fingerprint) ||
+    /\blorgar (?:esports team and event stage|product detail close-up|product and audience showcase)\b/u.test(fingerprint)
 }
 
 const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage'>) =>
