@@ -143,14 +143,6 @@ export const mediaURL = (media?: Media | null | number) => {
 
   const persistedMedia = media as PersistedMedia
 
-  if (persistedMedia.driveFileID && typeof persistedMedia.id !== 'undefined') {
-    return `/api/media/${encodeURIComponent(String(persistedMedia.id))}/asset`
-  }
-
-  if (persistedMedia.externalFileURL) {
-    return persistedMedia.externalFileURL
-  }
-
   if (media.externalImageURL) {
     return media.externalImageURL
   }
@@ -161,6 +153,14 @@ export const mediaURL = (media?: Media | null | number) => {
 
   if (media.url && !isLocalPayloadMediaURL(media.url)) {
     return media.url
+  }
+
+  if (persistedMedia.externalFileURL) {
+    return persistedMedia.externalFileURL
+  }
+
+  if (persistedMedia.driveFileID && typeof persistedMedia.id !== 'undefined') {
+    return `/api/media/${encodeURIComponent(String(persistedMedia.id))}/asset`
   }
 
   return null
