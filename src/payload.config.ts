@@ -43,6 +43,7 @@ const payloadSecret =
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
 const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
+const deployMigrationTimeoutMs = Number.parseInt(process.env.DEPLOY_MIGRATION_TIMEOUT_MS || '30000', 10)
 const { Client } = pg
 const plugPlayDemoImages: Record<string, string> = {
   'PlugPlay_750x350.jpg': '/seo/grok-test-blog.jpeg',
@@ -68,6 +69,9 @@ const ensureArticleViewCountSchema = async () => {
   const client = new Client({
     connectionString,
     ssl: process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined,
+    connectionTimeoutMillis: Math.min(Math.max(deployMigrationTimeoutMs, 5000), 30000),
+    query_timeout: deployMigrationTimeoutMs,
+    statement_timeout: deployMigrationTimeoutMs,
   })
 
   await client.connect()
@@ -798,8 +802,7 @@ export default buildConfig({
     try {
       await ensureArticleViewCountSchema()
     } catch (err) {
-      payload.logger.error({ err, msg: 'Failed to prepare article view count schema' })
-      throw err
+      payload.logger.warn({ err, msg: 'Skipped non-critical article view count schema preparation' })
     }
 
     const adminEmail = process.env.PAYLOAD_ADMIN_EMAIL || 'dev@payloadcms.com'
