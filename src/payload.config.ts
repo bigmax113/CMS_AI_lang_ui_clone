@@ -651,7 +651,15 @@ const ensureSeedMediaDocument = async (
   })
 }
 
-export const ensureLorgarFrontendSeed = async (payload: any) => {
+const shouldSeedLorgarFrontend = ['1', 'true', 'yes'].includes(
+  (process.env.SEED_LORGAR_FRONTEND || '').toLowerCase(),
+)
+
+const shouldOverwriteLorgarFrontendSeed = ['1', 'true', 'yes'].includes(
+  (process.env.SEED_LORGAR_FRONTEND_OVERWRITE || '').toLowerCase(),
+)
+
+const ensureDemoAuthor = async (payload: any) => {
   const demoAuthors = await payload.find({
     collection: authorsSlug,
     limit: 1,
@@ -662,23 +670,29 @@ export const ensureLorgarFrontendSeed = async (payload: any) => {
     },
   })
 
-  let demoAuthorID = demoAuthors.docs[0]?.id
+  const demoAuthorID = demoAuthors.docs[0]?.id
 
-  if (!demoAuthorID) {
-    const author = await payload.create({
-      collection: authorsSlug,
-      data: {
-        name: 'ASBIS Editorial Team',
-        role: 'Content team',
-        shortDescription:
-          'Editorial owner for product guides, knowledge base materials, and AI-assisted CMS content tests.',
-        slug: 'asbis-editorial-team',
-        status: 'active',
-      },
-    })
-
-    demoAuthorID = author.id
+  if (demoAuthorID) {
+    return demoAuthorID
   }
+
+  const author = await payload.create({
+    collection: authorsSlug,
+    data: {
+      name: 'ASBIS Editorial Team',
+      role: 'Content team',
+      shortDescription:
+        'Editorial owner for product guides, knowledge base materials, and AI-assisted CMS content tests.',
+      slug: 'asbis-editorial-team',
+      status: 'active',
+    },
+  })
+
+  return author.id
+}
+
+export const ensureLorgarFrontendSeed = async (payload: any) => {
+  const demoAuthorID = await ensureDemoAuthor(payload)
 
   const seedMediaByKey = Object.fromEntries(
     await Promise.all(
@@ -723,6 +737,10 @@ export const ensureLorgarFrontendSeed = async (payload: any) => {
     }
 
     if (existing.docs[0]) {
+      if (!shouldOverwriteLorgarFrontendSeed) {
+        continue
+      }
+
       await payload.update({
         collection: articlesSlug,
         data,
@@ -938,7 +956,9 @@ export default buildConfig({
       })
     }
 
-    const { authorID: demoAuthorID } = await ensureLorgarFrontendSeed(payload)
+    const { authorID: demoAuthorID } = shouldSeedLorgarFrontend
+      ? await ensureLorgarFrontendSeed(payload)
+      : { authorID: await ensureDemoAuthor(payload) }
 
     const demoArticles = await payload.find({
       collection: articlesSlug,

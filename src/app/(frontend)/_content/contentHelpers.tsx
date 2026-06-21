@@ -568,16 +568,25 @@ const isBlockedLorgarFrontendMedia = (media?: Media | null | number) => {
     .toLowerCase()
 
   return /\bgrok-test-blog(?:-inline-\d+)?\.(?:jpe?g|png|webp)\b/u.test(fingerprint) ||
+    /\/lorgar-figma\/card-fallbacks\//u.test(fingerprint) ||
+    /\blorgar-blog-hero\.webp\b/u.test(fingerprint) ||
     /\basbis\b/u.test(fingerprint) ||
     /\bplugplay_750x350\b/u.test(fingerprint) ||
     /\b(?:lorgar-esports-stage|lorgar-product-closeup|lorgar-rankings-cover|lorgar-platform-cover)\b/u.test(fingerprint) ||
     /\blorgar (?:esports team and event stage|product detail close-up|product and audience showcase)\b/u.test(fingerprint)
 }
 
-const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage'>) =>
+const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage' | 'seo'>) =>
   (isMedia(article.coverImage) && !isBlockedLorgarFrontendMedia(article.coverImage)
     ? article.coverImage
-    : null) || primaryImageFromContent(article.content)
+    : null) ||
+  (isMedia(article.seo?.image) && !isBlockedLorgarFrontendMedia(article.seo.image)
+    ? article.seo.image
+    : null) ||
+  primaryImageFromContent(article.content)
+
+const articleHasPublicFrontendImage = (article: Pick<Article, 'content' | 'coverImage' | 'seo'>) =>
+  Boolean(articlePrimaryImage(article))
 
 const articleReadingTime = ({
   content,
@@ -1624,11 +1633,12 @@ export const listPublishedArticles = async ({
     page += 1
   } while (page <= totalPages && docs.length < limit)
 
-  const filteredArticles = docs.slice(0, limit).filter(
+  const filteredArticles = docs.filter(
     (article) =>
+      articleHasPublicFrontendImage(article) &&
       articleMatchesSearchQuery(article, searchQuery) &&
       articleMatchesTagQueries(article, tagQueries?.length ? tagQueries : tagQuery),
-  )
+  ).slice(0, limit)
 
   return [...filteredArticles].sort(
     sortMode === 'views' ? compareArticlesByViewsDesc : compareArticlesByPublishedDateDesc,
@@ -1646,40 +1656,22 @@ export const listPublishedArticlesPage = async ({
   page?: number
   sortMode?: ArticleSortMode
 } = {}) => {
-  const payload = await getPayload({ config: configPromise })
-  const whereClauses: Where[] = [
-    {
-      status: {
-        equals: 'published',
-      },
-    },
-  ]
-
-  if (languageCode) {
-    whereClauses.push({
-      languageCode: {
-        equals: languageCode,
-      },
-    })
-  }
-
-  const result = await payload.find({
-    collection: 'articles',
-    depth: 1,
-    limit: Math.min(Math.max(limit, 1), 100),
-    overrideAccess: true,
-    page: Math.max(1, page),
-    sort: sortMode === 'views' ? '-viewCount' : '-publishedAt',
-    where: {
-      and: whereClauses,
-    },
+  const safeLimit = Math.min(Math.max(limit, 1), 100)
+  const allArticles = await listPublishedArticles({
+    languageCode,
+    limit: 1000,
+    sortMode,
   })
+  const totalItems = allArticles.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / safeLimit))
+  const currentPage = Math.min(Math.max(1, page), totalPages)
+  const start = (currentPage - 1) * safeLimit
 
   return {
-    articles: result.docs,
-    currentPage: result.page || page,
-    totalItems: result.totalDocs || result.docs.length,
-    totalPages: result.totalPages || 1,
+    articles: allArticles.slice(start, start + safeLimit),
+    currentPage,
+    totalItems,
+    totalPages,
   }
 }
 
