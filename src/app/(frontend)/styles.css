@@ -8483,3 +8483,28 @@ main:has(.public-content--lorgar),
 .public-content--lorgar .lorgar-share__discuss::before {
   content: none !important;
 }
+
+/* Figma typography audit: align blog index topics/meta text to the approved source. */
+.public-content--lorgar.public-content--index .lorgar-blog-topics strong {
+  font-size: 32px !important;
+  font-weight: 400 !important;
+  line-height: 40px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a {
+  font-family: "Noto Sans", var(--lorgar-font-body) !important;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  line-height: 18px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__stats span {
+  font-weight: 600 !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__more {
+  font-family: "Noto Sans", var(--lorgar-font-body) !important;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  line-height: 24px !important;
+}
