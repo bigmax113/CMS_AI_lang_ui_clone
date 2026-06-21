@@ -8426,6 +8426,7 @@ main:has(.public-content--lorgar),
   box-shadow: 0 16px 38px rgba(193, 50, 255, 0.48) !important;
   color: #ffffff !important;
   opacity: 0 !important;
+  transition: none !important;
   z-index: 120 !important;
 }
 
@@ -8437,6 +8438,11 @@ main:has(.public-content--lorgar),
 .public-content--lorgar.public-content--index a.lorgar-blog-card:hover .lorgar-blog-card__hover,
 .public-content--lorgar.public-content--index a.lorgar-blog-card:focus-visible .lorgar-blog-card__hover {
   opacity: 1 !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
+  margin-left: 12px !important;
+  white-space: nowrap !important;
 }
 
 .public-content--lorgar .lorgar-share button,
