@@ -2491,23 +2491,25 @@ export const LorgarArticlesIndexLayout = ({
                 </a>
               ) : null}
             </nav>
-            <nav aria-label="Article sorting" className="lorgar-blog-sort">
-              <strong>Sort by</strong>
-              <a
-                aria-current={!isPopularSort ? 'page' : undefined}
-                className={!isPopularSort ? 'is-active' : undefined}
-                href={sortHref('latest')}
-              >
-                Latest
-              </a>
-              <a
-                aria-current={isPopularSort ? 'page' : undefined}
-                className={isPopularSort ? 'is-active' : undefined}
-                href={sortHref('views')}
-              >
-                Popular
-              </a>
-            </nav>
+            {!isFilteredView ? (
+              <nav aria-label="Article sorting" className="lorgar-blog-sort">
+                <strong>Sort by</strong>
+                <a
+                  aria-current={!isPopularSort ? 'page' : undefined}
+                  className={!isPopularSort ? 'is-active' : undefined}
+                  href={sortHref('latest')}
+                >
+                  Latest
+                </a>
+                <a
+                  aria-current={isPopularSort ? 'page' : undefined}
+                  className={isPopularSort ? 'is-active' : undefined}
+                  href={sortHref('views')}
+                >
+                  Popular
+                </a>
+              </nav>
+            ) : null}
             <div>
               <span className="lorgar-blog-list__kicker">
                 {isFilteredView ? 'Filtered articles' : isPopularSort ? 'Popular news' : 'Latest news'}

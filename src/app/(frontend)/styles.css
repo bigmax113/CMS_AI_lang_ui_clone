@@ -8411,3 +8411,69 @@ main:has(.public-content--lorgar),
     width: 100% !important;
   }
 }
+
+/* fixes 12/13 final closure: keep after every previous override. */
+.public-content--lorgar.public-content--index .lorgar-blog-list__intro:has(.lorgar-blog-topics__clear) .lorgar-blog-sort {
+  display: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-list__intro:has(.lorgar-blog-topics__clear) > div {
+  display: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-card__hover {
+  background: #c132ff !important;
+  box-shadow: 0 16px 38px rgba(193, 50, 255, 0.48) !important;
+  color: #ffffff !important;
+  opacity: 0 !important;
+  z-index: 120 !important;
+}
+
+.public-content--lorgar.public-content--index a.lorgar-blog-card::before {
+  background: rgba(3, 5, 15, 0.58) !important;
+  z-index: 80 !important;
+}
+
+.public-content--lorgar.public-content--index a.lorgar-blog-card:hover .lorgar-blog-card__hover,
+.public-content--lorgar.public-content--index a.lorgar-blog-card:focus-visible .lorgar-blog-card__hover {
+  opacity: 1 !important;
+}
+
+.public-content--lorgar .lorgar-share button,
+.public-content--lorgar .lorgar-share a {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #c132ff !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  min-width: 28px !important;
+  padding: 0 !important;
+  width: 28px !important;
+}
+
+.public-content--lorgar .lorgar-share button:hover,
+.public-content--lorgar .lorgar-share button:focus-visible,
+.public-content--lorgar .lorgar-share a:hover,
+.public-content--lorgar .lorgar-share a:focus-visible {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.public-content--lorgar .lorgar-share__icon {
+  display: block !important;
+  height: 22px !important;
+  object-fit: contain !important;
+  stroke: currentColor !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  stroke-width: 1.9 !important;
+  width: 22px !important;
+}
+
+.public-content--lorgar .lorgar-share__link::before,
+.public-content--lorgar .lorgar-share__like::before,
+.public-content--lorgar .lorgar-share__discuss::before {
+  content: none !important;
+}
