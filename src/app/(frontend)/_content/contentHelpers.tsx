@@ -474,6 +474,7 @@ const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | '
         .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
         .join(' '),
     )
+    .filter((value) => normalizedTopicFilterText(value) !== 'all')
 
   return [...new Set(values)]
 }
@@ -500,7 +501,7 @@ const addLorgarTagFilter = (filters: LorgarTagFilter[], seen: Set<string>, value
 
   const normalized = normalizedTopicFilterText(tagQuery)
 
-  if (!normalized || seen.has(normalized)) {
+  if (!normalized || normalized === 'all' || seen.has(normalized)) {
     return
   }
 
@@ -512,7 +513,7 @@ export const buildLorgarTagFilters = (
   articles: Array<Pick<Article, 'category' | 'contentType' | 'tags'>> = [],
 ): LorgarTagFilter[] => {
   const filters: LorgarTagFilter[] = [{ label: 'ALL', tagQuery: '' }]
-  const seen = new Set<string>([''])
+  const seen = new Set<string>(['', 'all'])
 
   articles.forEach((article) => {
     publicArticleTags(article).forEach((tag) => addLorgarTagFilter(filters, seen, tag))
