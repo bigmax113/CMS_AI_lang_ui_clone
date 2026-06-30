@@ -8508,3 +8508,104 @@ main:has(.public-content--lorgar),
   font-weight: 400 !important;
   line-height: 24px !important;
 }
+/* fixes 14 final-only overrides: menu, tags, footer row, quote/background cleanup. */
+.public-content--lorgar .lorgar-nav-dropdown[open] > div {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics {
+  align-items: center !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics strong {
+  margin-right: 4px !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a {
+  align-items: center !important;
+  display: inline-flex !important;
+  gap: 8px !important;
+  justify-content: center !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics__remove {
+  align-items: center !important;
+  display: inline-flex !important;
+  height: 18px !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  position: static !important;
+  transform: none !important;
+  width: 18px !important;
+}
+
+.public-content--lorgar .public-content__richtext blockquote,
+.public-content--lorgar .public-content__richtext .public-content__callout,
+.public-content--lorgar .public-content__callout:not(blockquote) {
+  background: transparent !important;
+}
+
+.public-content--lorgar .public-content__richtext blockquote strong,
+.public-content--lorgar .public-content__richtext blockquote em,
+.public-content--lorgar .public-content__richtext blockquote p,
+.public-content--lorgar .public-content__richtext .public-content__callout strong,
+.public-content--lorgar .public-content__richtext .public-content__callout em,
+.public-content--lorgar .public-content__richtext .public-content__callout p {
+  color: inherit !important;
+}
+
+.public-content--lorgar .public-content__richtext blockquote a,
+.public-content--lorgar .public-content__richtext .public-content__callout a {
+  color: #c132ff !important;
+}
+
+.public-content--lorgar .lorgar-footer {
+  align-items: center !important;
+  column-gap: clamp(24px, 4vw, 64px) !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  row-gap: 22px !important;
+}
+
+.public-content--lorgar .lorgar-footer__logo {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.public-content--lorgar .lorgar-footer__nav {
+  align-items: center !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: clamp(22px, 3vw, 44px) !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  justify-content: center !important;
+}
+
+.public-content--lorgar .lorgar-footer__social {
+  align-items: center !important;
+  display: flex !important;
+  gap: clamp(14px, 1.8vw, 24px) !important;
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  justify-content: flex-end !important;
+}
+
+.public-content--lorgar .lorgar-footer__legal {
+  align-items: center !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: clamp(20px, 3vw, 44px) !important;
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 900px) {
+  .public-content--lorgar .lorgar-footer {
+    display: flex !important;
+  }
+}
