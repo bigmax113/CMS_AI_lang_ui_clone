@@ -2660,7 +2660,7 @@ const LorgarMeta = ({
   publishedAt?: null | string
 }) => {
   const date = formatArticleMetaDate(publishedAt, article.languageCode)
-  const authorNames = publicArticleAuthorNames(article.authors)
+  const authorNames = defaultPublicAuthorName
 
   return (
     <div className="lorgar-meta">
