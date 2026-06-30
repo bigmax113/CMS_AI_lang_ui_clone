@@ -483,15 +483,6 @@ export type LorgarTagFilter = {
   tagQuery: string
 }
 
-const lorgarDefaultTagFilters: LorgarTagFilter[] = [
-  { label: 'Partnerships', tagQuery: 'Partnerships' },
-  { label: 'Innovation', tagQuery: 'Innovation' },
-  { label: 'Corporate', tagQuery: 'Corporate' },
-  { label: 'Ecosystem', tagQuery: 'Ecosystem' },
-  { label: 'Cyprus', tagQuery: 'Cyprus' },
-  { label: 'Gaming devices', tagQuery: 'Gaming devices' },
-  { label: 'Gaming tournament', tagQuery: 'Gaming tournament' },
-]
 
 const tagLabelFromValue = (value: string) =>
   value
@@ -520,17 +511,9 @@ const addLorgarTagFilter = (filters: LorgarTagFilter[], seen: Set<string>, value
 export const buildLorgarTagFilters = (
   articles: Array<Pick<Article, 'category' | 'contentType' | 'tags'>> = [],
 ): LorgarTagFilter[] => {
-  const filters: LorgarTagFilter[] = []
-  const seen = new Set<string>()
+  const filters: LorgarTagFilter[] = [{ label: 'ALL', tagQuery: '' }]
+  const seen = new Set<string>([''])
 
-  lorgarDefaultTagFilters.forEach((filter) => {
-    const normalized = normalizedTopicFilterText(filter.tagQuery)
-
-    if (normalized && !seen.has(normalized)) {
-      seen.add(normalized)
-      filters.push(filter)
-    }
-  })
   articles.forEach((article) => {
     publicArticleTags(article).forEach((tag) => addLorgarTagFilter(filters, seen, tag))
   })
@@ -2037,29 +2020,65 @@ const LorgarExclusiveMenuScript = () => (
       __html: `(() => {
   if (window.__lorgarExclusiveMenus) return;
   window.__lorgarExclusiveMenus = true;
+  const hoverQuery = window.matchMedia ? window.matchMedia('(hover: hover) and (pointer: fine)') : { matches: false };
   const closeMenus = (root, except) => {
     root.querySelectorAll('details[data-lorgar-exclusive-menu][open]').forEach((details) => {
       if (details !== except) details.open = false;
     });
   };
+  const openMenu = (details) => {
+    const root = details.closest('.lorgar-header');
+    if (!root) return;
+    closeMenus(root, details);
+    details.open = true;
+  };
+  const closeMenu = (details) => {
+    if (!details.matches(':hover')) {
+      details.open = false;
+    }
+  };
+  const wireMenu = (details) => {
+    if (details.dataset.lorgarHoverWired) return;
+    details.dataset.lorgarHoverWired = '1';
+    details.addEventListener('pointerenter', () => {
+      if (hoverQuery.matches) openMenu(details);
+    });
+    details.addEventListener('pointerleave', () => {
+      if (hoverQuery.matches) window.setTimeout(() => closeMenu(details), 60);
+    });
+    details.addEventListener('focusin', () => openMenu(details));
+  };
+  const wireAll = () => document.querySelectorAll('details[data-lorgar-exclusive-menu]').forEach(wireMenu);
+  wireAll();
+  document.addEventListener('click', (event) => {
+    const summary = event.target instanceof Element ? event.target.closest('.lorgar-nav-dropdown > summary') : null;
+    if (!summary || !hoverQuery.matches) return;
+    event.preventDefault();
+    const details = summary.closest('details');
+    if (details) openMenu(details);
+  }, true);
   document.addEventListener('toggle', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLDetailsElement) || !target.open || !target.matches('[data-lorgar-exclusive-menu]')) return;
     const root = target.closest('.lorgar-header');
-    if (!root) return;
-    closeMenus(root, target);
+    if (root) closeMenus(root, target);
   }, true);
   document.addEventListener('pointerdown', (event) => {
-    const target = event.target;
-    if (!(target instanceof Node)) return;
+    if (!(event.target instanceof Element)) return;
     document.querySelectorAll('.lorgar-header').forEach((root) => {
-      if (!root.contains(target)) closeMenus(root, null);
+      if (!root.contains(event.target)) closeMenus(root, null);
     });
-  }, true);
+  });
+  document.addEventListener('pointermove', (event) => {
+    if (!hoverQuery.matches || !(event.target instanceof Element)) return;
+    const activeMenu = event.target.closest('details[data-lorgar-exclusive-menu]');
+    document.querySelectorAll('.lorgar-header').forEach((root) => closeMenus(root, activeMenu));
+  });
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.lorgar-header').forEach((root) => closeMenus(root, null));
   });
+  new MutationObserver(wireAll).observe(document.documentElement, { childList: true, subtree: true });
 })();`,
     }}
   />
@@ -2509,15 +2528,24 @@ export const LorgarArticlesIndexLayout = ({
   const selectedTopicSet = new Set(selectedTopicQueries.map((query) => normalizedTopicFilterText(query)))
   const availableTagFilters = tagFilters?.length ? tagFilters : buildLorgarTagFilters(articles)
   const orderedTopicFilters = [
-    ...availableTagFilters.filter((topic) => selectedTopicSet.has(normalizedTopicFilterText(topic.tagQuery))),
-    ...availableTagFilters.filter((topic) => !selectedTopicSet.has(normalizedTopicFilterText(topic.tagQuery))),
+    ...availableTagFilters.filter((topic) => !normalizedTopicFilterText(topic.tagQuery)),
+    ...availableTagFilters.filter((topic) => {
+      const topicQuery = normalizedTopicFilterText(topic.tagQuery)
+
+      return topicQuery && selectedTopicSet.has(topicQuery)
+    }),
+    ...availableTagFilters.filter((topic) => {
+      const topicQuery = normalizedTopicFilterText(topic.tagQuery)
+
+      return topicQuery && !selectedTopicSet.has(topicQuery)
+    }),
   ]
   const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
   const isPopularSort = sortMode === 'views'
   const heroTitle = isFilteredView ? pageTitle : 'Blog'
   const topicHref = (topicTagQuery: string) => {
     const topicQuery = normalizedTopicFilterText(topicTagQuery)
-    const nextQuery = selectedTopicSet.has(topicQuery) ? null : topicTagQuery
+    const nextQuery = !topicQuery || selectedTopicSet.has(topicQuery) ? null : topicTagQuery
 
     return lorgarArticlesPath({ languageCode, searchQuery, sortMode, tagQuery: nextQuery })
   }
@@ -2546,7 +2574,7 @@ export const LorgarArticlesIndexLayout = ({
               <strong>Tags</strong>
               {orderedTopicFilters.map((topic) => {
                 const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-                const isActive = selectedTopicSet.has(topicQuery)
+                const isActive = topicQuery ? selectedTopicSet.has(topicQuery) : !selectedTopicQueries.length
 
                 return (
                   <a
@@ -2556,19 +2584,10 @@ export const LorgarArticlesIndexLayout = ({
                     key={topic.label}
                   >
                     <span>{topic.label}</span>
-                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">&times;</span> : null}
                   </a>
                 )
               })}
-              {selectedTopicQueries.length ? (
-                <a
-                  aria-label="Clear selected tags"
-                  className="lorgar-blog-topics__clear"
-                  href={lorgarArticlesPath({ languageCode, searchQuery, sortMode })}
-                >
-                  Clear filters
-                </a>
-              ) : null}
+
             </nav>
             {!isFilteredView ? (
               <nav aria-label="Article sorting" className="lorgar-blog-sort">
@@ -2625,6 +2644,13 @@ const LorgarMetaDateIcon = () => (
   <img alt="" aria-hidden="true" className="lorgar-meta__icon" src="/lorgar-figma/calendar.svg" />
 )
 
+const LorgarMetaAuthorIcon = () => (
+  <svg aria-hidden="true" className="lorgar-meta__icon lorgar-meta__icon--author" fill="none" viewBox="0 0 24 24">
+    <circle cx="12" cy="7.5" r="3.5" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </svg>
+)
+
 const LorgarMeta = ({
   article,
   publishedAt,
@@ -2637,15 +2663,16 @@ const LorgarMeta = ({
 
   return (
     <div className="lorgar-meta">
+      <span>
+        <LorgarMetaAuthorIcon />
+        {authorNames}
+      </span>
       {date ? (
         <span>
           <LorgarMetaDateIcon />
           <time dateTime={publishedAt || undefined}>{date}</time>
         </span>
       ) : null}
-      <span>
-        {authorNames}
-      </span>
     </div>
   )
 }
@@ -2862,6 +2889,7 @@ export const LorgarArticleLayout = ({
   const publishedDate = article.publishedAt || article.createdAt
   const coverImage = articlePrimaryImage(article)
   const kicker = article.contentType || article.category || 'Article'
+  const articleTags = publicArticleTags(article)
 
   return (
     <div className="public-content public-content--lorgar">
@@ -2881,6 +2909,16 @@ export const LorgarArticleLayout = ({
             </div>
             <h1>{article.title}</h1>
             <LorgarMeta article={article} publishedAt={publishedDate} />
+            {articleTags.length ? (
+              <nav aria-label="Article tags" className="lorgar-article-tags">
+                <strong>Tags</strong>
+                {articleTags.map((tag) => (
+                  <Link href={lorgarArticlesPath({ languageCode: article.languageCode, tagQuery: tag })} key={tag} prefetch={false}>
+                    {tag}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
             {isMedia(coverImage) ? (
               <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
             ) : (
