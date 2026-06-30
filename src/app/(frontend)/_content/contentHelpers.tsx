@@ -2213,7 +2213,9 @@ const lorgarArticlesPath = ({
   }
 
   if (tags.length) {
-    params.set('tag', tags.join(','))
+    tags.forEach((tag) => {
+      params.append('tag', tag)
+    })
   }
 
   const queryString = params.toString()
