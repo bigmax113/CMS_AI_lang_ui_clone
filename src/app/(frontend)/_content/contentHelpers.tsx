@@ -512,8 +512,8 @@ const addLorgarTagFilter = (filters: LorgarTagFilter[], seen: Set<string>, value
 export const buildLorgarTagFilters = (
   articles: Array<Pick<Article, 'category' | 'contentType' | 'tags'>> = [],
 ): LorgarTagFilter[] => {
-  const filters: LorgarTagFilter[] = [{ label: 'ALL', tagQuery: '' }]
-  const seen = new Set<string>(['', 'all'])
+  const filters: LorgarTagFilter[] = []
+  const seen = new Set<string>(['all'])
 
   articles.forEach((article) => {
     publicArticleTags(article).forEach((tag) => addLorgarTagFilter(filters, seen, tag))
@@ -2034,7 +2034,7 @@ const LorgarExclusiveMenuScript = () => (
     details.open = true;
   };
   const closeMenu = (details) => {
-    if (!details.matches(':hover')) {
+    if (!details.matches(':hover') && !details.matches(':focus-within')) {
       details.open = false;
     }
   };
@@ -2045,7 +2045,7 @@ const LorgarExclusiveMenuScript = () => (
       if (hoverQuery.matches) openMenu(details);
     });
     details.addEventListener('pointerleave', () => {
-      if (hoverQuery.matches) window.setTimeout(() => closeMenu(details), 60);
+      if (hoverQuery.matches) window.setTimeout(() => closeMenu(details), 260);
     });
     details.addEventListener('focusin', () => openMenu(details));
   };
@@ -2070,11 +2070,7 @@ const LorgarExclusiveMenuScript = () => (
       if (!root.contains(event.target)) closeMenus(root, null);
     });
   });
-  document.addEventListener('pointermove', (event) => {
-    if (!hoverQuery.matches || !(event.target instanceof Element)) return;
-    const activeMenu = event.target.closest('details[data-lorgar-exclusive-menu]');
-    document.querySelectorAll('.lorgar-header').forEach((root) => closeMenus(root, activeMenu));
-  });
+
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.lorgar-header').forEach((root) => closeMenus(root, null));
@@ -2546,17 +2542,18 @@ export const LorgarArticlesIndexLayout = ({
   const heroTitle = isFilteredView ? pageTitle : 'Blog'
   const topicHref = (topicTagQuery: string) => {
     const topicQuery = normalizedTopicFilterText(topicTagQuery)
-    const nextQuery = !topicQuery || selectedTopicSet.has(topicQuery) ? null : topicTagQuery
 
-    return lorgarArticlesPath({ languageCode, searchQuery, sortMode, tagQuery: nextQuery })
+    if (!topicQuery) {
+      return lorgarArticlesPath({ languageCode, searchQuery, sortMode })
+    }
+
+    const nextQueries = selectedTopicSet.has(topicQuery)
+      ? selectedTopicQueries.filter((query) => normalizedTopicFilterText(query) !== topicQuery)
+      : [...selectedTopicQueries, topicTagQuery]
+
+    return lorgarArticlesPath({ languageCode, searchQuery, sortMode, tagQuery: nextQueries })
   }
-  const sortHref = (nextSortMode: ArticleSortMode) =>
-    lorgarArticlesPath({
-      languageCode,
-      searchQuery,
-      sortMode: nextSortMode,
-      tagQuery: selectedTopicQueries,
-    })
+  const clearTopicsHref = lorgarArticlesPath({ languageCode, searchQuery, sortMode })
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
@@ -2571,11 +2568,11 @@ export const LorgarArticlesIndexLayout = ({
         </section>
         <section className="lorgar-blog-list" aria-label="Articles">
           <div className="lorgar-blog-list__intro">
-            <nav aria-label="Tags" className="lorgar-blog-topics">
-              <strong>Tags</strong>
+            <nav aria-label="Topics" className="lorgar-blog-topics">
+              <strong>Topics</strong>
               {orderedTopicFilters.map((topic) => {
                 const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-                const isActive = topicQuery ? selectedTopicSet.has(topicQuery) : !selectedTopicQueries.length
+                const isActive = topicQuery ? selectedTopicSet.has(topicQuery) : false
 
                 return (
                   <a
@@ -2585,30 +2582,16 @@ export const LorgarArticlesIndexLayout = ({
                     key={topic.label}
                   >
                     <span>{topic.label}</span>
+                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
                   </a>
                 )
               })}
-
+              {selectedTopicQueries.length ? (
+                <a className="lorgar-blog-topics__clear" href={clearTopicsHref}>
+                  Clear all filters
+                </a>
+              ) : null}
             </nav>
-            {!isFilteredView ? (
-              <nav aria-label="Article sorting" className="lorgar-blog-sort">
-                <strong>Sort by</strong>
-                <a
-                  aria-current={!isPopularSort ? 'page' : undefined}
-                  className={!isPopularSort ? 'is-active' : undefined}
-                  href={sortHref('latest')}
-                >
-                  Latest
-                </a>
-                <a
-                  aria-current={isPopularSort ? 'page' : undefined}
-                  className={isPopularSort ? 'is-active' : undefined}
-                  href={sortHref('views')}
-                >
-                  Popular
-                </a>
-              </nav>
-            ) : null}
             <div>
               <span className="lorgar-blog-list__kicker">
                 {isFilteredView ? 'Filtered articles' : isPopularSort ? 'Popular news' : 'Latest news'}
@@ -2682,14 +2665,16 @@ const LorgarArticleShare = ({
   articleSlug,
   path,
   title,
+  viewsLabel,
 }: {
   articleSlug: string
   path?: null | string
   title: string
+  viewsLabel: string
 }) => {
   const url = absoluteURL(path) || publicBaseURL()
 
-  return <LorgarArticleActions articleSlug={articleSlug} title={title} url={url} />
+  return <LorgarArticleActions articleSlug={articleSlug} title={title} url={url} viewsLabel={viewsLabel} />
 }
 
 const LorgarSidebarCard = ({ article }: { article: Article }) => {
@@ -2766,10 +2751,10 @@ const LorgarArticleSidebar = ({
 
 const LorgarCTA = () => (
   <section className="lorgar-cta-strip" aria-label="Contact LORGAR">
-    <strong>Interested in working with LORGAR?</strong>
+    <strong>Interested in working with ASBIS?</strong>
     <div>
-      <Link href="/for-users" prefetch={false}>BECOME PARTNER</Link>
-      <Link href="/about" prefetch={false}>Contact us</Link>
+      <ExternalLink href="https://lorgar.com/for-users">BECOME PARTNER</ExternalLink>
+      <ExternalLink href="https://lorgar.com/support-in-messengers">CONTACT US</ExternalLink>
     </div>
   </section>
 )
@@ -2889,8 +2874,8 @@ export const LorgarArticleLayout = ({
   const navigationLabels = publicArticleNavigationLabels(article.languageCode)
   const publishedDate = article.publishedAt || article.createdAt
   const coverImage = articlePrimaryImage(article)
-  const kicker = article.contentType || article.category || 'Article'
   const articleTags = publicArticleTags(article)
+  const articleViewsLabel = `${formatArticleViewCount(article)} views`
 
   return (
     <div className="public-content public-content--lorgar">
@@ -2905,14 +2890,9 @@ export const LorgarArticleLayout = ({
                 { href: articlePath, label: article.title },
               ]}
             />
-            <div className="lorgar-article-kicker">
-              <span>{kicker}</span>
-            </div>
-            <h1>{article.title}</h1>
-            <LorgarMeta article={article} publishedAt={publishedDate} />
             {articleTags.length ? (
               <nav aria-label="Article tags" className="lorgar-article-tags">
-                <strong>Tags</strong>
+                <strong>Tags:</strong>
                 {articleTags.map((tag) => (
                   <Link href={lorgarArticlesPath({ languageCode: article.languageCode, tagQuery: tag })} key={tag} prefetch={false}>
                     {tag}
@@ -2920,12 +2900,15 @@ export const LorgarArticleLayout = ({
                 ))}
               </nav>
             ) : null}
+            <h1>{article.title}</h1>
+            {summary ? <p className="lorgar-article-summary">{summary}</p> : null}
+            <LorgarMeta article={article} publishedAt={publishedDate} />
             {isMedia(coverImage) ? (
               <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
             ) : (
               <img alt={article.title} className="lorgar-article-cover" loading="eager" src={lorgarCardFallbackImage(article)} />
             )}
-            <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} />
+            <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} viewsLabel={articleViewsLabel} />
             <div className="lorgar-article-body">{children}</div>
             <LorgarCTA />
             <LorgarRelatedSection article={article} recentArticles={recentArticles} />
