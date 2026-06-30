@@ -2526,8 +2526,15 @@ export const LorgarArticlesIndexLayout = ({
   const selectedTopicQueries = uniqueTopicQueries(tagQueries?.length ? tagQueries : tagQuery)
   const selectedTopicSet = new Set(selectedTopicQueries.map((query) => normalizedTopicFilterText(query)))
   const availableTagFilters = tagFilters?.length ? tagFilters : buildLorgarTagFilters(articles)
+  const availableTopicSet = new Set(
+    availableTagFilters.map((topic) => normalizedTopicFilterText(topic.tagQuery)).filter(Boolean),
+  )
+  const selectedFallbackTopicFilters = selectedTopicQueries
+    .filter((query) => !availableTopicSet.has(normalizedTopicFilterText(query)))
+    .map((query) => ({ label: tagLabelFromValue(query), tagQuery: query }))
   const orderedTopicFilters = [
     ...availableTagFilters.filter((topic) => !normalizedTopicFilterText(topic.tagQuery)),
+    ...selectedFallbackTopicFilters,
     ...availableTagFilters.filter((topic) => {
       const topicQuery = normalizedTopicFilterText(topic.tagQuery)
 
