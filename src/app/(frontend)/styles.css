@@ -9291,3 +9291,24 @@ main:has(.public-content--lorgar),
     gap: 18px 24px !important;
   }
 }
+
+/* Fixes 16.1: desktop footer top row must stay on one line. */
+@media (min-width: 901px) {
+  .public-content--lorgar .lorgar-footer {
+    grid-template-columns: auto max-content auto !important;
+    justify-content: center !important;
+    gap: 28px clamp(24px, 3vw, 56px) !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav {
+    flex-wrap: nowrap !important;
+    gap: clamp(24px, 2.25vw, 44px) !important;
+    min-width: max-content !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__social {
+    flex-wrap: nowrap !important;
+    min-width: max-content !important;
+  }
+}
