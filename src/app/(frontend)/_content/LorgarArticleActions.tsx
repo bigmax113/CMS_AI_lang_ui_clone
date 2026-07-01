@@ -19,7 +19,7 @@ const defaultReactionCount = 43
 const FigmaIcon = ({
   name,
 }: {
-  name: 'facebook' | 'instagram' | 'linkedin' | 'telegram'
+  name: 'facebook' | 'linkedin' | 'telegram'
 }) => (
   <img
     alt=""
@@ -30,9 +30,10 @@ const FigmaIcon = ({
 )
 
 const LikeIcon = () => (
-  <svg aria-hidden="true" className="lorgar-share__icon" fill="none" viewBox="0 0 24 24">
-    <path d="M8 21H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3v11Z" />
-    <path d="M8 10l4-7 1.5.8c.9.5 1.3 1.5 1 2.5L14 9h5a2 2 0 0 1 2 2.3l-1.1 7A3 3 0 0 1 17 21H8V10Z" />
+  <svg aria-hidden="true" className="lorgar-share__icon lorgar-share__icon--like" fill="none" viewBox="0 0 24 24">
+    <path d="M7 21V10" />
+    <path d="M7 10 11.7 3.2c.9.3 1.5 1.2 1.3 2.2L12.3 9H19a2 2 0 0 1 2 2.3l-1.1 6.5A3 3 0 0 1 17 20H7" />
+    <path d="M3 11h4v9H3z" />
   </svg>
 )
 
@@ -95,14 +96,7 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
         >
           <FigmaIcon name="facebook" />
         </a>
-        <a
-          aria-label="Open LORGAR on Instagram"
-          href="https://www.instagram.com/lorgar.global/"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <FigmaIcon name="instagram" />
-        </a>
+
         <a
           aria-label="Share on LinkedIn"
           href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedURL}&title=${encodedTitle}`}

@@ -1853,13 +1853,13 @@ const lorgarSocialLinks: Array<{
   icon: LorgarIconName
   label: string
 }> = [
-  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', icon: 'youtube', label: 'YouTube' },
-  { href: 'https://www.facebook.com/lorgargaming', icon: 'facebook', label: 'Facebook' },
   { href: 'https://www.instagram.com/lorgar.global/', icon: 'instagram', label: 'Instagram' },
-  { href: 'https://www.tiktok.com/@lorgar.global', icon: 'tiktok', label: 'TikTok' },
-  { href: 'https://wa.me/48732080677', icon: 'whatsapp', label: 'WhatsApp' },
-  { href: 'https://t.me/Lorgar_support_bot', icon: 'telegram', label: 'Telegram' },
   { href: 'https://www.linkedin.com/company/lorgar/', icon: 'linkedin', label: 'LinkedIn' },
+  { href: 'https://www.facebook.com/lorgargaming', icon: 'facebook', label: 'Facebook' },
+  { href: 'https://t.me/Lorgar_support_bot', icon: 'telegram', label: 'Telegram' },
+  { href: 'https://wa.me/48732080677', icon: 'whatsapp', label: 'WhatsApp' },
+  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', icon: 'youtube', label: 'YouTube' },
+  { href: 'https://www.tiktok.com/@lorgar.global', icon: 'tiktok', label: 'TikTok' },
 ]
 
 const ExternalLink = ({
@@ -2603,12 +2603,14 @@ export const LorgarArticlesIndexLayout = ({
                 ) : null}
               </div>
             </nav>
-            <div>
-              <span className="lorgar-blog-list__kicker">
-                {isFilteredView ? 'Filtered articles' : isPopularSort ? 'Popular news' : 'Latest news'}
-              </span>
-              <h2>{isFilteredView ? resultLabel || 'Results' : isPopularSort ? 'Popular news' : 'Latest news'}</h2>
-            </div>
+            {!isFilteredView ? (
+              <div>
+                <span className="lorgar-blog-list__kicker">
+                  {isPopularSort ? 'Popular news' : 'Latest news'}
+                </span>
+                <h2>{isPopularSort ? 'Popular news' : 'Latest news'}</h2>
+              </div>
+            ) : null}
           </div>
           {articles.length ? (
             <div className="lorgar-blog-mosaic">
@@ -2658,16 +2660,16 @@ const LorgarMeta = ({
 
   return (
     <div className="lorgar-meta">
-      <span>
-        <LorgarMetaAuthorIcon />
-        {authorNames}
-      </span>
       {date ? (
         <span>
           <LorgarMetaDateIcon />
           <time dateTime={publishedAt || undefined}>{date}</time>
         </span>
       ) : null}
+      <span>
+        <LorgarMetaAuthorIcon />
+        {authorNames}
+      </span>
     </div>
   )
 }
