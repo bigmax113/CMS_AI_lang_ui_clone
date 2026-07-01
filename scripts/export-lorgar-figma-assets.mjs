@@ -27,7 +27,7 @@ const assetTargets = [
   { id: '214:17479', name: 'social-youtube' },
   { id: '214:17484', name: 'social-tiktok' },
   { id: '7:5358', name: 'share-facebook' },
-  { id: '7:5352', name: 'share-linkedin' },
+  { id: '214:17465', name: 'share-linkedin', stripOuterCircle: true },
   { id: '7:5356', name: 'share-telegram' },
   { id: '15:6737', name: 'reaction-like' },
 ]
@@ -44,7 +44,10 @@ for (const target of assetTargets) {
   const width = round(node.size?.x || 24)
   const height = round(node.size?.y || 24)
   const ctx = { clipIndex: 0, defs: [] }
-  const body = renderNode(target.id, identity(), { ctx, includeSelfTransform: false })
+  let body = renderNode(target.id, identity(), { ctx, includeSelfTransform: false })
+  if (target.stripOuterCircle) {
+    body = stripFirstSVGPath(body)
+  }
   const defs = ctx.defs.length ? `<defs>${ctx.defs.join('')}</defs>` : ''
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none">`,
@@ -123,6 +126,10 @@ function renderClipPath(nodeRef, parentMatrix) {
 
 function getChildren(id) {
   return id ? doc.childrenMap.get(id) || [] : []
+}
+
+function stripFirstSVGPath(svgBody) {
+  return String(svgBody).replace(/<path\b[^>]*><\/path>|<path\b[^>]*\/?>/, '')
 }
 
 function renderOwnGeometry(node, matrix) {

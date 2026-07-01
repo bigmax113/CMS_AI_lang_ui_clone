@@ -14,7 +14,7 @@ const reactionLabels = {
 } as const
 
 const defaultReactionCount = 43
-const figmaArticleIconVersion = '20260701-article-actions-figma'
+const figmaArticleIconVersion = '20260701-share-linkedin-fix'
 
 const FigmaShareIcon = ({
   name,
