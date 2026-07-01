@@ -2579,27 +2579,29 @@ export const LorgarArticlesIndexLayout = ({
           <div className="lorgar-blog-list__intro">
             <nav aria-label="Topics" className="lorgar-blog-topics">
               <strong>Topics</strong>
-              {orderedTopicFilters.map((topic) => {
-                const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-                const isActive = topicQuery ? selectedTopicSet.has(topicQuery) : false
+              <div className="lorgar-blog-topics__items">
+                {orderedTopicFilters.map((topic) => {
+                  const topicQuery = normalizedTopicFilterText(topic.tagQuery)
+                  const isActive = topicQuery ? selectedTopicSet.has(topicQuery) : false
 
-                return (
-                  <a
-                    aria-current={isActive ? 'page' : undefined}
-                    className={isActive ? 'is-active' : undefined}
-                    href={topicHref(topic.tagQuery)}
-                    key={topic.label}
-                  >
-                    <span>{topic.label}</span>
-                    {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
+                  return (
+                    <a
+                      aria-current={isActive ? 'page' : undefined}
+                      className={isActive ? 'is-active' : undefined}
+                      href={topicHref(topic.tagQuery)}
+                      key={topic.label}
+                    >
+                      <span>{topic.label}</span>
+                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">&times;</span> : null}
+                    </a>
+                  )
+                })}
+                {selectedTopicQueries.length ? (
+                  <a className="lorgar-blog-topics__clear" href={clearTopicsHref}>
+                    Clear all filters
                   </a>
-                )
-              })}
-              {selectedTopicQueries.length ? (
-                <a className="lorgar-blog-topics__clear" href={clearTopicsHref}>
-                  Clear all filters
-                </a>
-              ) : null}
+                ) : null}
+              </div>
             </nav>
             <div>
               <span className="lorgar-blog-list__kicker">
