@@ -9921,7 +9921,7 @@ main:has(.public-content--lorgar),
 /* Final QA cleanup 2026-07-01: only screenshot-marked remnants. Keep last. */
 .public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
   align-self: center !important;
-  margin-left: 18px !important;
+  margin-left: 0 !important;
 }
 
 .public-content--lorgar .lorgar-article-tags a,
