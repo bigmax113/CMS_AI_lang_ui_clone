@@ -9480,7 +9480,7 @@ main:has(.public-content--lorgar),
     border-radius: 10px !important;
     background: transparent !important;
     color: #f8f7ff !important;
-    padding: 0 16px !important;
+    padding: 0 14px !important;
     font-family: 'Noto Sans', var(--lorgar-font-body), Arial, sans-serif !important;
     font-size: 18px !important;
     font-weight: 400 !important;
@@ -9586,15 +9586,15 @@ main:has(.public-content--lorgar),
   }
 
   .public-content--lorgar.public-content--index .lorgar-blog-topics__items {
-    display: grid !important;
-    grid-auto-flow: row !important;
-    grid-template-columns: repeat(10, max-content) !important;
-    column-gap: 30px !important;
-    row-gap: 24px !important;
-    align-items: start !important;
-    justify-content: start !important;
+    display: flex !important;
+    flex-flow: row wrap !important;
+    gap: 24px 30px !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
     width: 100% !important;
     max-width: 1416px !important;
+    height: 84px !important;
+    overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
   }
@@ -9615,7 +9615,7 @@ main:has(.public-content--lorgar),
     border-radius: 10px !important;
     background: transparent !important;
     color: #f8f7ff !important;
-    padding: 0 16px !important;
+    padding: 0 14px !important;
     font-family: 'Noto Sans', var(--lorgar-font-body), Arial, sans-serif !important;
     font-size: 18px !important;
     font-weight: 400 !important;
