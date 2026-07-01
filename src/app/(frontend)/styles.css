@@ -9975,15 +9975,16 @@ main:has(.public-content--lorgar),
 }
 
 .public-content--lorgar .lorgar-share a.lorgar-share__social {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  background: transparent !important;
 }
 
 .public-content--lorgar .lorgar-share__icon--social {
-  width: 22px !important;
-  height: 22px !important;
+  width: 40px !important;
+  height: 40px !important;
 }
 
 .public-content--lorgar .lorgar-share button.lorgar-share__reaction-button {

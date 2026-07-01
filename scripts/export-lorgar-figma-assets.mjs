@@ -26,9 +26,9 @@ const assetTargets = [
   { id: '214:17477', name: 'social-whatsapp' },
   { id: '214:17479', name: 'social-youtube' },
   { id: '214:17484', name: 'social-tiktok' },
-  { id: '7:5358', name: 'share-facebook' },
-  { id: '214:17465', name: 'share-linkedin', stripOuterCircle: true },
-  { id: '7:5356', name: 'share-telegram' },
+  { id: '126:16435', name: 'share-facebook', renderDerivedSymbol: true },
+  { id: '126:16437', name: 'share-linkedin', renderDerivedSymbol: true },
+  { id: '126:16438', name: 'share-telegram', renderDerivedSymbol: true },
   { id: '15:6737', name: 'reaction-like' },
 ]
 
@@ -41,12 +41,17 @@ for (const target of assetTargets) {
     throw new Error(`Figma node ${target.id} (${target.name}) was not found`)
   }
 
-  const width = round(node.size?.x || 24)
-  const height = round(node.size?.y || 24)
+  const rawWidth = Number(node.size?.x || 24)
+  const rawHeight = Number(node.size?.y || 24)
+  const width = round(target.outputSize || rawWidth)
+  const height = round(target.outputSize || rawHeight)
   const ctx = { clipIndex: 0, defs: [] }
-  let body = renderNode(target.id, identity(), { ctx, includeSelfTransform: false })
+  let body = renderNode(target.id, identity(), { ctx, includeSelfTransform: false, renderDerivedSymbol: Boolean(target.renderDerivedSymbol) })
   if (target.stripOuterCircle) {
     body = stripFirstSVGPath(body)
+  }
+  if (target.outputSize) {
+    body = `<g transform="scale(${round(target.outputSize / rawWidth)} ${round(target.outputSize / rawHeight)})">${body}</g>`
   }
   const defs = ctx.defs.length ? `<defs>${ctx.defs.join('')}</defs>` : ''
   const svg = [
@@ -81,7 +86,7 @@ function renderNode(nodeRef, parentMatrix, options = {}) {
     const clipPath = renderClipPath(clipChild, matrix)
     const content = children
       .slice(1)
-      .map((child) => renderNode(child, matrix, { ctx: options.ctx }))
+      .map((child) => renderNode(child, matrix, { ctx: options.ctx, renderDerivedSymbol: options.renderDerivedSymbol }))
       .join('')
 
     if (!clipPath || !content) {
@@ -93,7 +98,7 @@ function renderNode(nodeRef, parentMatrix, options = {}) {
     return `<g clip-path="url(#${clipID})">${content}</g>`
   }
 
-  const own = renderOwnGeometry(node, matrix)
+  const own = renderOwnGeometry(node, matrix, options)
   const childContent = children
     .map((child) => renderNode(child, matrix, { ctx: options.ctx }))
     .join('')
@@ -132,7 +137,7 @@ function stripFirstSVGPath(svgBody) {
   return String(svgBody).replace(/<path\b[^>]*><\/path>|<path\b[^>]*\/?>/, '')
 }
 
-function renderOwnGeometry(node, matrix) {
+function renderOwnGeometry(node, matrix, options = {}) {
   const output = []
   const fills = getVisiblePaints(node.fillPaints)
   const strokes = getVisiblePaints(node.strokePaints)
@@ -143,6 +148,22 @@ function renderOwnGeometry(node, matrix) {
   const strokePaths = hasResolvedStroke ? resolved.stroke : getVectorNetworkPaths(node, 'stroke')
   const fillMatrix = hasResolvedFill ? matrix : multiply(matrix, vectorGeometryScale(node))
   const strokeMatrix = hasResolvedStroke ? matrix : multiply(matrix, vectorGeometryScale(node))
+
+  if (options.renderDerivedSymbol && shouldRenderFrameFill(node)) {
+    for (const paint of getFrameFillPaints(node)) {
+      if (paint.type !== 'SOLID') {
+        continue
+      }
+
+      output.push(renderFrameFill(node, paint, matrix))
+    }
+  }
+
+  if (options.renderDerivedSymbol && node.derivedSymbolData) {
+    output.push(renderDerivedSymbolGeometry(node, matrix))
+
+    return output.join('')
+  }
 
   for (const paint of fills) {
     if (paint.type === 'IMAGE') {
@@ -207,6 +228,134 @@ function getNodePaths(node) {
   const resolvedPaths = [...(resolved.fill || []), ...(resolved.stroke || [])]
 
   return resolvedPaths.length ? resolvedPaths : getVectorNetworkPaths(node)
+}
+
+function shouldRenderFrameFill(node) {
+  return ['FRAME', 'INSTANCE', 'SYMBOL'].includes(node.type) && Boolean(node.size?.x && node.size?.y && node.cornerRadius !== undefined)
+}
+
+function renderFrameFill(node, paint, matrix) {
+  const width = round(node.size?.x || 0)
+  const height = round(node.size?.y || 0)
+  const radius = round(Math.min(Number(node.cornerRadius || 0), Number(node.size?.x || 0) / 2, Number(node.size?.y || 0) / 2))
+
+  return `<rect width="${width}" height="${height}" rx="${radius}" ry="${radius}" fill="${paintToColor(paint)}" transform="${matrixToSVG(matrix)}"${paintOpacity(paint)}/>`
+}
+
+function renderDerivedSymbolGeometry(node, matrix) {
+  return Object.values(node.derivedSymbolData || {})
+    .flatMap((entry) => {
+      const paints = getDerivedSymbolPaints(node, entry)
+
+      if (!paints.length) {
+        return []
+      }
+
+      return (entry.fillGeometry || []).flatMap((geometry) => {
+        const bytes = getBlobBytes(doc, geometry.commandsBlob)
+        const svgPath = bytes ? geometryBlobToSVGPath(bytes) : ''
+
+        if (!svgPath) {
+          return []
+        }
+
+        return paints
+          .filter((paint) => paint.type === 'SOLID')
+          .map((paint) => `<path d="${escapeXML(svgPath)}" fill="${paintToColor(paint)}" fill-rule="${svgFillRule(geometry.windingRule)}" transform="${matrixToSVG(centerDerivedGeometryMatrix(node, svgPath, matrix))}"${paintOpacity(paint)}/>`)
+      })
+    })
+    .join('')
+}
+
+function centerDerivedGeometryMatrix(node, svgPath, matrix) {
+  const bounds = getSVGPathBounds(svgPath)
+
+  if (!bounds || !node.size?.x || !node.size?.y) {
+    return matrix
+  }
+
+  const x = (Number(node.size.x) - bounds.width) / 2 - bounds.minX
+  const y = (Number(node.size.y) - bounds.height) / 2 - bounds.minY
+
+  return multiply(matrix, {
+    m00: 1,
+    m01: 0,
+    m02: x,
+    m10: 0,
+    m11: 1,
+    m12: y,
+  })
+}
+
+function getSVGPathBounds(svgPath) {
+  const values = String(svgPath)
+    .match(/-?\d*\.?\d+(?:e[-+]?\d+)?/gi)
+    ?.map(Number)
+
+  if (!values?.length) {
+    return null
+  }
+
+  const xs = []
+  const ys = []
+
+  for (let index = 0; index < values.length; index += 2) {
+    if (Number.isFinite(values[index])) {
+      xs.push(values[index])
+    }
+
+    if (Number.isFinite(values[index + 1])) {
+      ys.push(values[index + 1])
+    }
+  }
+
+  if (!xs.length || !ys.length) {
+    return null
+  }
+
+  const minX = Math.min(...xs)
+  const minY = Math.min(...ys)
+  const maxX = Math.max(...xs)
+  const maxY = Math.max(...ys)
+
+  return {
+    minX,
+    minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+}
+
+function getFrameFillPaints(node) {
+  const override = (node.symbolData?.symbolOverrides || []).find((item) => (
+    item.size?.x === node.size?.x &&
+    item.size?.y === node.size?.y &&
+    item.styleIdForFill
+  ))
+
+  return override ? getStylePaints(override.styleIdForFill) : getVisiblePaints(node.fillPaints)
+}
+
+function getDerivedSymbolPaints(node, entry) {
+  const entryKey = guidPathKey(entry.guidPath)
+  const override = (node.symbolData?.symbolOverrides || []).find((item) => (
+    item.styleIdForFill && guidPathKey(item.guidPath) === entryKey
+  ))
+
+  return override ? getStylePaints(override.styleIdForFill) : []
+}
+
+function getStylePaints(styleRef) {
+  const key = styleRef?.assetRef?.key
+  const style = key ? [...doc.nodeMap.values()].find((node) => node.key === key && node.styleType === 'FILL') : null
+
+  return getVisiblePaints(style?.fillPaints)
+}
+
+function guidPathKey(guidPath) {
+  return (guidPath?.guids || [])
+    .map((guid) => `${guid.sessionID}:${guid.localID}`)
+    .join('/')
 }
 
 function getVectorNetworkPaths(node, mode = 'all') {
@@ -417,7 +566,7 @@ function paintOpacity(paint) {
 }
 
 function svgFillRule(rule) {
-  return rule === 'EVENODD' ? 'evenodd' : 'nonzero'
+  return rule === 'EVENODD' || rule === 'ODD' ? 'evenodd' : 'nonzero'
 }
 
 function svgStrokeCap(cap) {
