@@ -26,6 +26,10 @@ const assetTargets = [
   { id: '214:17477', name: 'social-whatsapp' },
   { id: '214:17479', name: 'social-youtube' },
   { id: '214:17484', name: 'social-tiktok' },
+  { id: '7:5358', name: 'share-facebook' },
+  { id: '7:5352', name: 'share-linkedin' },
+  { id: '7:5356', name: 'share-telegram' },
+  { id: '15:6737', name: 'reaction-like' },
 ]
 
 mkdirSync(outputDir, { recursive: true })
