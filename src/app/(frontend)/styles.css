@@ -9312,3 +9312,116 @@ main:has(.public-content--lorgar),
     min-width: max-content !important;
   }
 }
+
+/* Figma topics block alignment: heading first, compact two-row chips, no promoted active chip. */
+.public-content--lorgar.public-content--index .lorgar-blog-list__intro {
+  gap: clamp(64px, 7vw, 104px) !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  column-gap: clamp(28px, 3vw, 48px) !important;
+  row-gap: 30px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics strong {
+  display: block !important;
+  flex: 0 0 100% !important;
+  order: 0 !important;
+  margin: 0 0 26px !important;
+  color: #f9fbff !important;
+  font-family: var(--lorgar-font-display), Impact, sans-serif !important;
+  font-size: clamp(36px, 2.45vw, 50px) !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a,
+.public-content--lorgar.public-content--index .lorgar-blog-topics a:first-of-type {
+  order: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  width: auto !important;
+  border: 1px solid rgba(195, 49, 255, 0.95) !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  color: #f8f7ff !important;
+  padding: 0 24px !important;
+  font-family: var(--lorgar-font-body), Arial, sans-serif !important;
+  font-size: clamp(18px, 1.12vw, 22px) !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-decoration: none !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a:hover,
+.public-content--lorgar.public-content--index .lorgar-blog-topics a:focus-visible,
+.public-content--lorgar.public-content--index .lorgar-blog-topics a.is-active {
+  background: #c233ff !important;
+  border-color: #c233ff !important;
+  color: #fff !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics__remove {
+  display: inline-flex !important;
+  margin-left: 8px !important;
+  font-family: Arial, sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
+  order: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 42px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #f8f7ff !important;
+  padding: 0 !important;
+  font-family: var(--lorgar-font-body), Arial, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  text-transform: none !important;
+}
+
+@media (max-width: 900px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-list__intro {
+    gap: 52px !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-topics {
+    column-gap: 14px !important;
+    row-gap: 14px !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-topics strong {
+    font-size: 32px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-topics a,
+  .public-content--lorgar.public-content--index .lorgar-blog-topics a:first-of-type {
+    min-height: 34px !important;
+    border-radius: 12px !important;
+    padding: 0 16px !important;
+    font-size: 15px !important;
+  }
+}

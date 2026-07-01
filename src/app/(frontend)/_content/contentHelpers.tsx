@@ -2526,25 +2526,25 @@ export const LorgarArticlesIndexLayout = ({
   const selectedTopicQueries = uniqueTopicQueries(tagQueries?.length ? tagQueries : tagQuery)
   const selectedTopicSet = new Set(selectedTopicQueries.map((query) => normalizedTopicFilterText(query)))
   const availableTagFilters = tagFilters?.length ? tagFilters : buildLorgarTagFilters(articles)
+  const hiddenTopicFilters = new Set(['all', 'news'])
+  const visibleTagFilters = availableTagFilters.filter((topic) => {
+    const topicQuery = normalizedTopicFilterText(topic.tagQuery)
+
+    return topicQuery && !hiddenTopicFilters.has(topicQuery)
+  })
   const availableTopicSet = new Set(
-    availableTagFilters.map((topic) => normalizedTopicFilterText(topic.tagQuery)).filter(Boolean),
+    visibleTagFilters.map((topic) => normalizedTopicFilterText(topic.tagQuery)).filter(Boolean),
   )
   const selectedFallbackTopicFilters = selectedTopicQueries
-    .filter((query) => !availableTopicSet.has(normalizedTopicFilterText(query)))
+    .filter((query) => {
+      const topicQuery = normalizedTopicFilterText(query)
+
+      return topicQuery && !hiddenTopicFilters.has(topicQuery) && !availableTopicSet.has(topicQuery)
+    })
     .map((query) => ({ label: tagLabelFromValue(query), tagQuery: query }))
   const orderedTopicFilters = [
-    ...availableTagFilters.filter((topic) => !normalizedTopicFilterText(topic.tagQuery)),
     ...selectedFallbackTopicFilters,
-    ...availableTagFilters.filter((topic) => {
-      const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-
-      return topicQuery && selectedTopicSet.has(topicQuery)
-    }),
-    ...availableTagFilters.filter((topic) => {
-      const topicQuery = normalizedTopicFilterText(topic.tagQuery)
-
-      return topicQuery && !selectedTopicSet.has(topicQuery)
-    }),
+    ...visibleTagFilters,
   ]
   const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
   const isPopularSort = sortMode === 'views'
