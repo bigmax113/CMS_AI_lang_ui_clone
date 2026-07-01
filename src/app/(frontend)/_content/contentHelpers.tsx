@@ -2548,7 +2548,7 @@ export const LorgarArticlesIndexLayout = ({
   ]
   const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
   const isPopularSort = sortMode === 'views'
-  const heroTitle = isFilteredView ? pageTitle : 'Blog'
+  const heroTitle = isFilteredView ? pageTitle : 'BLOG'
   const topicHref = (topicTagQuery: string) => {
     const topicQuery = normalizedTopicFilterText(topicTagQuery)
 

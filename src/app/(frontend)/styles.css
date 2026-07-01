@@ -9917,3 +9917,127 @@ main:has(.public-content--lorgar),
     font-size: 24px !important;
   }
 }
+
+/* Final QA cleanup 2026-07-01: only screenshot-marked remnants. Keep last. */
+.public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
+  align-self: center !important;
+  margin-left: 18px !important;
+}
+
+.public-content--lorgar .lorgar-article-tags a,
+.public-content--lorgar .lorgar-article-tags a:hover,
+.public-content--lorgar .lorgar-article-tags a:focus-visible {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-cover h1 {
+  text-transform: uppercase !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages > a[aria-label],
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages > span.is-disabled:first-child,
+.public-content--lorgar.public-content--index .lorgar-blog-pagination__pages > span.is-disabled:last-child {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  color: #fff !important;
+  font-size: clamp(46px, 3.8vw, 66px) !important;
+  font-weight: 400 !important;
+  line-height: 0.72 !important;
+  text-decoration: none !important;
+  text-underline-offset: 0 !important;
+}
+
+.public-content--lorgar .lorgar-article-main > h1 {
+  margin-bottom: clamp(38px, 4.1vw, 58px) !important;
+}
+
+.public-content--lorgar .lorgar-meta {
+  margin-top: 0 !important;
+  margin-bottom: clamp(30px, 3.2vw, 44px) !important;
+}
+
+.public-content--lorgar .lorgar-share {
+  gap: clamp(44px, 4.2vw, 72px) !important;
+  margin: clamp(30px, 3.4vw, 48px) 0 !important;
+}
+
+.public-content--lorgar .lorgar-share__links,
+.public-content--lorgar .lorgar-share__reactions {
+  gap: 16px !important;
+}
+
+.public-content--lorgar .lorgar-share__links > span,
+.public-content--lorgar .lorgar-share__reactions > span:not(.lorgar-share__views) {
+  font-size: clamp(20px, 1.42vw, 26px) !important;
+  font-weight: 700 !important;
+}
+
+.public-content--lorgar .lorgar-share a.lorgar-share__social {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+}
+
+.public-content--lorgar .lorgar-share__icon--social {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.public-content--lorgar .lorgar-share button.lorgar-share__reaction-button {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+}
+
+.public-content--lorgar .lorgar-share__icon--like {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.public-content--lorgar .lorgar-share__reaction-count {
+  color: #8b93ad !important;
+  font-size: clamp(18px, 1.15vw, 22px) !important;
+  font-weight: 400 !important;
+}
+
+.public-content--lorgar .lorgar-share__views {
+  gap: 18px !important;
+  margin-left: clamp(12px, 1.5vw, 28px) !important;
+}
+
+.public-content--lorgar .lorgar-share__views,
+.public-content--lorgar .lorgar-share__views strong {
+  color: #fff !important;
+  font-size: clamp(18px, 1.15vw, 22px) !important;
+  font-weight: 700 !important;
+}
+
+.public-content--lorgar .lorgar-share__icon--eye {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+@media (max-width: 700px) {
+  .public-content--lorgar .lorgar-article-main > h1 {
+    margin-bottom: 28px !important;
+  }
+
+  .public-content--lorgar .lorgar-share a.lorgar-share__social {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .public-content--lorgar .lorgar-share__links > span,
+  .public-content--lorgar .lorgar-share__reactions > span:not(.lorgar-share__views),
+  .public-content--lorgar .lorgar-share__reaction-count,
+  .public-content--lorgar .lorgar-share__views,
+  .public-content--lorgar .lorgar-share__views strong {
+    font-size: 20px !important;
+  }
+}
