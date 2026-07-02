@@ -12,7 +12,7 @@ const outputDir = join(repoRoot, 'public', 'lorgar-figma')
 const doc = parseFig(readFileSync(figPath))
 
 const derivedSymbolNudges = new Map([
-  ['share-facebook', { x: 1, y: 0 }],
+  ['share-facebook', { x: 0, y: 0 }],
   ['share-linkedin', { x: 1, y: -1 }],
   ['share-telegram', { x: -2, y: 2 }],
 ])
