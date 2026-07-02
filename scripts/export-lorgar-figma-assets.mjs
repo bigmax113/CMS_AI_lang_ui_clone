@@ -11,6 +11,12 @@ const outputDir = join(repoRoot, 'public', 'lorgar-figma')
 
 const doc = parseFig(readFileSync(figPath))
 
+const derivedSymbolNudges = new Map([
+  ['share-facebook', { x: 1, y: 0 }],
+  ['share-linkedin', { x: 1, y: -1 }],
+  ['share-telegram', { x: -2, y: 2 }],
+])
+
 const assetTargets = [
   { id: '214:16759', name: 'logo' },
   { id: '214:16784', name: 'blog-badge' },
@@ -47,6 +53,10 @@ for (const target of assetTargets) {
   const height = round(target.outputSize || rawHeight)
   const ctx = { clipIndex: 0, defs: [] }
   let body = renderNode(target.id, identity(), { ctx, includeSelfTransform: false, renderDerivedSymbol: Boolean(target.renderDerivedSymbol) })
+  const symbolNudge = derivedSymbolNudges.get(target.name)
+  if (symbolNudge) {
+    body = nudgeDerivedSymbolBody(body, symbolNudge)
+  }
   if (target.stripOuterCircle) {
     body = stripFirstSVGPath(body)
   }
@@ -135,6 +145,13 @@ function getChildren(id) {
 
 function stripFirstSVGPath(svgBody) {
   return String(svgBody).replace(/<path\b[^>]*><\/path>|<path\b[^>]*\/?>/, '')
+}
+
+function nudgeDerivedSymbolBody(svgBody, nudge) {
+  return String(svgBody).replace(
+    /(<path\b(?=[^>]*fill="rgba\(255, 255, 255, 1\)"[^>]*transform="matrix\(1 0 0 1 )(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)(\)"[^>]*>)/,
+    (_match, prefix, x, y, suffix) => `${prefix}${round(Number(x) + nudge.x)} ${round(Number(y) + nudge.y)}${suffix}`,
+  )
 }
 
 function renderOwnGeometry(node, matrix, options = {}) {

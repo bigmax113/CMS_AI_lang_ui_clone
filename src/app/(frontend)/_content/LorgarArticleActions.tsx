@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type LorgarArticleActionsProps = {
   articleSlug: string
@@ -14,7 +14,7 @@ const reactionLabels = {
 } as const
 
 const defaultReactionCount = 43
-const figmaArticleIconVersion = '20260701-figma-share-instance-icons'
+const figmaArticleIconVersion = '20260702-share-reaction-polish'
 
 const FigmaShareIcon = ({
   name,
@@ -53,9 +53,23 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
   const [message, setMessage] = useState('')
   const [pendingReaction, setPendingReaction] = useState<null | keyof typeof reactionLabels>(null)
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({})
+  const [reactedReactions, setReactedReactions] = useState<Record<string, boolean>>({})
   const likeCount = reactionCounts.like || defaultReactionCount
+  const hasReactedLike = Boolean(reactedReactions.like)
+
+  useEffect(() => {
+    try {
+      setReactedReactions(window.localStorage.getItem(`lorgar-reaction:${articleSlug}:like`) ? { like: true } : {})
+    } catch {
+      setReactedReactions({})
+    }
+  }, [articleSlug])
 
   const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
+    if (pendingReaction === reactionType || reactedReactions[reactionType]) {
+      return
+    }
+
     setPendingReaction(reactionType)
     setMessage('')
 
@@ -77,7 +91,16 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
         ...current,
         [reactionType]: Number(result.count || current[reactionType] || defaultReactionCount),
       }))
-      setMessage('Reaction saved.')
+      setReactedReactions((current) => ({
+        ...current,
+        [reactionType]: true,
+      }))
+      try {
+        window.localStorage.setItem(`lorgar-reaction:${articleSlug}:${reactionType}`, '1')
+      } catch {
+        // Storage can be blocked in private contexts; the current page state still locks the reaction.
+      }
+      setMessage('')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Reaction was not saved.')
     } finally {
@@ -123,7 +146,8 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
         <button
           aria-label={reactionLabels.like}
           className="lorgar-share__reaction-button"
-          disabled={pendingReaction === 'like'}
+          aria-pressed={hasReactedLike}
+          disabled={pendingReaction === 'like' || hasReactedLike}
           onClick={() => void sendReaction('like')}
           type="button"
         >

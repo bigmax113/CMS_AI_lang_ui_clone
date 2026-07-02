@@ -10042,3 +10042,42 @@ main:has(.public-content--lorgar),
     font-size: 20px !important;
   }
 }
+
+/* Final micro QA 2026-07-02: filter chip spacing/cross alignment and locked reaction state only. */
+@media (min-width: 901px) {
+  .public-content--lorgar.public-content--index .lorgar-blog-topics__items {
+    align-items: center !important;
+    gap: 24px 30px !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear {
+    align-self: center !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 30px !important;
+    margin-left: 30px !important;
+    padding: 0 !important;
+  }
+
+  .public-content--lorgar.public-content--index .lorgar-blog-topics__remove {
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-left: 8px !important;
+    font-size: 18px !important;
+    line-height: 16px !important;
+    transform: translateY(-1px) !important;
+  }
+}
+
+.public-content--lorgar .lorgar-share button.lorgar-share__reaction-button:disabled {
+  cursor: default !important;
+  opacity: 1 !important;
+}
