@@ -2075,6 +2075,16 @@ const LorgarExclusiveMenuScript = () => (
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.lorgar-header').forEach((root) => closeMenus(root, null));
   });
+  let lastScrollY = window.scrollY || 0;
+  window.addEventListener('scroll', () => {
+    if (hoverQuery.matches) return;
+    const nextScrollY = window.scrollY || 0;
+    if (Math.abs(nextScrollY - lastScrollY) < 10) return;
+    lastScrollY = nextScrollY;
+    document.querySelectorAll('.lorgar-header__mobile-menu[open]').forEach((details) => {
+      details.open = false;
+    });
+  }, { passive: true });
   new MutationObserver(wireAll).observe(document.documentElement, { childList: true, subtree: true });
 })();`,
     }}
