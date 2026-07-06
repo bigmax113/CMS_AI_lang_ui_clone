@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     buildCommand: pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm deploy:migrate && pnpm start
+    startCommand: pnpm start
     healthCheckPath: /ai
     envVars:
       - key: NODE_ENV
