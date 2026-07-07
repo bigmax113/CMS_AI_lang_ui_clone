@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react'
 
 type LorgarArticleActionsProps = {
   articleSlug: string
+  likeAriaLabel?: string
+  reactionsAriaLabel?: string
+  reactionsLabel?: string
+  shareAriaLabel?: string
+  shareLabel?: string
   title: string
   url: string
   viewsLabel: string
@@ -47,7 +52,17 @@ const EyeIcon = () => (
   />
 )
 
-export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: LorgarArticleActionsProps) => {
+export const LorgarArticleActions = ({
+  articleSlug,
+  likeAriaLabel = reactionLabels.like,
+  reactionsAriaLabel = 'Article reactions',
+  reactionsLabel = 'Reactions:',
+  shareAriaLabel = 'Share article',
+  shareLabel = 'Share:',
+  title,
+  url,
+  viewsLabel,
+}: LorgarArticleActionsProps) => {
   const encodedTitle = encodeURIComponent(title)
   const encodedURL = encodeURIComponent(url)
   const [message, setMessage] = useState('')
@@ -110,8 +125,8 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
 
   return (
     <div className="lorgar-share">
-      <div aria-label="Share article" className="lorgar-share__links">
-        <span>Share:</span>
+      <div aria-label={shareAriaLabel} className="lorgar-share__links">
+        <span>{shareLabel}</span>
         <a
           aria-label="Share on Facebook"
           className="lorgar-share__social"
@@ -141,10 +156,10 @@ export const LorgarArticleActions = ({ articleSlug, title, url, viewsLabel }: Lo
           <FigmaShareIcon name="telegram" />
         </a>
       </div>
-      <div aria-label="Article reactions" className="lorgar-share__reactions">
-        <span>Reactions:</span>
+      <div aria-label={reactionsAriaLabel} className="lorgar-share__reactions">
+        <span>{reactionsLabel}</span>
         <button
-          aria-label={reactionLabels.like}
+          aria-label={likeAriaLabel}
           className="lorgar-share__reaction-button"
           aria-pressed={hasReactedLike}
           disabled={pendingReaction === 'like' || hasReactedLike}

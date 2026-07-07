@@ -10,6 +10,11 @@ import {
   aiDocsEndpoint,
   aiFoldersEndpoint,
   askEndpoint,
+  frontendUILocalizationEndpoint,
+  frontendUILocalizationLanguageEndpoint,
+  frontendUILocalizationPublishEndpoint,
+  frontendUILocalizationTranslateEndpoint,
+  frontendUILocalizationUpdateEndpoint,
   generateArticleEndpoint,
   generateImageEndpoint,
   generateVideoEndpoint,
@@ -30,6 +35,10 @@ import { SiteLinksCollection, siteLinksSlug } from './collections/SiteLinks'
 import { SitesCollection, sitesSlug } from './collections/Sites'
 import { TestRunsCollection, testRunsSlug } from './collections/TestRuns'
 import { Users, usersSlug } from './collections/Users'
+import {
+  ensureFrontendUITranslationsSchema,
+  syncFrontendUITranslationKeys,
+} from './lib/frontendUITranslations'
 import { migrations } from './migrations'
 import {
   articleReactionEndpoint,
@@ -800,6 +809,11 @@ export default buildConfig({
     translateArticlesEndpoint,
     updateArticleStatusesEndpoint,
     translateUiEndpoint,
+    frontendUILocalizationEndpoint,
+    frontendUILocalizationLanguageEndpoint,
+    frontendUILocalizationTranslateEndpoint,
+    frontendUILocalizationUpdateEndpoint,
+    frontendUILocalizationPublishEndpoint,
     videoStatusEndpoint,
     articleReactionEndpoint,
     newsletterSubscriptionEndpoint,
@@ -821,6 +835,13 @@ export default buildConfig({
       await ensureArticleViewCountSchema()
     } catch (err) {
       payload.logger.warn({ err, msg: 'Skipped non-critical article view count schema preparation' })
+    }
+
+    try {
+      await ensureFrontendUITranslationsSchema()
+      await syncFrontendUITranslationKeys()
+    } catch (err) {
+      payload.logger.warn({ err, msg: 'Skipped non-critical frontend UI localization schema preparation' })
     }
 
     const adminEmail = process.env.PAYLOAD_ADMIN_EMAIL || 'dev@payloadcms.com'

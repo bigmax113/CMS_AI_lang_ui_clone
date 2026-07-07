@@ -4,10 +4,20 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 
 type LorgarSubscribeFormProps = {
+  emailAriaLabel?: string
   languageCode: string
+  placeholder?: string
+  savingLabel?: string
+  submitLabel?: string
 }
 
-export const LorgarSubscribeForm = ({ languageCode }: LorgarSubscribeFormProps) => {
+export const LorgarSubscribeForm = ({
+  emailAriaLabel = 'Email address',
+  languageCode,
+  placeholder = 'Enter your email',
+  savingLabel = 'Saving...',
+  submitLabel = 'Subscribe',
+}: LorgarSubscribeFormProps) => {
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -49,9 +59,9 @@ export const LorgarSubscribeForm = ({ languageCode }: LorgarSubscribeFormProps) 
 
   return (
     <form onSubmit={(event) => void submit(event)}>
-      <input aria-label="Email address" name="email" placeholder="Enter your email" required type="email" />
+      <input aria-label={emailAriaLabel} name="email" placeholder={placeholder} required type="email" />
       <button disabled={isSubmitting} type="submit">
-        {isSubmitting ? 'Saving...' : 'Subscribe'}
+        {isSubmitting ? savingLabel : submitLabel}
       </button>
       {message ? <p className="lorgar-subscribe__message">{message}</p> : null}
     </form>

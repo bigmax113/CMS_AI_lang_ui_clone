@@ -12,7 +12,21 @@ import {
   stripArticleLanguagePrefix,
 } from '../lib/articleTranslations'
 import { slugifyArticleTitle } from '../lib/articleFields'
-
+import {
+  createFrontendUITranslationBatch,
+  defaultFrontendUIStrings,
+  finishFrontendUITranslationBatch,
+  frontendUIStringDefinitions,
+  listFrontendUILanguageOptions,
+  listFrontendUILocalization,
+  normalizeFrontendUILanguageCode,
+  publishFrontendUITranslations,
+  updateFrontendUITranslation,
+  upsertFrontendUILanguage,
+  upsertFrontendUITranslations,
+  type FrontendUIKey,
+  type FrontendUITranslationStatus,
+} from '../lib/frontendUITranslations'
 const DEFAULT_XAI_BASE_URL = 'https://api.x.ai/v1'
 const DEFAULT_GROK_TEXT_MODEL = 'grok-4.3'
 const DEFAULT_GROK_IMAGE_MODEL = 'grok-imagine-image'
@@ -140,6 +154,25 @@ type TranslateUIRequestBody = {
   strings?: Record<string, string>
 }
 
+type FrontendUILocalizationTranslateRequestBody = {
+  locale?: string
+}
+
+type FrontendUILocalizationLanguageRequestBody = {
+  displayCode?: string
+  label?: string
+  language?: string
+  locale?: string
+}
+
+type FrontendUILocalizationUpdateRequestBody = {
+  items?: Array<{
+    key?: string
+    status?: string
+    text?: string
+  }>
+  locale?: string
+}
 const UI_TRANSLATION_LANGUAGES: Record<string, string> = {
   en: 'English',
   pl: 'Polish',
@@ -688,6 +721,256 @@ export const updateArticleStatusesEndpoint: Endpoint = {
   path: '/update-article-statuses',
 }
 
+export const frontendUILocalizationEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    const url = new URL(req.url || 'http://localhost/api/frontend-ui-localization')
+    const locale = normalizeFrontendUILanguageCode(url.searchParams.get('locale') || 'en')
+
+    try {
+      const localization = await listFrontendUILocalization({ languageCode: locale })
+
+      return Response.json({
+        ...localization,
+        locale: localization.languageCode,
+        ok: true,
+      })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 500 })
+    }
+  },
+  method: 'get',
+  path: '/frontend-ui-localization',
+}
+
+export const frontendUILocalizationLanguageEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: FrontendUILocalizationLanguageRequestBody
+
+    try {
+      body =
+        typeof req.json === 'function'
+          ? ((await req.json()) as FrontendUILocalizationLanguageRequestBody)
+          : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    try {
+      const language = await upsertFrontendUILanguage({
+        displayCode: body.displayCode,
+        label: body.label,
+        language: body.language,
+        value: body.locale,
+      })
+      const localization = await listFrontendUILocalization({ languageCode: language.value })
+
+      return Response.json({
+        ...localization,
+        locale: localization.languageCode,
+        ok: true,
+      })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 400 })
+    }
+  },
+  method: 'post',
+  path: '/frontend-ui-localization/languages',
+}
+
+export const frontendUILocalizationTranslateEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: FrontendUILocalizationTranslateRequestBody
+
+    try {
+      body =
+        typeof req.json === 'function'
+          ? ((await req.json()) as FrontendUILocalizationTranslateRequestBody)
+          : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const locale = normalizeFrontendUILanguageCode(body.locale || 'en')
+    const languages = await listFrontendUILanguageOptions()
+    const languageOption = languages.find((candidate) => candidate.value === locale)
+
+    if (!languageOption) {
+      return Response.json(
+        { error: 'Add this interface language before generating translations.' },
+        { status: 400 },
+      )
+    }
+
+    if (locale === 'en') {
+      await upsertFrontendUITranslations({
+        generatedBy: 'system',
+        languageCode: locale,
+        status: 'published',
+        translations: defaultFrontendUIStrings,
+      })
+      const localization = await listFrontendUILocalization({ languageCode: locale })
+
+      return Response.json({ ...localization, locale: localization.languageCode, ok: true })
+    }
+
+    const batchID = await createFrontendUITranslationBatch({
+      languageCode: locale,
+      totalKeys: frontendUIStringDefinitions.length,
+    })
+
+    try {
+      const result = await translateUIStrings({
+        language: languageOption.language || languageOption.label,
+        strings: defaultFrontendUIStrings,
+      })
+
+      if (!result.ok) {
+        await finishFrontendUITranslationBatch({
+          batchID,
+          error: result.error || 'Translation failed.',
+          model: result.model,
+          status: 'failed',
+        })
+
+        return Response.json(result, { status: result.status || 502 })
+      }
+
+      const translatedStrings = Object.fromEntries(
+        frontendUIStringDefinitions.map((definition) => [
+          definition.key,
+          result.strings[definition.key] || definition.defaultText,
+        ]),
+      ) as Record<FrontendUIKey, string>
+
+      await upsertFrontendUITranslations({
+        generatedBy: result.model || 'ai',
+        languageCode: locale,
+        status: 'review',
+        translations: translatedStrings,
+      })
+      await finishFrontendUITranslationBatch({ batchID, model: result.model, status: 'success' })
+
+      const localization = await listFrontendUILocalization({ languageCode: locale })
+
+      return Response.json({
+        ...localization,
+        locale: localization.languageCode,
+        model: result.model,
+        ok: true,
+      })
+    } catch (error) {
+      await finishFrontendUITranslationBatch({
+        batchID,
+        error: errorMessageFromUnknown(error),
+        status: 'failed',
+      })
+
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 500 })
+    }
+  },
+  method: 'post',
+  path: '/frontend-ui-localization/translate',
+}
+
+export const frontendUILocalizationUpdateEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: FrontendUILocalizationUpdateRequestBody
+
+    try {
+      body =
+        typeof req.json === 'function'
+          ? ((await req.json()) as FrontendUILocalizationUpdateRequestBody)
+          : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const locale = normalizeFrontendUILanguageCode(body.locale || 'en')
+    const allowedKeys = new Set(frontendUIStringDefinitions.map((definition) => definition.key))
+    const updates = (body.items || []).filter(
+      (item): item is { key: FrontendUIKey; status?: string; text: string } =>
+        typeof item.key === 'string' &&
+        allowedKeys.has(item.key as FrontendUIKey) &&
+        typeof item.text === 'string',
+    )
+
+    if (!updates.length) {
+      return Response.json({ error: 'No valid UI strings to update.' }, { status: 400 })
+    }
+
+    try {
+      for (const item of updates) {
+        const status =
+          item.status === 'draft' || item.status === 'published' || item.status === 'review'
+            ? (item.status as FrontendUITranslationStatus)
+            : 'review'
+
+        await updateFrontendUITranslation({
+          key: item.key,
+          languageCode: locale,
+          status,
+          text: item.text,
+        })
+      }
+
+      const localization = await listFrontendUILocalization({ languageCode: locale })
+
+      return Response.json({ ...localization, locale: localization.languageCode, ok: true })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 500 })
+    }
+  },
+  method: 'patch',
+  path: '/frontend-ui-localization',
+}
+
+export const frontendUILocalizationPublishEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: FrontendUILocalizationTranslateRequestBody
+
+    try {
+      body =
+        typeof req.json === 'function'
+          ? ((await req.json()) as FrontendUILocalizationTranslateRequestBody)
+          : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const locale = normalizeFrontendUILanguageCode(body.locale || 'en')
+
+    try {
+      await publishFrontendUITranslations({ languageCode: locale })
+      const localization = await listFrontendUILocalization({ languageCode: locale })
+
+      return Response.json({ ...localization, locale: localization.languageCode, ok: true })
+    } catch (error) {
+      return Response.json({ error: errorMessageFromUnknown(error), ok: false }, { status: 500 })
+    }
+  },
+  method: 'post',
+  path: '/frontend-ui-localization/publish',
+}
 export const translateUiEndpoint: Endpoint = {
   handler: async (req) => {
     let body: TranslateUIRequestBody

@@ -17,6 +17,7 @@ import {
   type ArticleLanguageCode,
 } from '@/lib/articleTranslations'
 import { isValidArticlePreviewToken } from '@/lib/articlePreview'
+import { frontendUILabel, type FrontendUIKey, type FrontendUIStrings } from '@/lib/frontendUITranslations'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { LorgarArticleActions } from './LorgarArticleActions'
 import { LorgarSubscribeForm } from './LorgarSubscribeForm'
@@ -1369,6 +1370,7 @@ export const PublicChrome = ({
   meta,
   searchQuery,
   title,
+  uiStrings,
 }: {
   backgroundImage?: Media | null | number
   children: React.ReactNode
@@ -1377,6 +1379,7 @@ export const PublicChrome = ({
   meta?: React.ReactNode
   searchQuery?: null | string
   title: string
+  uiStrings?: LorgarUIStrings
 }) => {
   const heroImageURL = mediaURL(isMedia(backgroundImage) ? backgroundImage : null)
   const heroStyle = heroImageURL
@@ -1385,7 +1388,7 @@ export const PublicChrome = ({
 
   return (
     <div className="public-content public-content--lorgar public-content--index">
-      <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
+      <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} uiStrings={uiStrings} />
       <section
         className={['public-content__hero', heroImageURL ? 'public-content__hero--image' : ''].filter(Boolean).join(' ')}
         style={heroStyle}
@@ -1395,7 +1398,7 @@ export const PublicChrome = ({
         {meta ? <div className="public-content__meta-wrap">{meta}</div> : null}
       </section>
       {children}
-      <LorgarFooter />
+      <LorgarFooter uiStrings={uiStrings} />
     </div>
   )
 }
@@ -1796,42 +1799,55 @@ export const ArticleLanguageSwitcher = ({
   )
 }
 
-const lorgarSolutions = [
-  { href: 'https://lorgar.com/streaming', label: 'Streaming Solution' },
-  { href: 'https://lorgar.com/pc-gaming', label: 'PC Gaming Solution' },
-  { href: 'https://lorgar.com/sim-racing-flex', label: 'Sim Racing Flex Solution' },
-  { href: 'https://lorgar.com/sim-racing-pro', label: 'Sim Racing Pro Solution' },
+type LorgarUIStrings = FrontendUIStrings | null | undefined
+
+type LorgarTranslatedLink = {
+  href: string
+  label: string
+  translationKey?: FrontendUIKey
+}
+
+const uiLabel = (uiStrings: LorgarUIStrings, key: FrontendUIKey) => frontendUILabel(uiStrings, key)
+
+const translatedLinkLabel = (item: LorgarTranslatedLink, uiStrings: LorgarUIStrings) =>
+  item.translationKey ? uiLabel(uiStrings, item.translationKey) : item.label
+
+const lorgarSolutions: LorgarTranslatedLink[] = [
+  { href: 'https://lorgar.com/streaming', label: 'Streaming Solution', translationKey: 'nav.solutions.streaming' },
+  { href: 'https://lorgar.com/pc-gaming', label: 'PC Gaming Solution', translationKey: 'nav.solutions.pcGaming' },
+  { href: 'https://lorgar.com/sim-racing-flex', label: 'Sim Racing Flex Solution', translationKey: 'nav.solutions.simRacingFlex' },
+  { href: 'https://lorgar.com/sim-racing-pro', label: 'Sim Racing Pro Solution', translationKey: 'nav.solutions.simRacingPro' },
 ]
 
-const lorgarProducts = [
-  { href: 'https://lorgar.com/products', label: 'All Products' },
-  { href: 'https://lorgar.com/category/pc', label: 'PC' },
-  { href: 'https://lorgar.com/category/monitors', label: 'Monitors' },
-  { href: 'https://lorgar.com/category/gaming-mice', label: 'Mice' },
-  { href: 'https://lorgar.com/category/gaming-keyboards', label: 'Keyboards' },
-  { href: 'https://lorgar.com/category/gaming-headsets', label: 'Headsets' },
-  { href: 'https://lorgar.com/category/gaming-controllers', label: 'Controllers' },
-  { href: 'https://lorgar.com/category/gaming-mousepads', label: 'Mouse pads' },
-  { href: 'https://lorgar.com/category/gaming-chairs', label: 'Chairs' },
-  { href: 'https://lorgar.com/category/gaming-desks', label: 'Desks' },
-  { href: 'https://lorgar.com/category/web-cameras', label: 'Webcams' },
-  { href: 'https://lorgar.com/category/gaming-microphones', label: 'Microphones' },
-  { href: 'https://lorgar.com/category/gaming-racing-cockpits', label: 'Racing Cockpits' },
-  { href: 'https://lorgar.com/category/gaming-accessories', label: 'Racing Accessories' },
+const lorgarProducts: LorgarTranslatedLink[] = [
+  { href: 'https://lorgar.com/products', label: 'All Products', translationKey: 'nav.products.all' },
+  { href: 'https://lorgar.com/category/pc', label: 'PC', translationKey: 'nav.products.pc' },
+  { href: 'https://lorgar.com/category/monitors', label: 'Monitors', translationKey: 'nav.products.monitors' },
+  { href: 'https://lorgar.com/category/gaming-mice', label: 'Mice', translationKey: 'nav.products.mice' },
+  { href: 'https://lorgar.com/category/gaming-keyboards', label: 'Keyboards', translationKey: 'nav.products.keyboards' },
+  { href: 'https://lorgar.com/category/gaming-headsets', label: 'Headsets', translationKey: 'nav.products.headsets' },
+  { href: 'https://lorgar.com/category/gaming-controllers', label: 'Controllers', translationKey: 'nav.products.controllers' },
+  { href: 'https://lorgar.com/category/gaming-mousepads', label: 'Mouse pads', translationKey: 'nav.products.mousepads' },
+  { href: 'https://lorgar.com/category/gaming-chairs', label: 'Chairs', translationKey: 'nav.products.chairs' },
+  { href: 'https://lorgar.com/category/gaming-desks', label: 'Desks', translationKey: 'nav.products.desks' },
+  { href: 'https://lorgar.com/category/web-cameras', label: 'Webcams', translationKey: 'nav.products.webcams' },
+  { href: 'https://lorgar.com/category/gaming-microphones', label: 'Microphones', translationKey: 'nav.products.microphones' },
+  { href: 'https://lorgar.com/category/gaming-racing-cockpits', label: 'Racing Cockpits', translationKey: 'nav.products.racingCockpits' },
+  { href: 'https://lorgar.com/category/gaming-accessories', label: 'Racing Accessories', translationKey: 'nav.products.racingAccessories' },
 ]
 
-const lorgarFooterLinks = [
-  { href: 'https://lorgar.com/for-users', label: 'FOR USERS' },
-  { href: 'https://lorgar.com/for-partners', label: 'FOR PARTNERS' },
-  { href: 'https://lorgar.com/platform', label: 'LORGAR PLATFORM' },
-  { href: 'https://lorgar.com/where-to-buy', label: 'WHERE TO BUY' },
-  { href: 'https://lorgar.com/about', label: 'ABOUT LORGAR' },
+const lorgarFooterLinks: LorgarTranslatedLink[] = [
+  { href: 'https://lorgar.com/for-users', label: 'FOR USERS', translationKey: 'footer.forUsers' },
+  { href: 'https://lorgar.com/for-partners', label: 'FOR PARTNERS', translationKey: 'footer.forPartners' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR PLATFORM', translationKey: 'footer.platform' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'WHERE TO BUY', translationKey: 'footer.whereToBuy' },
+  { href: 'https://lorgar.com/about', label: 'ABOUT LORGAR', translationKey: 'footer.about' },
 ]
 
-const lorgarPolicyLinks = [
-  { href: 'https://lorgar.com/warranty-terms', label: 'WARRANTY POLICY AND WARRANTY CARDS' },
-  { href: 'https://lorgar.com/privacy-policy', label: 'PRIVACY POLICY' },
-  { href: 'https://lorgar.com/cookies-policy', label: 'COOKIES POLICY' },
+const lorgarPolicyLinks: LorgarTranslatedLink[] = [
+  { href: 'https://lorgar.com/warranty-terms', label: 'WARRANTY POLICY AND WARRANTY CARDS', translationKey: 'footer.warranty' },
+  { href: 'https://lorgar.com/privacy-policy', label: 'PRIVACY POLICY', translationKey: 'footer.privacy' },
+  { href: 'https://lorgar.com/cookies-policy', label: 'COOKIES POLICY', translationKey: 'footer.cookies' },
 ]
 
 type LorgarIconName =
@@ -1896,12 +1912,12 @@ const LorgarBlogBadge = ({ className }: { className?: string }) => (
   </span>
 )
 
-const LorgarBrand = ({ className }: { className?: string }) => (
+const LorgarBrand = ({ className, uiStrings }: { className?: string; uiStrings?: LorgarUIStrings }) => (
   <div className={className}>
-    <ExternalLink ariaLabel="Open LORGAR official site" className="lorgar-brand__logo" href="https://lorgar.com">
+    <ExternalLink ariaLabel={uiLabel(uiStrings, 'nav.logoAria')} className="lorgar-brand__logo" href="https://lorgar.com">
       <LorgarLogo className="lorgar-header__logo" />
     </ExternalLink>
-    <Link aria-label="Open LORGAR blog" className="lorgar-brand__blog" href="/articles" prefetch={false}>
+    <Link aria-label={uiLabel(uiStrings, 'nav.blogAria')} className="lorgar-brand__blog" href="/articles" prefetch={false}>
       <LorgarBlogBadge className="lorgar-blog-badge" />
     </Link>
   </div>
@@ -2094,9 +2110,11 @@ const LorgarExclusiveMenuScript = () => (
 const LorgarNavDropdown = ({
   items,
   label,
+  uiStrings,
 }: {
-  items: Array<{ href: string; label: string }>
+  items: LorgarTranslatedLink[]
   label: string
+  uiStrings?: LorgarUIStrings
 }) => (
   <details className="lorgar-nav-dropdown" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
     <summary>
@@ -2106,7 +2124,7 @@ const LorgarNavDropdown = ({
     <div>
       {items.map((item) => (
         <ExternalLink href={item.href} key={item.href}>
-          {item.label}
+          {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
     </div>
@@ -2118,20 +2136,22 @@ type LorgarPrimaryNavItem =
       href: string
       internal?: boolean
       label: string
+      translationKey?: FrontendUIKey
       type: 'link'
     }
   | {
-      items: Array<{ href: string; label: string }>
+      items: LorgarTranslatedLink[]
       label: string
+      translationKey?: FrontendUIKey
       type: 'dropdown'
     }
 
 const lorgarPrimaryNavItems: LorgarPrimaryNavItem[] = [
-  { items: lorgarSolutions, label: 'Solutions', type: 'dropdown' },
-  { items: lorgarProducts, label: 'Products', type: 'dropdown' },
-  { href: 'https://lorgar.com/for-users', label: 'For Users', type: 'link' },
-  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform', type: 'link' },
-  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy', type: 'link' },
+  { items: lorgarSolutions, label: 'Solutions', translationKey: 'nav.solutions', type: 'dropdown' },
+  { items: lorgarProducts, label: 'Products', translationKey: 'nav.products', type: 'dropdown' },
+  { href: 'https://lorgar.com/for-users', label: 'For Users', translationKey: 'nav.forUsers', type: 'link' },
+  { href: 'https://lorgar.com/platform', label: 'LORGAR Platform', translationKey: 'nav.platform', type: 'link' },
+  { href: 'https://lorgar.com/where-to-buy', label: 'Where To Buy', translationKey: 'nav.whereToBuy', type: 'link' },
 ]
 
 const LorgarPrimaryNavLink = ({
@@ -2151,15 +2171,17 @@ const LorgarPrimaryNavLink = ({
     <ExternalLink href={href}>{label}</ExternalLink>
   )
 
-const LorgarPrimaryNav = ({ className }: { className?: string }) => (
-  <nav aria-label="Primary" className={className}>
-    {lorgarPrimaryNavItems.map((item) =>
-      item.type === 'dropdown' ? (
-        <LorgarNavDropdown items={item.items} key={item.label} label={item.label} />
+const LorgarPrimaryNav = ({ className, uiStrings }: { className?: string; uiStrings?: LorgarUIStrings }) => (
+  <nav aria-label={uiLabel(uiStrings, 'nav.primaryLabel')} className={className}>
+    {lorgarPrimaryNavItems.map((item) => {
+      const label = item.translationKey ? uiLabel(uiStrings, item.translationKey) : item.label
+
+      return item.type === 'dropdown' ? (
+        <LorgarNavDropdown items={item.items} key={item.label} label={label} uiStrings={uiStrings} />
       ) : (
-        <LorgarPrimaryNavLink href={item.href} internal={item.internal} key={`${item.href}-${item.label}`} label={item.label} />
-      ),
-    )}
+        <LorgarPrimaryNavLink href={item.href} internal={item.internal} key={`${item.href}-${item.label}`} label={label} />
+      )
+    })}
   </nav>
 )
 
@@ -2262,10 +2284,12 @@ const LorgarHeader = ({
   alternates,
   languageCode,
   searchQuery,
+  uiStrings,
 }: {
   alternates?: ArticleLanguageAlternate[]
   languageCode?: null | string
   searchQuery?: null | string
+  uiStrings?: LorgarUIStrings
 }) => {
   const currentCode = normalizeArticleLanguageCode(languageCode)
   const currentDisplayCode = articleLanguageDisplayCodeByCode[currentCode] || currentCode.toUpperCase()
@@ -2276,17 +2300,23 @@ const LorgarHeader = ({
 
   return (
     <header className="lorgar-header">
-      <LorgarBrand className="lorgar-header__brand" />
-      <LorgarPrimaryNav className="lorgar-header__nav" />
+      <LorgarBrand className="lorgar-header__brand" uiStrings={uiStrings} />
+      <LorgarPrimaryNav className="lorgar-header__nav" uiStrings={uiStrings} />
       <div className="lorgar-header__tools">
         <details className="lorgar-header__search" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
-          <summary aria-label="Open article search">
+          <summary aria-label={uiLabel(uiStrings, 'nav.searchLabel')}>
             <LorgarSearchIcon />
           </summary>
           <form action="/articles" role="search">
-            <input aria-label="Search articles" defaultValue={searchQuery || ''} name="q" placeholder="Search" type="search" />
+            <input
+              aria-label={uiLabel(uiStrings, 'nav.searchInputLabel')}
+              defaultValue={searchQuery || ''}
+              name="q"
+              placeholder={uiLabel(uiStrings, 'nav.searchPlaceholder')}
+              type="search"
+            />
             <input name="lang" type="hidden" value={currentCode} />
-            <button type="submit">Search</button>
+            <button type="submit">{uiLabel(uiStrings, 'nav.searchSubmit')}</button>
           </form>
         </details>
         <details className="lorgar-header__language" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
@@ -2305,8 +2335,8 @@ const LorgarHeader = ({
           </div>
         </details>
         <details className="lorgar-header__mobile-menu">
-          <summary aria-label="Open menu"><span aria-hidden="true" /></summary>
-          <LorgarPrimaryNav className="lorgar-header__mobile-nav" />
+          <summary aria-label={uiLabel(uiStrings, 'nav.openMenu')}><span aria-hidden="true" /></summary>
+          <LorgarPrimaryNav className="lorgar-header__mobile-nav" uiStrings={uiStrings} />
         </details>
       </div>
       <LorgarExclusiveMenuScript />
@@ -2364,10 +2394,12 @@ const lorgarCardFallbackImage = (article: Article) => {
   return lorgarCardFallbackImages[index]
 }
 
-const LorgarBlogCard = ({ article }: { article: Article }) => {
+const LorgarBlogCard = ({ article, uiStrings }: { article: Article; uiStrings?: LorgarUIStrings }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const image = articlePrimaryImage(article)
   const date = formatDate(article.publishedAt || article.createdAt, article.languageCode)
+  const readMoreLabel = uiLabel(uiStrings, 'blog.readMore')
+  const viewsSuffix = uiLabel(uiStrings, 'blog.viewsSuffix')
 
   return (
     <a className="lorgar-blog-card" href={href}>
@@ -2384,14 +2416,14 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
         <img alt={article.title} className="lorgar-blog-card__image" loading="eager" src={lorgarCardFallbackImage(article)} />
       )}
       <span aria-hidden="true" className="lorgar-blog-card__hover">
-        READ MORE
+        {readMoreLabel.toUpperCase()}
       </span>
       <strong className="lorgar-blog-card__title">{article.title}</strong>
       <span className="lorgar-blog-card__footer">
         <span className="lorgar-blog-card__stats">
           <span>
             <img alt="" aria-hidden="true" className="lorgar-card-meta-icon" src="/lorgar-figma/eye.svg" />
-            {formatArticleViewCount(article)} views
+            {formatArticleViewCount(article)} {viewsSuffix}
           </span>
           <span className="lorgar-blog-card__divider" aria-hidden="true" />
           <span>
@@ -2400,7 +2432,7 @@ const LorgarBlogCard = ({ article }: { article: Article }) => {
           </span>
         </span>
         <span className="lorgar-blog-card__more">
-          Read more
+          {readMoreLabel}
           <img alt="" aria-hidden="true" className="lorgar-card-arrow" src="/lorgar-figma/arrow-right-mini.svg" />
         </span>
       </span>
@@ -2444,6 +2476,7 @@ const LorgarBlogPagination = ({
   sortMode,
   tagQuery,
   tagQueries,
+  uiStrings,
 }: {
   languageCode?: null | string
   pagination: LorgarArticlesPagination
@@ -2451,10 +2484,12 @@ const LorgarBlogPagination = ({
   sortMode?: ArticleSortMode
   tagQuery?: null | string
   tagQueries?: null | string[]
+  uiStrings?: LorgarUIStrings
 }) => {
   const { currentPage, totalPages } = pagination
   const hasNextPage = currentPage < totalPages
   const hasPreviousPage = currentPage > 1
+  const moreArticlesLabel = uiLabel(uiStrings, 'blog.moreArticles')
   const pageHref = (page: number) =>
     lorgarArticlesPath({
       languageCode,
@@ -2465,17 +2500,17 @@ const LorgarBlogPagination = ({
     })
 
   return (
-    <nav aria-label="Article pages" className="lorgar-blog-pagination">
+    <nav aria-label={uiLabel(uiStrings, 'blog.pagesAria')} className="lorgar-blog-pagination">
       {hasNextPage ? (
         <a className="lorgar-blog-pagination__more" href={pageHref(currentPage + 1)}>
-          More articles
+          {moreArticlesLabel}
         </a>
       ) : (
-        <span className="lorgar-blog-pagination__more is-disabled">More articles</span>
+        <span className="lorgar-blog-pagination__more is-disabled">{moreArticlesLabel}</span>
       )}
       <div className="lorgar-blog-pagination__pages">
         {hasPreviousPage ? (
-          <a aria-label="Previous page" href={pageHref(currentPage - 1)}>
+          <a aria-label={uiLabel(uiStrings, 'blog.previousPage')} href={pageHref(currentPage - 1)}>
             ‹
           </a>
         ) : (
@@ -2497,7 +2532,7 @@ const LorgarBlogPagination = ({
           ),
         )}
         {hasNextPage ? (
-          <a aria-label="Next page" href={pageHref(currentPage + 1)}>
+          <a aria-label={uiLabel(uiStrings, 'blog.nextPage')} href={pageHref(currentPage + 1)}>
             ›
           </a>
         ) : (
@@ -2520,6 +2555,7 @@ export const LorgarArticlesIndexLayout = ({
   tagQuery,
   tagQueries,
   tagFilters,
+  uiStrings,
 }: {
   articles: Article[]
   languageCode?: null | string
@@ -2532,6 +2568,7 @@ export const LorgarArticlesIndexLayout = ({
   tagQuery?: null | string
   tagQueries?: null | string[]
   tagFilters?: LorgarTagFilter[]
+  uiStrings?: LorgarUIStrings
 }) => {
   const selectedTopicQueries = uniqueTopicQueries(tagQueries?.length ? tagQueries : tagQuery)
   const selectedTopicSet = new Set(selectedTopicQueries.map((query) => normalizedTopicFilterText(query)))
@@ -2558,7 +2595,7 @@ export const LorgarArticlesIndexLayout = ({
   ]
   const isFilteredView = Boolean(searchQuery || selectedTopicQueries.length)
   const isPopularSort = sortMode === 'views'
-  const heroTitle = isFilteredView ? pageTitle : 'BLOG'
+  const heroTitle = isFilteredView ? pageTitle : uiLabel(uiStrings, 'blog.coverTitle')
   const topicHref = (topicTagQuery: string) => {
     const topicQuery = normalizedTopicFilterText(topicTagQuery)
 
@@ -2578,17 +2615,17 @@ export const LorgarArticlesIndexLayout = ({
     <div className="public-content public-content--lorgar public-content--index">
       <LorgarHeader languageCode={languageCode} searchQuery={searchQuery} />
       <main className="lorgar-blog-index">
-        <section className="lorgar-blog-cover" aria-label="LORGAR blog">
+        <section className="lorgar-blog-cover" aria-label={uiLabel(uiStrings, 'blog.coverAria')}>
           <div className="lorgar-blog-cover__inner">
-            <span className="lorgar-blog-cover__eyebrow">Blog</span>
+            <span className="lorgar-blog-cover__eyebrow">{uiLabel(uiStrings, 'blog.coverEyebrow')}</span>
             <h1>{heroTitle}</h1>
             {pageIntro ? <p>{pageIntro}</p> : null}
           </div>
         </section>
-        <section className="lorgar-blog-list" aria-label="Articles">
+        <section className="lorgar-blog-list" aria-label={uiLabel(uiStrings, 'blog.articlesAria')}>
           <div className="lorgar-blog-list__intro">
-            <nav aria-label="Topics" className="lorgar-blog-topics">
-              <strong>Topics</strong>
+            <nav aria-label={uiLabel(uiStrings, 'blog.topicsTitle')} className="lorgar-blog-topics">
+              <strong>{uiLabel(uiStrings, 'blog.topicsTitle')}</strong>
               <div className="lorgar-blog-topics__items">
                 {orderedTopicFilters.map((topic) => {
                   const topicQuery = normalizedTopicFilterText(topic.tagQuery)
@@ -2602,7 +2639,7 @@ export const LorgarArticlesIndexLayout = ({
                       key={topic.label}
                     >
                       <span>{topic.label}</span>
-                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">&times;</span> : null}
+                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
                     </a>
                   )
                 })}
@@ -2616,7 +2653,7 @@ export const LorgarArticlesIndexLayout = ({
             {!isFilteredView ? (
               <div>
                 <span className="lorgar-blog-list__kicker">
-                  {isPopularSort ? 'Popular news' : 'Latest news'}
+                  {isPopularSort ? uiLabel(uiStrings, 'blog.popularNews') : uiLabel(uiStrings, 'blog.latestNews')}
                 </span>
                 <h2>{isPopularSort ? 'Popular news' : 'Latest news'}</h2>
               </div>
@@ -2625,11 +2662,11 @@ export const LorgarArticlesIndexLayout = ({
           {articles.length ? (
             <div className="lorgar-blog-mosaic">
               {articles.map((article, index) => (
-                <LorgarBlogCard article={article} key={article.id || `${article.slug}-${index}`} />
+                <LorgarBlogCard article={article} uiStrings={uiStrings} key={article.id || `${article.slug}-${index}`} />
               ))}
             </div>
           ) : (
-            <p className="public-content__empty">No published articles match this search and language filter.</p>
+            <p className="public-content__empty">{uiLabel(uiStrings, 'blog.noResults')}</p>
           )}
           {pagination && pagination.totalPages > 1 ? (
             <LorgarBlogPagination
@@ -2638,11 +2675,12 @@ export const LorgarArticlesIndexLayout = ({
               searchQuery={searchQuery}
               sortMode={sortMode}
               tagQueries={selectedTopicQueries}
+              uiStrings={uiStrings}
             />
           ) : null}
         </section>
       </main>
-      <LorgarFooter />
+      <LorgarFooter uiStrings={uiStrings} />
     </div>
   )
 }
@@ -2688,16 +2726,30 @@ const LorgarArticleShare = ({
   articleSlug,
   path,
   title,
+  uiStrings,
   viewsLabel,
 }: {
   articleSlug: string
   path?: null | string
   title: string
+  uiStrings?: LorgarUIStrings
   viewsLabel: string
 }) => {
   const url = absoluteURL(path) || publicBaseURL()
 
-  return <LorgarArticleActions articleSlug={articleSlug} title={title} url={url} viewsLabel={viewsLabel} />
+  return (
+    <LorgarArticleActions
+      articleSlug={articleSlug}
+      likeAriaLabel={uiLabel(uiStrings, 'article.likeAriaLabel')}
+      reactionsAriaLabel={uiLabel(uiStrings, 'article.reactionsAriaLabel')}
+      reactionsLabel={uiLabel(uiStrings, 'article.reactionsLabel')}
+      shareAriaLabel={uiLabel(uiStrings, 'article.shareAriaLabel')}
+      shareLabel={uiLabel(uiStrings, 'article.shareLabel')}
+      title={title}
+      url={url}
+      viewsLabel={viewsLabel}
+    />
+  )
 }
 
 const LorgarSidebarCard = ({ article }: { article: Article }) => {
@@ -2733,9 +2785,11 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
 const LorgarArticleSidebar = ({
   article,
   recentArticles,
+  uiStrings,
 }: {
   article: Article
   recentArticles: Article[]
+  uiStrings?: LorgarUIStrings
 }) => {
   const currentID = String(article.id)
   const currentLanguageCode = inferArticleLanguageCode(article)
@@ -2747,10 +2801,10 @@ const LorgarArticleSidebar = ({
   const recent = [...siblingArticles].sort(compareArticlesByPublishedDateDesc).slice(0, 3)
   const popular = [...sidebarArticles].sort(compareArticlesByViewsDesc).slice(0, 3)
   return (
-    <aside className="lorgar-sidebar" aria-label="Article sidebar">
+    <aside className="lorgar-sidebar" aria-label={uiLabel(uiStrings, 'article.sidebarAria')}>
       {recent.length ? (
         <section className="lorgar-sidebar__panel lorgar-sidebar__panel--recent">
-          <h2>Recent news</h2>
+          <h2>{uiLabel(uiStrings, 'article.recentNews')}</h2>
           <div className="lorgar-sidebar__cards">
             {recent.map((item) => (
               <LorgarSidebarCard article={item} key={item.id} />
@@ -2760,7 +2814,7 @@ const LorgarArticleSidebar = ({
       ) : null}
       {popular.length ? (
         <section className="lorgar-sidebar__panel lorgar-sidebar__panel--popular">
-          <h2>Popular news</h2>
+          <h2>{uiLabel(uiStrings, 'article.popularNews')}</h2>
           <div className="lorgar-sidebar__cards">
             {popular.map((item) => (
               <LorgarSidebarCard article={item} key={item.id} />
@@ -2772,36 +2826,48 @@ const LorgarArticleSidebar = ({
   )
 }
 
-const LorgarCTA = () => (
-  <section className="lorgar-cta-strip" aria-label="Contact LORGAR">
-    <strong>Interested in working with ASBIS?</strong>
+const LorgarCTA = ({ uiStrings }: { uiStrings?: LorgarUIStrings }) => (
+  <section className="lorgar-cta-strip" aria-label={uiLabel(uiStrings, 'cta.aria')}>
+    <strong>{uiLabel(uiStrings, 'cta.title')}</strong>
     <div>
-      <ExternalLink href="https://lorgar.com/for-users">BECOME PARTNER</ExternalLink>
-      <ExternalLink href="https://lorgar.com/support-in-messengers">CONTACT US</ExternalLink>
+      <ExternalLink href="https://lorgar.com/for-users">{uiLabel(uiStrings, 'cta.becomePartner')}</ExternalLink>
+      <ExternalLink href="https://lorgar.com/support-in-messengers">{uiLabel(uiStrings, 'cta.contactUs')}</ExternalLink>
     </div>
   </section>
 )
 
-const LorgarSubscribe = ({ languageCode }: { languageCode?: null | string }) => (
-  <section className="lorgar-subscribe" aria-label="Subscribe to LORGAR blog">
+const LorgarSubscribe = ({
+  languageCode,
+  uiStrings,
+}: {
+  languageCode?: null | string
+  uiStrings?: LorgarUIStrings
+}) => (
+  <section className="lorgar-subscribe" aria-label={uiLabel(uiStrings, 'subscribe.aria')}>
     <div className="lorgar-subscribe__icon">
       <LorgarIcon name="mail" />
     </div>
     <div>
-      <h2>Subscribe to our blog</h2>
-      <p>Get the latest news and insights delivered straight to your inbox.</p>
+      <h2>{uiLabel(uiStrings, 'subscribe.title')}</h2>
+      <p>{uiLabel(uiStrings, 'subscribe.description')}</p>
     </div>
-    <LorgarSubscribeForm languageCode={normalizeArticleLanguageCode(languageCode)} />
+    <LorgarSubscribeForm
+      emailAriaLabel={uiLabel(uiStrings, 'subscribe.emailAriaLabel')}
+      languageCode={normalizeArticleLanguageCode(languageCode)}
+      placeholder={uiLabel(uiStrings, 'subscribe.placeholder')}
+      savingLabel={uiLabel(uiStrings, 'subscribe.saving')}
+      submitLabel={uiLabel(uiStrings, 'subscribe.submit')}
+    />
   </section>
 )
 
-const LorgarFooter = () => (
+const LorgarFooter = ({ uiStrings }: { uiStrings?: LorgarUIStrings } = {}) => (
   <footer className="lorgar-footer">
-    <LorgarBrand className="lorgar-footer__logo" />
-    <nav aria-label="Footer" className="lorgar-footer__nav">
+    <LorgarBrand className="lorgar-footer__logo" uiStrings={uiStrings} />
+    <nav aria-label={uiLabel(uiStrings, 'footer.aria')} className="lorgar-footer__nav">
       {lorgarFooterLinks.map((item) => (
         <ExternalLink href={item.href} key={item.href}>
-          {item.label}
+          {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
     </nav>
@@ -2814,10 +2880,10 @@ const LorgarFooter = () => (
       ))}
     </div>
     <div className="lorgar-footer__legal">
-      <span>&copy; LORGAR 2026, ALL RIGHTS RESERVED</span>
+      <span>{uiLabel(uiStrings, 'footer.copyright')}</span>
       {lorgarPolicyLinks.map((item) => (
         <ExternalLink href={item.href} key={item.href}>
-          {item.label}
+          {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
     </div>
@@ -2852,9 +2918,11 @@ const LorgarRelatedCard = ({ article }: { article: Article }) => {
 const LorgarRelatedSection = ({
   article,
   recentArticles,
+  uiStrings,
 }: {
   article: Article
   recentArticles: Article[]
+  uiStrings?: LorgarUIStrings
 }) => {
   const currentID = String(article.id)
   const currentLanguageCode = inferArticleLanguageCode(article)
@@ -2869,8 +2937,8 @@ const LorgarRelatedSection = ({
   }
 
   return (
-    <section className="lorgar-related" aria-label="Recent news">
-      <h2>Recent news</h2>
+    <section className="lorgar-related" aria-label={uiLabel(uiStrings, 'article.recentNews')}>
+      <h2>{uiLabel(uiStrings, 'article.recentNews')}</h2>
       <div>
         {items.slice(0, 3).map((item) => (
           <LorgarRelatedCard article={item} key={item.id} />
@@ -2886,23 +2954,25 @@ export const LorgarArticleLayout = ({
   recentArticles,
   summary,
   translations,
+  uiStrings,
 }: {
   article: Article
   children: React.ReactNode
   recentArticles: Article[]
   summary?: null | string
   translations: ArticleLanguageAlternate[]
+  uiStrings?: LorgarUIStrings
 }) => {
   const articlePath = articlePublicPath(article.slug) || '/articles'
   const navigationLabels = publicArticleNavigationLabels(article.languageCode)
   const publishedDate = article.publishedAt || article.createdAt
   const coverImage = articlePrimaryImage(article)
   const articleTags = publicArticleTags(article)
-  const articleViewsLabel = `${formatArticleViewCount(article)} views`
+  const articleViewsLabel = `${formatArticleViewCount(article)} ${uiLabel(uiStrings, 'blog.viewsSuffix')}`
 
   return (
     <div className="public-content public-content--lorgar">
-      <LorgarHeader alternates={translations} languageCode={article.languageCode} />
+      <LorgarHeader alternates={translations} languageCode={article.languageCode} uiStrings={uiStrings} />
       <main className="lorgar-article-shell">
         <div className="lorgar-article-grid">
           <article className="lorgar-article-main">
@@ -2915,7 +2985,7 @@ export const LorgarArticleLayout = ({
             />
             {articleTags.length ? (
               <nav aria-label="Article tags" className="lorgar-article-tags">
-                <strong>Tags:</strong>
+                <strong>{uiLabel(uiStrings, 'article.tagsLabel')}</strong>
                 {articleTags.map((tag) => (
                   <Link href={lorgarArticlesPath({ languageCode: article.languageCode, tagQuery: tag })} key={tag} prefetch={false}>
                     {tag}
@@ -2931,16 +3001,22 @@ export const LorgarArticleLayout = ({
             ) : (
               <img alt={article.title} className="lorgar-article-cover" loading="eager" src={lorgarCardFallbackImage(article)} />
             )}
-            <LorgarArticleShare articleSlug={article.slug} path={articlePath} title={article.title} viewsLabel={articleViewsLabel} />
+            <LorgarArticleShare
+              articleSlug={article.slug}
+              path={articlePath}
+              title={article.title}
+              uiStrings={uiStrings}
+              viewsLabel={articleViewsLabel}
+            />
             <div className="lorgar-article-body">{children}</div>
-            <LorgarCTA />
-            <LorgarRelatedSection article={article} recentArticles={recentArticles} />
-            <LorgarSubscribe languageCode={article.languageCode} />
+            <LorgarCTA uiStrings={uiStrings} />
+            <LorgarRelatedSection article={article} recentArticles={recentArticles} uiStrings={uiStrings} />
+            <LorgarSubscribe languageCode={article.languageCode} uiStrings={uiStrings} />
           </article>
-          <LorgarArticleSidebar article={article} recentArticles={recentArticles} />
+          <LorgarArticleSidebar article={article} recentArticles={recentArticles} uiStrings={uiStrings} />
         </div>
       </main>
-      <LorgarFooter />
+      <LorgarFooter uiStrings={uiStrings} />
     </div>
   )
 }

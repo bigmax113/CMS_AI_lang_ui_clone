@@ -1,6 +1,8 @@
 import React from 'react'
 import Link from 'next/link'
 
+import { LocalizationManager } from '../LocalizationManager'
+
 const quickLinks = [
   {
     description: 'Open the connected AI workspace for RAG tests, media generation, and UI translation.',
@@ -107,6 +109,8 @@ export const AdminDashboard = () => {
           </Link>
         ))}
       </div>
+
+      <LocalizationManager />
     </section>
   )
 }
