@@ -3,7 +3,7 @@ import {
   articleLanguageLabelByCode,
   normalizeArticleLanguageCode,
 } from '@/lib/articleTranslations'
-import { loadFrontendUIDictionary } from '@/lib/frontendUITranslations'
+import { loadFrontendUIDictionary, normalizeFrontendUILanguageCode } from '@/lib/frontendUITranslations'
 import type { Article } from '@/payload-types'
 
 import {
@@ -61,9 +61,11 @@ export async function renderArticlesIndexPage({
   const tagQueries = [...new Set([...queryValues(query?.tag), ...(routeTag ? [routeTag] : [])])]
   const requestedPage = parsePage(query?.page)
   const sortMode = parseSortMode(query?.sort)
-  const languageCode = normalizeArticleLanguageCode(routeLanguageCode || firstQueryValue(query?.lang) || 'en')
+  const rawLanguageCode = routeLanguageCode || firstQueryValue(query?.lang) || 'en'
+  const languageCode = normalizeArticleLanguageCode(rawLanguageCode)
+  const uiLanguageCode = normalizeFrontendUILanguageCode(rawLanguageCode)
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
-  const uiStrings = await loadFrontendUIDictionary(languageCode, { preview: shouldPreviewLocalization })
+  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization })
   const shouldUseFilteredArchive = Boolean(searchQuery || tagQueries.length)
   const tagFilterArticles = await listPublishedArticles({
     languageCode,

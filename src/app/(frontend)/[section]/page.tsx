@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { loadFrontendUIDictionary } from '@/lib/frontendUITranslations'
+import { loadFrontendUIDictionary, normalizeFrontendUILanguageCode } from '@/lib/frontendUITranslations'
 
 import {
   articleLanguageDisplayCodeByCode,
@@ -102,9 +102,11 @@ export default async function LorgarSectionPage({ params, searchParams }: PagePr
   const query = await searchParams
   const searchQuery = firstQueryValue(query?.q)?.trim() || ''
   const tagQuery = firstQueryValue(query?.tag)?.trim() || config.defaultTag
-  const languageCode = normalizeArticleLanguageCode(firstQueryValue(query?.lang) || 'en')
+  const rawLanguageCode = firstQueryValue(query?.lang) || 'en'
+  const languageCode = normalizeArticleLanguageCode(rawLanguageCode)
+  const uiLanguageCode = normalizeFrontendUILanguageCode(rawLanguageCode)
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
-  const uiStrings = await loadFrontendUIDictionary(languageCode, { preview: shouldPreviewLocalization })
+  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization })
   const articles = (await listPublishedArticles({
     languageCode,
     limit: searchQuery || tagQuery ? 500 : 12,

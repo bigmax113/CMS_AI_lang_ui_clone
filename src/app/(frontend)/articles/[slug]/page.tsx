@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 
-import { loadFrontendUIDictionary } from '@/lib/frontendUITranslations'
+import { loadFrontendUIDictionary, normalizeFrontendUILanguageCode } from '@/lib/frontendUITranslations'
 import { articlePublicPath } from '@/lib/publicURLs'
 import {
   LorgarArticleLayout,
@@ -98,8 +98,9 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
 
   const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
   const recentArticles = await listPublishedArticles()
+  const uiLanguageCode = normalizeFrontendUILanguageCode(firstQueryValue(query?.lang) || article.languageCode)
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
-  const uiStrings = await loadFrontendUIDictionary(article.languageCode, { preview: shouldPreviewLocalization })
+  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization })
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
   const publishedDate = article.publishedAt || article.createdAt
 

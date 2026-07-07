@@ -564,6 +564,8 @@ export const frontendUILabel = (
 
 export const ensureFrontendUITranslationsSchema = async (): Promise<void> => {
   await withFrontendUIClient(async (client, schema) => {
+    await ensureArticleLanguageEnumValues(client, schema)
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS ${schema}."frontend_ui_languages" (
         language_code text PRIMARY KEY,
@@ -968,6 +970,52 @@ const normalizeFrontendUITranslationStatus = (
   return 'review'
 }
 
+const articleLanguageEnumTypeNames = [
+  'enum_articles_language_code',
+  'enum__articles_v_version_language_code',
+] as const
+
+const ensureArticleLanguageEnumValues = async (
+  client: FrontendUIPGClient,
+  schema: string,
+): Promise<void> => {
+  const schemaName = unquoteDatabaseIdentifier(schema)
+
+  for (const enumTypeName of articleLanguageEnumTypeNames) {
+    const enumResult = await client.query<{ enumlabel: string }>(
+      `
+        SELECT enum_values.enumlabel
+        FROM pg_enum enum_values
+        JOIN pg_type enum_type ON enum_type.oid = enum_values.enumtypid
+        JOIN pg_namespace enum_schema ON enum_schema.oid = enum_type.typnamespace
+        WHERE enum_schema.nspname = $1 AND enum_type.typname = $2;
+      `,
+      [schemaName, enumTypeName],
+    )
+
+    if (!enumResult.rowCount) {
+      continue
+    }
+
+    const existingValues = new Set(enumResult.rows.map((row) => row.enumlabel))
+
+    for (const language of articleLanguageDefinitions) {
+      const languageCode = language.value
+
+      if (
+        existingValues.has(languageCode) ||
+        !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})?$/.test(languageCode)
+      ) {
+        continue
+      }
+
+      await client.query(
+        `ALTER TYPE ${schema}."${enumTypeName}" ADD VALUE IF NOT EXISTS '${languageCode.replaceAll("'", "''")}';`,
+      )
+    }
+  }
+}
+
 const withFrontendUIClient = async <T>(
   callback: (client: FrontendUIPGClient, schema: string) => Promise<T>,
 ): Promise<T | undefined> => {
@@ -1003,3 +1051,7 @@ const withFrontendUIClient = async <T>(
 
 const quoteDatabaseIdentifier = (value: string): string => `"${value.replaceAll('"', '""')}"`
 
+const unquoteDatabaseIdentifier = (value: string): string =>
+  value.startsWith('"') && value.endsWith('"')
+    ? value.slice(1, -1).replaceAll('""', '"')
+    : value
