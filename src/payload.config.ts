@@ -41,6 +41,7 @@ import {
 } from './lib/frontendUITranslations'
 import { migrations } from './migrations'
 import {
+  articleReactionCountsEndpoint,
   articleReactionEndpoint,
   newsletterSubscriptionEndpoint,
 } from './publicInteractions/endpoints'
@@ -815,6 +816,7 @@ export default buildConfig({
     frontendUILocalizationUpdateEndpoint,
     frontendUILocalizationPublishEndpoint,
     videoStatusEndpoint,
+    articleReactionCountsEndpoint,
     articleReactionEndpoint,
     newsletterSubscriptionEndpoint,
   ],

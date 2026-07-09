@@ -10472,3 +10472,41 @@ main:has(.public-content--lorgar),
     font-size: 22px !important;
   }
 }
+/* Localization overflow safety 2026-07-08. */
+.public-content--lorgar .lorgar-subscribe input {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.public-content--lorgar .lorgar-subscribe input::placeholder {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+@media (min-width: 901px) {
+  .public-content--lorgar .lorgar-footer {
+    grid-template-columns: auto minmax(0, max-content) auto !important;
+    gap: 28px clamp(18px, 2vw, 44px) !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav {
+    gap: clamp(16px, 1.55vw, 34px) !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav a {
+    font-size: clamp(14px, 0.78vw, 16px) !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .public-content--lorgar .lorgar-subscribe input,
+  .public-content--lorgar .lorgar-subscribe input::placeholder {
+    font-size: clamp(14px, 4.2vw, 17px) !important;
+  }
+}

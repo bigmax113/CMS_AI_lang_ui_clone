@@ -390,7 +390,7 @@ export const ArticlesCollection: CollectionConfig = {
         description: 'Public view count shown on LORGAR blog cards and used for Popular news sorting.',
         position: 'sidebar',
       },
-      defaultValue: 1248,
+      defaultValue: 0,
       label: 'Views',
       min: 0,
     },

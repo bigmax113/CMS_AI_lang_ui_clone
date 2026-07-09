@@ -18,7 +18,7 @@ const reactionLabels = {
   like: 'Like article',
 } as const
 
-const defaultReactionCount = 43
+const defaultReactionCount = 0
 const figmaArticleIconVersion = '20260702-share-fb-left'
 
 const FigmaShareIcon = ({
@@ -69,7 +69,7 @@ export const LorgarArticleActions = ({
   const [pendingReaction, setPendingReaction] = useState<null | keyof typeof reactionLabels>(null)
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({})
   const [reactedReactions, setReactedReactions] = useState<Record<string, boolean>>({})
-  const likeCount = reactionCounts.like || defaultReactionCount
+  const likeCount = reactionCounts.like ?? defaultReactionCount
   const hasReactedLike = Boolean(reactedReactions.like)
 
   useEffect(() => {
@@ -80,7 +80,40 @@ export const LorgarArticleActions = ({
     }
   }, [articleSlug])
 
-  const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
+  useEffect(() => {
+    let cancelled = false
+
+    const loadReactionCounts = async () => {
+      try {
+        const response = await fetch(`/api/article-reactions?articleSlug=${encodeURIComponent(articleSlug)}`, {
+          cache: 'no-store',
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        const result = (await response.json()) as { counts?: Record<string, unknown> }
+        const like = Number(result.counts?.like)
+
+        if (!cancelled && Number.isFinite(like)) {
+          setReactionCounts((current) => ({
+            ...current,
+            like: Math.max(0, Math.round(like)),
+          }))
+        }
+      } catch {
+        // Reaction counters are non-critical for article reading.
+      }
+    }
+
+    void loadReactionCounts()
+
+    return () => {
+      cancelled = true
+    }
+  }, [articleSlug])
+const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
     if (pendingReaction === reactionType || reactedReactions[reactionType]) {
       return
     }
@@ -102,10 +135,17 @@ export const LorgarArticleActions = ({
         throw new Error(result.error || 'Reaction was not saved.')
       }
 
-      setReactionCounts((current) => ({
-        ...current,
-        [reactionType]: Number(result.count || current[reactionType] || defaultReactionCount),
-      }))
+      setReactionCounts((current) => {
+        const nextCount =
+          typeof result.count === 'number' && Number.isFinite(result.count)
+            ? Math.max(0, Math.round(result.count))
+            : (current[reactionType] ?? defaultReactionCount)
+
+        return {
+          ...current,
+          [reactionType]: nextCount,
+        }
+      })
       setReactedReactions((current) => ({
         ...current,
         [reactionType]: true,

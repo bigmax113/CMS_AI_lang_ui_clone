@@ -75,6 +75,43 @@ const upsertKV = async ({
   })
 }
 
+const readReactionCount = async (
+  req: Parameters<Endpoint['handler']>[0],
+  articleSlug: string,
+  reactionType: (typeof reactionTypes)[number],
+) => {
+  const key = payloadKVKey(['frontend', 'article-reaction', articleSlug, reactionType])
+  const current = await readKV(req, key)
+  const currentData = current?.data && typeof current.data === 'object' && !Array.isArray(current.data)
+    ? (current.data as { count?: number })
+    : {}
+
+  return Math.max(Number(currentData.count || 0), 0)
+}
+export const articleReactionCountsEndpoint: Endpoint = {
+  handler: async (req) => {
+    const requestURL = new URL(req.url || 'http://localhost/api/article-reactions')
+    const articleSlug = stringField(requestURL.searchParams.get('articleSlug')).slice(0, 160)
+
+    if (!articleSlug) {
+      return Response.json({ error: 'Field "articleSlug" is required.', ok: false }, { status: 400 })
+    }
+
+    const countEntries = await Promise.all(
+      reactionTypes.map(async (reactionType) => [
+        reactionType,
+        await readReactionCount(req, articleSlug, reactionType),
+      ] as const),
+    )
+
+    return Response.json({
+      counts: Object.fromEntries(countEntries),
+      ok: true,
+    })
+  },
+  method: 'get',
+  path: '/article-reactions',
+}
 export const articleReactionEndpoint: Endpoint = {
   handler: async (req) => {
     const body = typeof req.json === 'function' ? ((await req.json()) as ArticleReactionBody) : {}
