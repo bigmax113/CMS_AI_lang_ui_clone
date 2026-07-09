@@ -7,6 +7,10 @@ type ArticleReactionBody = {
   reactionType?: string
 }
 
+type ArticleViewBody = {
+  articleSlug?: string
+}
+
 type NewsletterSubscriptionBody = {
   email?: string
   languageCode?: string
@@ -150,6 +154,77 @@ export const articleReactionEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/article-reactions',
+}
+
+const findArticleBySlug = async (req: Parameters<Endpoint['handler']>[0], articleSlug: string) => {
+  const result = await req.payload.find({
+    collection: 'articles',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    where: {
+      slug: {
+        equals: articleSlug,
+      },
+    },
+  })
+
+  return result.docs[0] as { id?: number | string; viewCount?: number } | undefined
+}
+
+const articleViewsHandler: Endpoint['handler'] = async (req) => {
+  const isPost = req.method?.toLowerCase() === 'post'
+  const requestURL = new URL(req.url || 'http://localhost/api/article-views')
+  const body =
+    isPost && typeof req.json === 'function' ? ((await req.json()) as ArticleViewBody) : {}
+  const articleSlug = stringField(body.articleSlug || requestURL.searchParams.get('articleSlug')).slice(0, 160)
+
+  if (!articleSlug) {
+    return Response.json({ error: 'Field "articleSlug" is required.', ok: false }, { status: 400 })
+  }
+
+  const article = await findArticleBySlug(req, articleSlug)
+
+  if (!article?.id) {
+    return Response.json({ error: 'Article was not found.', ok: false }, { status: 404 })
+  }
+
+  const currentCount = Math.max(0, Math.round(Number(article.viewCount || 0)))
+
+  if (!isPost) {
+    return Response.json({
+      ok: true,
+      viewCount: currentCount,
+    })
+  }
+
+  const viewCount = currentCount + 1
+
+  await req.payload.update({
+    collection: 'articles',
+    data: {
+      viewCount,
+    },
+    id: article.id,
+    overrideAccess: true,
+  })
+
+  return Response.json({
+    ok: true,
+    viewCount,
+  })
+}
+
+export const articleViewsEndpoint: Endpoint = {
+  handler: articleViewsHandler,
+  method: 'get',
+  path: '/article-views',
+}
+
+export const articleViewIncrementEndpoint: Endpoint = {
+  handler: articleViewsHandler,
+  method: 'post',
+  path: '/article-views',
 }
 
 export const newsletterSubscriptionEndpoint: Endpoint = {

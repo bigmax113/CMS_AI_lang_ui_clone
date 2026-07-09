@@ -19,6 +19,12 @@ const reactionLabels = {
 } as const
 
 const defaultReactionCount = 0
+const formatViewsLabel = (count: number, fallbackLabel: string) => {
+  const suffix = fallbackLabel.replace(/^[\d\s,.]+/u, '').trim()
+  const formattedCount = new Intl.NumberFormat('en-US').format(Math.max(0, Math.round(count)))
+
+  return suffix ? `${formattedCount} ${suffix}` : formattedCount
+}
 const figmaArticleIconVersion = '20260702-share-fb-left'
 
 const FigmaShareIcon = ({
@@ -65,6 +71,7 @@ export const LorgarArticleActions = ({
 }: LorgarArticleActionsProps) => {
   const encodedTitle = encodeURIComponent(title)
   const encodedURL = encodeURIComponent(url)
+  const [displayViewsLabel, setDisplayViewsLabel] = useState(viewsLabel)
   const [message, setMessage] = useState('')
   const [pendingReaction, setPendingReaction] = useState<null | keyof typeof reactionLabels>(null)
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({})
@@ -72,6 +79,71 @@ export const LorgarArticleActions = ({
   const likeCount = reactionCounts.like ?? defaultReactionCount
   const hasReactedLike = Boolean(reactedReactions.like)
 
+  useEffect(() => {
+    setDisplayViewsLabel(viewsLabel)
+  }, [viewsLabel])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const syncArticleViews = async () => {
+      try {
+        const storageKey = `lorgar-view:${articleSlug}`
+        let hasTrackedView = false
+
+        try {
+          hasTrackedView = window.localStorage.getItem(storageKey) === '1'
+        } catch {
+          hasTrackedView = true
+        }
+
+        const response = await fetch(
+          hasTrackedView ? `/api/article-views?articleSlug=${encodeURIComponent(articleSlug)}` : '/api/article-views',
+          {
+            body: hasTrackedView ? undefined : JSON.stringify({ articleSlug }),
+            cache: 'no-store',
+            headers: hasTrackedView
+              ? undefined
+              : {
+                  'Content-Type': 'application/json',
+                },
+            method: hasTrackedView ? 'GET' : 'POST',
+          },
+        )
+
+        if (!response.ok) {
+          return
+        }
+
+        const result = (await response.json()) as { viewCount?: number }
+        const viewCount = Number(result.viewCount)
+
+        if (!Number.isFinite(viewCount)) {
+          return
+        }
+
+        if (!hasTrackedView) {
+          try {
+            window.localStorage.setItem(storageKey, '1')
+          } catch {
+            // Storage can be blocked; the server-side counter is already updated.
+          }
+        }
+
+        if (!cancelled) {
+          setDisplayViewsLabel(formatViewsLabel(viewCount, viewsLabel))
+        }
+      } catch {
+        // View counters are non-critical for article reading.
+      }
+    }
+
+    void syncArticleViews()
+
+    return () => {
+      cancelled = true
+    }
+  }, [articleSlug, viewsLabel])
   useEffect(() => {
     try {
       setReactedReactions(window.localStorage.getItem(`lorgar-reaction:${articleSlug}:like`) ? { like: true } : {})
@@ -113,7 +185,8 @@ export const LorgarArticleActions = ({
       cancelled = true
     }
   }, [articleSlug])
-const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
+
+  const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
     if (pendingReaction === reactionType || reactedReactions[reactionType]) {
       return
     }
@@ -212,7 +285,7 @@ const sendReaction = async (reactionType: keyof typeof reactionLabels) => {
           {likeCount}
         </small>
         <span className="lorgar-share__views">
-          <strong>{viewsLabel}</strong>
+          <strong>{displayViewsLabel}</strong>
           <EyeIcon />
         </span>
       </div>

@@ -43,6 +43,8 @@ import { migrations } from './migrations'
 import {
   articleReactionCountsEndpoint,
   articleReactionEndpoint,
+  articleViewIncrementEndpoint,
+  articleViewsEndpoint,
   newsletterSubscriptionEndpoint,
 } from './publicInteractions/endpoints'
 
@@ -818,6 +820,8 @@ export default buildConfig({
     videoStatusEndpoint,
     articleReactionCountsEndpoint,
     articleReactionEndpoint,
+    articleViewsEndpoint,
+    articleViewIncrementEndpoint,
     newsletterSubscriptionEndpoint,
   ],
   secret: payloadSecret,

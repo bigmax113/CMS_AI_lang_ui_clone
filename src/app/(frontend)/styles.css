@@ -10510,3 +10510,30 @@ main:has(.public-content--lorgar),
     font-size: clamp(14px, 4.2vw, 17px) !important;
   }
 }
+
+/* Desktop footer adaptive locale spacing 2026-07-09. */
+@media (min-width: 1025px) {
+  .public-content--lorgar .lorgar-footer {
+    column-gap: clamp(48px, 5.2vw, 104px) !important;
+    grid-template-columns: auto minmax(760px, 1fr) auto !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav {
+    align-items: center !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: clamp(38px, 4.4vw, 88px) !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav a {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__social {
+    gap: clamp(20px, 1.9vw, 32px) !important;
+  }
+}
