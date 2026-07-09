@@ -1,4 +1,4 @@
-import type { Endpoint } from 'payload'
+﻿import type { Endpoint } from 'payload'
 
 import { normalizeArticleLanguageCode } from '@/lib/articleTranslations'
 
@@ -189,24 +189,30 @@ const articleViewsHandler: Endpoint['handler'] = async (req) => {
     return Response.json({ error: 'Article was not found.', ok: false }, { status: 404 })
   }
 
-  const currentCount = Math.max(0, Math.round(Number(article.viewCount || 0)))
+  const baseCount = Math.max(0, Math.round(Number(article.viewCount || 0)))
+  const viewKey = payloadKVKey(['frontend', 'article-view', articleSlug])
+  const viewKV = await readKV(req, viewKey)
+  const viewData = viewKV?.data && typeof viewKV.data === 'object' && !Array.isArray(viewKV.data)
+    ? (viewKV.data as { count?: number })
+    : {}
+  const extraCount = Math.max(0, Math.round(Number(viewData.count || 0)))
 
   if (!isPost) {
     return Response.json({
       ok: true,
-      viewCount: currentCount,
+      viewCount: baseCount + extraCount,
     })
   }
 
-  const viewCount = currentCount + 1
+  const nextExtraCount = extraCount + 1
+  const viewCount = baseCount + nextExtraCount
 
-  await req.payload.update({
-    collection: 'articles',
+  await upsertKV({
     data: {
-      viewCount,
+      count: nextExtraCount,
     },
-    id: article.id,
-    overrideAccess: true,
+    key: viewKey,
+    req,
   })
 
   return Response.json({
@@ -254,3 +260,4 @@ export const newsletterSubscriptionEndpoint: Endpoint = {
   method: 'post',
   path: '/newsletter-subscriptions',
 }
+
