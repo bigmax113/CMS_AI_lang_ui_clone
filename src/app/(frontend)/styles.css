@@ -10638,3 +10638,21 @@ main:has(.public-content--lorgar),
     font-size: clamp(12px, 0.9vw, 14px) !important;
   }
 }
+
+/* Localized desktop dropdown spacing guard 2026-07-10.
+   Long translated menu labels need larger vertical rhythm without touching the
+   already-approved desktop/mobile page structure. */
+@media (min-width: 901px) {
+  .public-content--lorgar .lorgar-nav-dropdown > div {
+    gap: 16px !important;
+    padding: 24px 20px !important;
+  }
+
+  .public-content--lorgar .lorgar-nav-dropdown > div a {
+    align-items: center !important;
+    display: flex !important;
+    line-height: 1.36 !important;
+    min-height: 40px !important;
+    padding: 0 8px !important;
+  }
+}
