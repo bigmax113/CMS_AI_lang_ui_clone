@@ -10537,3 +10537,45 @@ main:has(.public-content--lorgar),
     gap: clamp(20px, 1.9vw, 32px) !important;
   }
 }
+/* Desktop localized header no-wrap guard 2026-07-10. */
+@media (min-width: 1025px) {
+  .public-content--lorgar .lorgar-header {
+    column-gap: clamp(36px, 4vw, 72px) !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    width: min(1400px, calc(100% - 320px)) !important;
+  }
+
+  .public-content--lorgar .lorgar-header__nav {
+    align-items: center !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: clamp(28px, 3.2vw, 64px) !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .public-content--lorgar .lorgar-header__nav > a,
+  .public-content--lorgar .lorgar-nav-dropdown > summary {
+    flex: 0 0 auto !important;
+    font-size: clamp(14px, 0.82vw, 16px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1500px) {
+  .public-content--lorgar .lorgar-header {
+    column-gap: clamp(24px, 2.4vw, 40px) !important;
+    width: min(1400px, calc(100% - 160px)) !important;
+  }
+
+  .public-content--lorgar .lorgar-header__nav {
+    gap: clamp(20px, 2vw, 36px) !important;
+  }
+
+  .public-content--lorgar .lorgar-header__nav > a,
+  .public-content--lorgar .lorgar-nav-dropdown > summary {
+    font-size: clamp(13px, 0.9vw, 15px) !important;
+  }
+}
