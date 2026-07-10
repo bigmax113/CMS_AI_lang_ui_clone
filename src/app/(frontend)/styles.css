@@ -10579,3 +10579,62 @@ main:has(.public-content--lorgar),
     font-size: clamp(13px, 0.9vw, 15px) !important;
   }
 }
+
+/* Footer localized label collision guard 2026-07-10.
+   Keep the Figma one-row footer structure while reserving real space for the
+   logo + BLOG badge, so long UI translations cannot overlap the brand. */
+@media (min-width: 1025px) {
+  .public-content--lorgar .lorgar-footer {
+    column-gap: clamp(44px, 4.2vw, 80px) !important;
+    grid-template-columns: 247px minmax(0, 1fr) max-content !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: min(1416px, calc(100% - 160px)) !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__logo {
+    justify-self: start !important;
+    min-width: 247px !important;
+    width: 247px !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav {
+    align-items: center !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: clamp(32px, 3.4vw, 68px) !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav a {
+    flex: 0 1 auto !important;
+    font-size: clamp(13px, 0.78vw, 16px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__social {
+    flex-wrap: nowrap !important;
+    justify-self: end !important;
+    min-width: max-content !important;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1500px) {
+  .public-content--lorgar .lorgar-footer {
+    column-gap: clamp(24px, 2.6vw, 44px) !important;
+    width: min(1416px, calc(100% - 96px)) !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav {
+    gap: clamp(18px, 2vw, 36px) !important;
+  }
+
+  .public-content--lorgar .lorgar-footer__nav a {
+    font-size: clamp(12px, 0.9vw, 14px) !important;
+  }
+}
