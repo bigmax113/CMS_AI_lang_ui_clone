@@ -10645,8 +10645,8 @@ main:has(.public-content--lorgar),
 @media (min-width: 901px) {
   .public-content--lorgar .lorgar-nav-dropdown > div {
     gap: 10px !important;
-    max-height: min(74vh, 560px) !important;
-    overflow-y: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     padding: 18px 20px !important;
   }
 
