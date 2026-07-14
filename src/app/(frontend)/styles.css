@@ -10644,15 +10644,17 @@ main:has(.public-content--lorgar),
    already-approved desktop/mobile page structure. */
 @media (min-width: 901px) {
   .public-content--lorgar .lorgar-nav-dropdown > div {
-    gap: 16px !important;
-    padding: 24px 20px !important;
+    gap: 10px !important;
+    max-height: min(74vh, 560px) !important;
+    overflow-y: auto !important;
+    padding: 18px 20px !important;
   }
 
   .public-content--lorgar .lorgar-nav-dropdown > div a {
     align-items: center !important;
     display: flex !important;
     line-height: 1.36 !important;
-    min-height: 40px !important;
-    padding: 0 8px !important;
+    min-height: 0 !important;
+    padding: 4px 8px !important;
   }
 }
