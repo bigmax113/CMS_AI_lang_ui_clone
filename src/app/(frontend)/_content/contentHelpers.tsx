@@ -1408,7 +1408,7 @@ export const PublicChrome = ({
         {meta ? <div className="public-content__meta-wrap">{meta}</div> : null}
       </section>
       {children}
-      <LorgarFooter uiStrings={uiStrings} />
+      <LorgarFooter languageCode={languageCode} uiStrings={uiStrings} />
     </div>
   )
 }
@@ -2551,6 +2551,45 @@ const publicArticleAuthorNamesForLanguage = ({
   languageCode?: null | string
 }) => localizedAuthorNameByLanguage[normalizeArticleLanguageCode(languageCode)] || publicArticleAuthorNames(authors)
 
+const lorgarOriginByLanguageCode: Record<ArticleLanguageCode, string> = {
+  bg: 'https://lorgar.bg',
+  cs: 'https://lorgar.cz',
+  de: 'https://de.lorgar.com',
+  ee: 'https://lorgar.ee',
+  el: 'https://lorgar.gr',
+  en: 'https://lorgar.com',
+  es: 'https://lorgar.es',
+  hu: 'https://lorgar.hu',
+  kz: 'https://lorgar.kz',
+  lt: 'https://lorgar.lt',
+  lv: 'https://lorgar.lv',
+  pl: 'https://lorgar.pl',
+  ro: 'https://lorgar.ro',
+  rs: 'https://lorgar.rs',
+  ru: 'https://ru.lorgar.eu',
+  sk: 'https://lorgar.sk',
+  uk: 'https://lorgar.ua',
+}
+
+const localizedLorgarHref = ({
+  href,
+  languageCode,
+}: {
+  href: string
+  languageCode?: null | string
+}) => {
+  const defaultOrigin = lorgarOriginByLanguageCode.en
+
+  if (/^https?:\/\//u.test(href) && !href.startsWith(defaultOrigin)) {
+    return href
+  }
+
+  const origin = lorgarOriginByLanguageCode[normalizeArticleLanguageCode(languageCode)]
+  const sourcePath = href.startsWith(defaultOrigin) ? href.slice(defaultOrigin.length) : href
+  const path = sourcePath.startsWith('/') ? sourcePath : `/${sourcePath}`
+
+  return `${origin}${path || '/'}`
+}
 const lorgarSolutions: LorgarTranslatedLink[] = [
   { href: 'https://lorgar.com/streaming', label: 'Streaming Solution', translationKey: 'nav.solutions.streaming' },
   { href: 'https://lorgar.com/pc-gaming', label: 'PC Gaming Solution', translationKey: 'nav.solutions.pcGaming' },
@@ -2651,9 +2690,21 @@ const LorgarBlogBadge = ({ className }: { className?: string }) => (
   </span>
 )
 
-const LorgarBrand = ({ className, uiStrings }: { className?: string; uiStrings?: LorgarUIStrings }) => (
+const LorgarBrand = ({
+  className,
+  languageCode,
+  uiStrings,
+}: {
+  className?: string
+  languageCode?: null | string
+  uiStrings?: LorgarUIStrings
+}) => (
   <div className={className}>
-    <ExternalLink ariaLabel={uiLabel(uiStrings, 'nav.logoAria')} className="lorgar-brand__logo" href="https://lorgar.com">
+    <ExternalLink
+      ariaLabel={uiLabel(uiStrings, 'nav.logoAria')}
+      className="lorgar-brand__logo"
+      href={localizedLorgarHref({ href: 'https://lorgar.com', languageCode })}
+    >
       <LorgarLogo className="lorgar-header__logo" />
     </ExternalLink>
     <Link aria-label={uiLabel(uiStrings, 'nav.blogAria')} className="lorgar-brand__blog" href="/articles" prefetch={false}>
@@ -2848,10 +2899,12 @@ const LorgarExclusiveMenuScript = () => (
 
 const LorgarNavDropdown = ({
   items,
+  languageCode,
   label,
   uiStrings,
 }: {
   items: LorgarTranslatedLink[]
+  languageCode?: null | string
   label: string
   uiStrings?: LorgarUIStrings
 }) => (
@@ -2862,7 +2915,7 @@ const LorgarNavDropdown = ({
     </summary>
     <div>
       {items.map((item) => (
-        <ExternalLink href={item.href} key={item.href}>
+        <ExternalLink href={localizedLorgarHref({ href: item.href, languageCode })} key={item.href}>
           {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
@@ -2896,10 +2949,12 @@ const lorgarPrimaryNavItems: LorgarPrimaryNavItem[] = [
 const LorgarPrimaryNavLink = ({
   href,
   internal,
+  languageCode,
   label,
 }: {
   href: string
   internal?: boolean
+  languageCode?: null | string
   label: string
 }) =>
   internal ? (
@@ -2907,18 +2962,38 @@ const LorgarPrimaryNavLink = ({
       {label}
     </Link>
   ) : (
-    <ExternalLink href={href}>{label}</ExternalLink>
+    <ExternalLink href={localizedLorgarHref({ href, languageCode })}>{label}</ExternalLink>
   )
 
-const LorgarPrimaryNav = ({ className, uiStrings }: { className?: string; uiStrings?: LorgarUIStrings }) => (
+const LorgarPrimaryNav = ({
+  className,
+  languageCode,
+  uiStrings,
+}: {
+  className?: string
+  languageCode?: null | string
+  uiStrings?: LorgarUIStrings
+}) => (
   <nav aria-label={uiLabel(uiStrings, 'nav.primaryLabel')} className={className}>
     {lorgarPrimaryNavItems.map((item) => {
       const label = item.translationKey ? uiLabel(uiStrings, item.translationKey) : item.label
 
       return item.type === 'dropdown' ? (
-        <LorgarNavDropdown items={item.items} key={item.label} label={label} uiStrings={uiStrings} />
+        <LorgarNavDropdown
+          items={item.items}
+          key={item.label}
+          label={label}
+          languageCode={languageCode}
+          uiStrings={uiStrings}
+        />
       ) : (
-        <LorgarPrimaryNavLink href={item.href} internal={item.internal} key={`${item.href}-${item.label}`} label={label} />
+        <LorgarPrimaryNavLink
+          href={item.href}
+          internal={item.internal}
+          key={`${item.href}-${item.label}`}
+          label={label}
+          languageCode={languageCode}
+        />
       )
     })}
   </nav>
@@ -3039,8 +3114,8 @@ const LorgarHeader = ({
 
   return (
     <header className="lorgar-header">
-      <LorgarBrand className="lorgar-header__brand" uiStrings={uiStrings} />
-      <LorgarPrimaryNav className="lorgar-header__nav" uiStrings={uiStrings} />
+      <LorgarBrand className="lorgar-header__brand" languageCode={currentCode} uiStrings={uiStrings} />
+      <LorgarPrimaryNav className="lorgar-header__nav" languageCode={currentCode} uiStrings={uiStrings} />
       <div className="lorgar-header__tools">
         <details className="lorgar-header__search" data-lorgar-exclusive-menu="" name="lorgar-header-menu">
           <summary aria-label={uiLabel(uiStrings, 'nav.searchLabel')}>
@@ -3075,7 +3150,7 @@ const LorgarHeader = ({
         </details>
         <details className="lorgar-header__mobile-menu">
           <summary aria-label={uiLabel(uiStrings, 'nav.openMenu')}><span aria-hidden="true" /></summary>
-          <LorgarPrimaryNav className="lorgar-header__mobile-nav" uiStrings={uiStrings} />
+          <LorgarPrimaryNav className="lorgar-header__mobile-nav" languageCode={currentCode} uiStrings={uiStrings} />
         </details>
       </div>
       <LorgarExclusiveMenuScript />
@@ -3420,7 +3495,7 @@ export const LorgarArticlesIndexLayout = ({
           ) : null}
         </section>
       </main>
-      <LorgarFooter uiStrings={uiStrings} />
+      <LorgarFooter languageCode={languageCode} uiStrings={uiStrings} />
     </div>
   )
 }
@@ -3601,12 +3676,18 @@ const LorgarSubscribe = ({
   </section>
 )
 
-const LorgarFooter = ({ uiStrings }: { uiStrings?: LorgarUIStrings } = {}) => (
+const LorgarFooter = ({
+  languageCode,
+  uiStrings,
+}: {
+  languageCode?: null | string
+  uiStrings?: LorgarUIStrings
+} = {}) => (
   <footer className="lorgar-footer">
-    <LorgarBrand className="lorgar-footer__logo" uiStrings={uiStrings} />
+    <LorgarBrand className="lorgar-footer__logo" languageCode={languageCode} uiStrings={uiStrings} />
     <nav aria-label={uiLabel(uiStrings, 'footer.aria')} className="lorgar-footer__nav">
       {lorgarFooterLinks.map((item) => (
-        <ExternalLink href={item.href} key={item.href}>
+        <ExternalLink href={localizedLorgarHref({ href: item.href, languageCode })} key={item.href}>
           {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
@@ -3622,7 +3703,7 @@ const LorgarFooter = ({ uiStrings }: { uiStrings?: LorgarUIStrings } = {}) => (
     <div className="lorgar-footer__legal">
       <span>{uiLabel(uiStrings, 'footer.copyright')}</span>
       {lorgarPolicyLinks.map((item) => (
-        <ExternalLink href={item.href} key={item.href}>
+        <ExternalLink href={localizedLorgarHref({ href: item.href, languageCode })} key={item.href}>
           {translatedLinkLabel(item, uiStrings)}
         </ExternalLink>
       ))}
@@ -3756,7 +3837,7 @@ export const LorgarArticleLayout = ({
           <LorgarArticleSidebar article={article} recentArticles={recentArticles} uiStrings={uiStrings} />
         </div>
       </main>
-      <LorgarFooter uiStrings={uiStrings} />
+      <LorgarFooter languageCode={article.languageCode} uiStrings={uiStrings} />
     </div>
   )
 }
