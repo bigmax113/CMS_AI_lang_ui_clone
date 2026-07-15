@@ -10585,12 +10585,12 @@ main:has(.public-content--lorgar),
    logo + BLOG badge, so long UI translations cannot overlap the brand. */
 @media (min-width: 1025px) {
   .public-content--lorgar .lorgar-footer {
-    column-gap: clamp(44px, 4.2vw, 80px) !important;
+    column-gap: clamp(36px, 3vw, 56px) !important;
     grid-template-columns: 247px minmax(0, 1fr) max-content !important;
     max-width: none !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    width: min(1416px, calc(100% - 160px)) !important;
+    width: min(1680px, calc(100% - 120px)) !important;
   }
 
   .public-content--lorgar .lorgar-footer__logo {
@@ -10603,7 +10603,7 @@ main:has(.public-content--lorgar),
     align-items: center !important;
     display: flex !important;
     flex-wrap: nowrap !important;
-    gap: clamp(32px, 3.4vw, 68px) !important;
+    gap: clamp(24px, 2.2vw, 44px) !important;
     justify-content: center !important;
     min-width: 0 !important;
     overflow: visible !important;
