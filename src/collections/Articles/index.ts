@@ -119,7 +119,7 @@ export const ArticlesCollection: CollectionConfig = {
     components: {
       beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
     },
-    defaultColumns: ['title', 'languageCode', 'status', 'createdAt', 'updatedAt'],
+    defaultColumns: ['title', 'languageCode', 'status', 'publishedAt', 'createdAt', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => {
       if (typeof doc.slug !== 'string') {

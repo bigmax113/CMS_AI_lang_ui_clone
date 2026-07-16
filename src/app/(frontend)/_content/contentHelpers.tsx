@@ -23,6 +23,7 @@ import {
   type FrontendUIKey,
   type FrontendUIStrings,
 } from '@/lib/frontendUITranslations'
+import { lorgarSocialLinksForLanguage } from '@/lib/lorgarSocialLinks'
 import { articlePublicPath, blogPostPublicPath, normalizeBlogPath, publicBaseURL } from '@/lib/publicURLs'
 import { LorgarArticleActions } from './LorgarArticleActions'
 import { LorgarSubscribeForm } from './LorgarSubscribeForm'
@@ -2642,20 +2643,6 @@ type LorgarIconName =
   | 'x'
   | 'youtube'
 
-const lorgarSocialLinks: Array<{
-  href: string
-  icon: LorgarIconName
-  label: string
-}> = [
-  { href: 'https://www.instagram.com/lorgar.global/', icon: 'instagram', label: 'Instagram' },
-  { href: 'https://www.linkedin.com/company/lorgar/', icon: 'linkedin', label: 'LinkedIn' },
-  { href: 'https://www.facebook.com/lorgargaming', icon: 'facebook', label: 'Facebook' },
-  { href: 'https://t.me/Lorgar_support_bot', icon: 'telegram', label: 'Telegram' },
-  { href: 'https://wa.me/48732080677', icon: 'whatsapp', label: 'WhatsApp' },
-  { href: 'https://www.youtube.com/channel/UCf3wrq74zLwlDI6AciwK0JA', icon: 'youtube', label: 'YouTube' },
-  { href: 'https://www.tiktok.com/@lorgar.global', icon: 'tiktok', label: 'TikTok' },
-]
-
 const ExternalLink = ({
   ariaLabel,
   children,
@@ -3693,8 +3680,8 @@ const LorgarFooter = ({
       ))}
     </nav>
     <div className="lorgar-footer__social" aria-label="Social links">
-      {lorgarSocialLinks.map((item) => (
-        <ExternalLink href={item.href} key={item.href} newTab>
+      {lorgarSocialLinksForLanguage(languageCode).map((item) => (
+        <ExternalLink href={item.href} key={item.icon} newTab>
           <LorgarIcon name={item.icon} />
           <span className="sr-only">{item.label}</span>
         </ExternalLink>
