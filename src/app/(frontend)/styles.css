@@ -10663,3 +10663,8 @@ main:has(.public-content--lorgar),
     padding: 4px 8px !important;
   }
 }
+
+.public-content--lorgar .lorgar-sidebar__panel--recent {
+  border: 0 !important;
+  border-radius: 0 !important;
+}
