@@ -10232,6 +10232,11 @@ main:has(.public-content--lorgar),
     overflow: visible !important;
   }
 
+  .public-content--lorgar .lorgar-sidebar__panel--recent {
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
   .public-content--lorgar .lorgar-sidebar__panel h2 {
     margin: 0 0 28px !important;
     font-size: 36px !important;
