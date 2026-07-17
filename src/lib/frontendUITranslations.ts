@@ -1,4 +1,4 @@
-import pg from 'pg'
+﻿import pg from 'pg'
 
 import { articleLanguageDefinitions } from './articleTranslations'
 
@@ -643,7 +643,7 @@ export const frontendUIStringDefinitions = [
     namespace: 'footer',
   },
   {
-    defaultText: '© LORGAR 2026, ALL RIGHTS RESERVED',
+    defaultText: 'Â© LORGAR 2026, ALL RIGHTS RESERVED',
     description: 'Footer copyright line.',
     key: 'footer.copyright',
     namespace: 'footer',
@@ -1220,7 +1220,7 @@ export const syncFrontendUITranslationKeys = async (): Promise<void> => {
   })
 }
 
-export const loadFrontendUIDictionary = async (
+const loadFrontendUIDictionaryUncached = async (
   languageCode: null | string | undefined,
   options: { preview?: boolean } = {},
 ): Promise<FrontendUIStrings> => {
@@ -1262,6 +1262,40 @@ export const loadFrontendUIDictionary = async (
   }
 
   return translated
+}
+
+
+type FrontendUIDictionaryCacheEntry = {
+  expiresAt: number
+  value: ReturnType<typeof loadFrontendUIDictionaryUncached>
+}
+
+const FRONTEND_UI_DICTIONARY_CACHE_TTL_MS = 10_000
+const frontendUIDictionaryCache = new Map<string, FrontendUIDictionaryCacheEntry>()
+
+export const loadFrontendUIDictionary = async (...args: Parameters<typeof loadFrontendUIDictionaryUncached>) => {
+  const [languageCode, options] = args
+  const normalizedLanguageCode = normalizeFrontendUILanguageCode(languageCode)
+  const previewKey = options?.preview ? 'preview' : 'published'
+  const cacheKey = `${normalizedLanguageCode}:${previewKey}`
+  const now = Date.now()
+  const existing = frontendUIDictionaryCache.get(cacheKey)
+
+  if (existing && existing.expiresAt > now) {
+    return existing.value
+  }
+
+  const value = loadFrontendUIDictionaryUncached(...args).catch((error) => {
+    frontendUIDictionaryCache.delete(cacheKey)
+    throw error
+  })
+
+  frontendUIDictionaryCache.set(cacheKey, {
+    expiresAt: now + FRONTEND_UI_DICTIONARY_CACHE_TTL_MS,
+    value,
+  })
+
+  return value
 }
 
 export const listFrontendUILocalization = async (args: {

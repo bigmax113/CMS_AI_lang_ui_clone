@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+﻿import { notFound } from 'next/navigation'
 
 import { loadFrontendUIDictionary, normalizeFrontendUILanguageCode } from '@/lib/frontendUITranslations'
 import { articlePublicPath } from '@/lib/publicURLs'
@@ -96,11 +96,13 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
     notFound()
   }
 
-  const translations = article.status === 'published' ? await listPublishedArticleTranslations(article) : []
-  const recentArticles = await listPublishedArticles()
   const uiLanguageCode = normalizeFrontendUILanguageCode(firstQueryValue(query?.lang) || article.languageCode)
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
-  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization })
+  const [translations, recentArticles, uiStrings] = await Promise.all([
+    article.status === 'published' ? listPublishedArticleTranslations(article) : Promise.resolve([]),
+    listPublishedArticles(),
+    loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization }),
+  ])
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
   const publishedDate = article.publishedAt || article.createdAt
 

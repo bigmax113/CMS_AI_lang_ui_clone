@@ -45,6 +45,40 @@ const defaultSEOImagePath = '/seo/default-og.png'
 const defaultPublicAuthorName = process.env.DEFAULT_ARTICLE_AUTHOR_NAME || 'Matthew King'
 const defaultArticleViewCount = 0
 
+type FrontendQueryCacheEntry<T> = {
+  expiresAt: number
+  value: Promise<T>
+}
+
+const FRONTEND_QUERY_CACHE_TTL_MS = 10_000
+const frontendQueryCache = new Map<string, FrontendQueryCacheEntry<unknown>>()
+
+function getCachedFrontendQueryValue<T>(key: string, loader: () => Promise<T>): Promise<T> {
+  const now = Date.now()
+  const cached = frontendQueryCache.get(key) as FrontendQueryCacheEntry<T> | undefined
+
+  if (cached && cached.expiresAt > now) {
+    return cached.value
+  }
+
+  let value!: Promise<T>
+  value = loader().catch((error) => {
+    const current = frontendQueryCache.get(key)
+
+    if (current?.value === value) {
+      frontendQueryCache.delete(key)
+    }
+
+    throw error
+  })
+
+  frontendQueryCache.set(key, {
+    expiresAt: now + FRONTEND_QUERY_CACHE_TTL_MS,
+    value,
+  })
+
+  return value
+}
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
@@ -103,23 +137,23 @@ const publicArticleNavigationLabelsByCode: Record<
     blog: string
   }
 > = {
-  bg: { allArticles: 'Всички статии', blog: 'Блог' },
-  cs: { allArticles: 'Všechny články', blog: 'Blog' },
-  ee: { allArticles: 'Kõik artiklid', blog: 'Blogi' },
+  bg: { allArticles: 'Ð’ÑÐ¸Ñ‡ÐºÐ¸ ÑÑ‚Ð°Ñ‚Ð¸Ð¸', blog: 'Ð‘Ð»Ð¾Ð³' },
+  cs: { allArticles: 'VÅ¡echny ÄlÃ¡nky', blog: 'Blog' },
+  ee: { allArticles: 'KÃµik artiklid', blog: 'Blogi' },
   de: { allArticles: 'Alle Artikel', blog: 'Blog' },
-  el: { allArticles: 'Όλα τα άρθρα', blog: 'Blog' },
+  el: { allArticles: 'ÎŒÎ»Î± Ï„Î± Î¬ÏÎ¸ÏÎ±', blog: 'Blog' },
   en: { allArticles: 'All Articles', blog: 'Blog' },
-  es: { allArticles: 'Todos los artículos', blog: 'Blog' },
-  hu: { allArticles: 'Összes cikk', blog: 'Blog' },
-  kz: { allArticles: 'Барлық мақалалар', blog: 'Блог' },
-  lt: { allArticles: 'Visi straipsniai', blog: 'Tinklaraštis' },
+  es: { allArticles: 'Todos los artÃ­culos', blog: 'Blog' },
+  hu: { allArticles: 'Ã–sszes cikk', blog: 'Blog' },
+  kz: { allArticles: 'Ð‘Ð°Ñ€Ð»Ñ‹Ò› Ð¼Ð°Ò›Ð°Ð»Ð°Ð»Ð°Ñ€', blog: 'Ð‘Ð»Ð¾Ð³' },
+  lt: { allArticles: 'Visi straipsniai', blog: 'TinklaraÅ¡tis' },
   lv: { allArticles: 'Visi raksti', blog: 'Blogs' },
-  pl: { allArticles: 'Wszystkie artykuły', blog: 'Blog' },
+  pl: { allArticles: 'Wszystkie artykuÅ‚y', blog: 'Blog' },
   ro: { allArticles: 'Toate articolele', blog: 'Blog' },
-  rs: { allArticles: 'Svi članci', blog: 'Blog' },
-  ru: { allArticles: 'Все статьи', blog: 'Блог' },
-  sk: { allArticles: 'Všetky články', blog: 'Blog' },
-  uk: { allArticles: 'Усі статті', blog: 'Блог' },
+  rs: { allArticles: 'Svi Älanci', blog: 'Blog' },
+  ru: { allArticles: 'Ð’ÑÐµ ÑÑ‚Ð°Ñ‚ÑŒÐ¸', blog: 'Ð‘Ð»Ð¾Ð³' },
+  sk: { allArticles: 'VÅ¡etky ÄlÃ¡nky', blog: 'Blog' },
+  uk: { allArticles: 'Ð£ÑÑ– ÑÑ‚Ð°Ñ‚Ñ‚Ñ–', blog: 'Ð‘Ð»Ð¾Ð³' },
 }
 
 export const publicArticleNavigationLabels = (languageCode?: null | string) =>
@@ -350,7 +384,7 @@ const faqItemsFromRichText = (content: Article['content'] | BlogPost['content'] 
       continue
     }
 
-    if (child.type === 'heading' && /\bfaq\b|frequently asked|questions|часто|вопрос/iu.test(text)) {
+    if (child.type === 'heading' && /\bfaq\b|frequently asked|questions|Ñ‡Ð°ÑÑ‚Ð¾|Ð²Ð¾Ð¿Ñ€Ð¾Ñ/iu.test(text)) {
       flush()
       isInFAQSection = true
       continue
@@ -654,11 +688,11 @@ const articleReadingTime = ({
   const code = normalizeArticleLanguageCode(languageCode)
 
   if (code === 'ru') {
-    return `${minutes} мин чтения`
+    return `${minutes} Ð¼Ð¸Ð½ Ñ‡Ñ‚ÐµÐ½Ð¸Ñ`
   }
 
   if (code === 'uk') {
-    return `${minutes} хв читання`
+    return `${minutes} Ñ…Ð² Ñ‡Ð¸Ñ‚Ð°Ð½Ð½Ñ`
   }
 
   return `${minutes} min read`
@@ -1009,7 +1043,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
         <aside className="public-content__cta" key={key}>
           {typeof fields.label === 'string' ? <strong>{fields.label}</strong> : null}
           {typeof fields.description === 'string' ? <p>{fields.description}</p> : null}
-          {typeof fields.url === 'string' ? <a href={fields.url}>Перейти</a> : null}
+          {typeof fields.url === 'string' ? <a href={fields.url}>ÐŸÐµÑ€ÐµÐ¹Ñ‚Ð¸</a> : null}
         </aside>
       )
     }
@@ -1128,7 +1162,7 @@ export const RichText = ({ content }: { content?: Article['content'] | BlogPost[
   const root = content?.root as LexicalNode | undefined
 
   if (!root?.children?.length) {
-    return <p>Контент пока не заполнен.</p>
+    return <p>ÐšÐ¾Ð½Ñ‚ÐµÐ½Ñ‚ Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð·Ð°Ð¿Ð¾Ð»Ð½ÐµÐ½.</p>
   }
 
   return <div className="public-content__richtext">{renderNode(root, 'root')}</div>
@@ -1190,7 +1224,7 @@ export const ArticleMetaLine = ({
   return (
     <p className="public-content__meta">
       {names ? <span>{names}</span> : null}
-      {names && date ? <span aria-hidden="true">·</span> : null}
+      {names && date ? <span aria-hidden="true">Â·</span> : null}
       {date ? <time dateTime={publishedAt || undefined}>{date}</time> : null}
     </p>
   )
@@ -1446,7 +1480,7 @@ export const ContentCard = ({
   )
 }
 
-export const findPublishedArticleBySlug = async (slug: string) => {
+const findPublishedArticleBySlugUncached = async (slug: string) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'articles',
@@ -1471,6 +1505,10 @@ export const findPublishedArticleBySlug = async (slug: string) => {
 
   return result.docs[0] || null
 }
+
+export const findPublishedArticleBySlug = async (slug: string) =>
+  getCachedFrontendQueryValue(`article-by-slug:${slug}`, () => findPublishedArticleBySlugUncached(slug))
+
 
 export const findPreviewArticleBySlug = async ({
   id,
@@ -1624,7 +1662,7 @@ const articleMatchesTagQueries = (article: Article, tagQueries?: null | string |
   return !queries.length || queries.some((query) => articleMatchesTagQuery(article, query))
 }
 
-export const listPublishedArticles = async ({
+const listPublishedArticlesUncached = async ({
   languageCode,
   limit = 1000,
   searchQuery,
@@ -1692,6 +1730,12 @@ export const listPublishedArticles = async ({
   )
 }
 
+
+export const listPublishedArticles = async (...args: Parameters<typeof listPublishedArticlesUncached>) =>
+  getCachedFrontendQueryValue(`published-articles:${JSON.stringify(args[0] || {})}`, () =>
+    listPublishedArticlesUncached(...args),
+  )
+
 export const listPublishedArticlesPage = async ({
   languageCode,
   limit = 6,
@@ -1732,7 +1776,7 @@ export type ArticleLanguageAlternate = {
   title: string
 }
 
-export const listPublishedArticleTranslations = async (
+const listPublishedArticleTranslationsUncached = async (
   article: Article,
 ): Promise<ArticleLanguageAlternate[]> => {
   const group = articleTranslationGroupFromArticle(article)
@@ -1780,6 +1824,19 @@ export const listPublishedArticleTranslations = async (
     left.code.localeCompare(right.code),
   )
 }
+
+export const listPublishedArticleTranslations = async (
+  ...args: Parameters<typeof listPublishedArticleTranslationsUncached>
+) => {
+  const [article] = args
+  const group = articleTranslationGroupFromArticle(article)
+  const articleId = article?.id == null ? 'unknown' : String(article.id)
+
+  return getCachedFrontendQueryValue(`article-translations:${articleId}:${group}`, () =>
+    listPublishedArticleTranslationsUncached(...args),
+  )
+}
+
 
 export const ArticleLanguageSwitcher = ({
   alternates,
@@ -2431,90 +2488,90 @@ const localizedTopicLabelKeys: Partial<Record<string, FrontendUIKey>> = {
 
 const localizedTagFallbacks: Partial<Record<ArticleLanguageCode, Record<string, string>>> = {
   bg: {
-    all: 'Всички',
-    article: 'Статия',
+    all: 'Ð’ÑÐ¸Ñ‡ÐºÐ¸',
+    article: 'Ð¡Ñ‚Ð°Ñ‚Ð¸Ñ',
     'astral esports': 'Astral Esports',
-    'blog post': 'Блог публикация',
-    chairs: 'Столове',
-    corporate: 'Корпоративно',
-    cyprus: 'Кипър',
-    ecosystem: 'Екосистема',
-    esports: 'Еспорт',
-    events: 'Събития',
-    featured: 'Препоръчани',
-    'gaming chairs': 'Гейминг столове',
-    'gaming devices': 'Гейминг устройства',
-    'gaming tournament': 'Гейминг турнир',
-    innovation: 'Иновации',
-    news: 'Новини',
-    partners: 'Партньори',
-    partnerships: 'Партньорства',
-    passion: 'Страст',
+    'blog post': 'Ð‘Ð»Ð¾Ð³ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ñ',
+    chairs: 'Ð¡Ñ‚Ð¾Ð»Ð¾Ð²Ðµ',
+    corporate: 'ÐšÐ¾Ñ€Ð¿Ð¾Ñ€Ð°Ñ‚Ð¸Ð²Ð½Ð¾',
+    cyprus: 'ÐšÐ¸Ð¿ÑŠÑ€',
+    ecosystem: 'Ð•ÐºÐ¾ÑÐ¸ÑÑ‚ÐµÐ¼Ð°',
+    esports: 'Ð•ÑÐ¿Ð¾Ñ€Ñ‚',
+    events: 'Ð¡ÑŠÐ±Ð¸Ñ‚Ð¸Ñ',
+    featured: 'ÐŸÑ€ÐµÐ¿Ð¾Ñ€ÑŠÑ‡Ð°Ð½Ð¸',
+    'gaming chairs': 'Ð“ÐµÐ¹Ð¼Ð¸Ð½Ð³ ÑÑ‚Ð¾Ð»Ð¾Ð²Ðµ',
+    'gaming devices': 'Ð“ÐµÐ¹Ð¼Ð¸Ð½Ð³ ÑƒÑÑ‚Ñ€Ð¾Ð¹ÑÑ‚Ð²Ð°',
+    'gaming tournament': 'Ð“ÐµÐ¹Ð¼Ð¸Ð½Ð³ Ñ‚ÑƒÑ€Ð½Ð¸Ñ€',
+    innovation: 'Ð˜Ð½Ð¾Ð²Ð°Ñ†Ð¸Ð¸',
+    news: 'ÐÐ¾Ð²Ð¸Ð½Ð¸',
+    partners: 'ÐŸÐ°Ñ€Ñ‚Ð½ÑŒÐ¾Ñ€Ð¸',
+    partnerships: 'ÐŸÐ°Ñ€Ñ‚Ð½ÑŒÐ¾Ñ€ÑÑ‚Ð²Ð°',
+    passion: 'Ð¡Ñ‚Ñ€Ð°ÑÑ‚',
     'performance lab': 'Performance Lab',
-    platform: 'Платформа',
-    'product content': 'Продуктово съдържание',
-    products: 'Продукти',
+    platform: 'ÐŸÐ»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ð°',
+    'product content': 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¾Ð²Ð¾ ÑÑŠÐ´ÑŠÑ€Ð¶Ð°Ð½Ð¸Ðµ',
+    products: 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¸',
     'rainbow six siege': 'Rainbow Six Siege',
-    rankings: 'Класации',
-    'release note': 'Бележки към версията',
+    rankings: 'ÐšÐ»Ð°ÑÐ°Ñ†Ð¸Ð¸',
+    'release note': 'Ð‘ÐµÐ»ÐµÐ¶ÐºÐ¸ ÐºÑŠÐ¼ Ð²ÐµÑ€ÑÐ¸ÑÑ‚Ð°',
     'stake ranked': 'Stake Ranked',
   },
   cs: {
-    all: 'Vše',
-    article: 'Článek',
+    all: 'VÅ¡e',
+    article: 'ÄŒlÃ¡nek',
     'astral esports': 'Astral Esports',
-    'blog post': 'Blogový příspěvek',
-    chairs: 'Židle',
-    corporate: 'Firemní',
+    'blog post': 'BlogovÃ½ pÅ™Ã­spÄ›vek',
+    chairs: 'Å½idle',
+    corporate: 'FiremnÃ­',
     cyprus: 'Kypr',
-    ecosystem: 'Ekosystém',
+    ecosystem: 'EkosystÃ©m',
     esports: 'Esport',
-    events: 'Události',
-    featured: 'Doporučené',
-    'gaming chairs': 'Herní židle',
-    'gaming devices': 'Herní zařízení',
-    'gaming tournament': 'Herní turnaj',
+    events: 'UdÃ¡losti',
+    featured: 'DoporuÄenÃ©',
+    'gaming chairs': 'HernÃ­ Å¾idle',
+    'gaming devices': 'HernÃ­ zaÅ™Ã­zenÃ­',
+    'gaming tournament': 'HernÃ­ turnaj',
     innovation: 'Inovace',
     news: 'Novinky',
-    partners: 'Partneři',
-    partnerships: 'Partnerství',
-    passion: 'Vášeň',
+    partners: 'PartneÅ™i',
+    partnerships: 'PartnerstvÃ­',
+    passion: 'VÃ¡Å¡eÅˆ',
     'performance lab': 'Performance Lab',
     platform: 'Platforma',
-    'product content': 'Produktový obsah',
+    'product content': 'ProduktovÃ½ obsah',
     products: 'Produkty',
     'rainbow six siege': 'Rainbow Six Siege',
-    rankings: 'Žebříčky',
-    'release note': 'Poznámky k vydání',
+    rankings: 'Å½ebÅ™Ã­Äky',
+    'release note': 'PoznÃ¡mky k vydÃ¡nÃ­',
     'stake ranked': 'Stake Ranked',
   },
   uk: {
-    all: 'Усі',
-    article: 'Стаття',
+    all: 'Ð£ÑÑ–',
+    article: 'Ð¡Ñ‚Ð°Ñ‚Ñ‚Ñ',
     'astral esports': 'Astral Esports',
-    'blog post': 'Блог',
-    chairs: 'Крісла',
-    corporate: 'Корпоративне',
-    cyprus: 'Кіпр',
-    ecosystem: 'Екосистема',
-    esports: 'Кіберспорт',
-    events: 'Події',
-    featured: 'Рекомендовані',
-    'gaming chairs': 'Ігрові крісла',
-    'gaming devices': 'Ігрові пристрої',
-    'gaming tournament': 'Ігровий турнір',
-    innovation: 'Інновації',
-    news: 'Новини',
-    partners: 'Партнери',
-    partnerships: 'Партнерства',
-    passion: 'Пристрасть',
+    'blog post': 'Ð‘Ð»Ð¾Ð³',
+    chairs: 'ÐšÑ€Ñ–ÑÐ»Ð°',
+    corporate: 'ÐšÐ¾Ñ€Ð¿Ð¾Ñ€Ð°Ñ‚Ð¸Ð²Ð½Ðµ',
+    cyprus: 'ÐšÑ–Ð¿Ñ€',
+    ecosystem: 'Ð•ÐºÐ¾ÑÐ¸ÑÑ‚ÐµÐ¼Ð°',
+    esports: 'ÐšÑ–Ð±ÐµÑ€ÑÐ¿Ð¾Ñ€Ñ‚',
+    events: 'ÐŸÐ¾Ð´Ñ–Ñ—',
+    featured: 'Ð ÐµÐºÐ¾Ð¼ÐµÐ½Ð´Ð¾Ð²Ð°Ð½Ñ–',
+    'gaming chairs': 'Ð†Ð³Ñ€Ð¾Ð²Ñ– ÐºÑ€Ñ–ÑÐ»Ð°',
+    'gaming devices': 'Ð†Ð³Ñ€Ð¾Ð²Ñ– Ð¿Ñ€Ð¸ÑÑ‚Ñ€Ð¾Ñ—',
+    'gaming tournament': 'Ð†Ð³Ñ€Ð¾Ð²Ð¸Ð¹ Ñ‚ÑƒÑ€Ð½Ñ–Ñ€',
+    innovation: 'Ð†Ð½Ð½Ð¾Ð²Ð°Ñ†Ñ–Ñ—',
+    news: 'ÐÐ¾Ð²Ð¸Ð½Ð¸',
+    partners: 'ÐŸÐ°Ñ€Ñ‚Ð½ÐµÑ€Ð¸',
+    partnerships: 'ÐŸÐ°Ñ€Ñ‚Ð½ÐµÑ€ÑÑ‚Ð²Ð°',
+    passion: 'ÐŸÑ€Ð¸ÑÑ‚Ñ€Ð°ÑÑ‚ÑŒ',
     'performance lab': 'Performance Lab',
-    platform: 'Платформа',
-    'product content': 'Продуктовий контент',
-    products: 'Продукти',
+    platform: 'ÐŸÐ»Ð°Ñ‚Ñ„Ð¾Ñ€Ð¼Ð°',
+    'product content': 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¾Ð²Ð¸Ð¹ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚',
+    products: 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¸',
     'rainbow six siege': 'Rainbow Six Siege',
-    rankings: 'Рейтинги',
-    'release note': 'Примітки до релізу',
+    rankings: 'Ð ÐµÐ¹Ñ‚Ð¸Ð½Ð³Ð¸',
+    'release note': 'ÐŸÑ€Ð¸Ð¼Ñ–Ñ‚ÐºÐ¸ Ð´Ð¾ Ñ€ÐµÐ»Ñ–Ð·Ñƒ',
     'stake ranked': 'Stake Ranked',
   },
 }
@@ -2539,9 +2596,9 @@ const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCo
 }
 
 const localizedAuthorNameByLanguage: Partial<Record<ArticleLanguageCode, string>> = {
-  bg: 'Стела Николова',
-  cs: 'Lukáš Dvořák',
-  uk: 'Олександр Бондаренко',
+  bg: 'Ð¡Ñ‚ÐµÐ»Ð° ÐÐ¸ÐºÐ¾Ð»Ð¾Ð²Ð°',
+  cs: 'LukÃ¡Å¡ DvoÅ™Ã¡k',
+  uk: 'ÐžÐ»ÐµÐºÑÐ°Ð½Ð´Ñ€ Ð‘Ð¾Ð½Ð´Ð°Ñ€ÐµÐ½ÐºÐ¾',
 }
 
 const publicArticleAuthorNamesForLanguage = ({
@@ -3312,15 +3369,15 @@ const LorgarBlogPagination = ({
       <div className="lorgar-blog-pagination__pages">
         {hasPreviousPage ? (
           <a aria-label={uiLabel(uiStrings, 'blog.previousPage')} href={pageHref(currentPage - 1)}>
-            ‹
+            â€¹
           </a>
         ) : (
-          <span aria-hidden="true" className="is-disabled">‹</span>
+          <span aria-hidden="true" className="is-disabled">â€¹</span>
         )}
         {paginationSequence({ currentPage, totalPages }).map((item, index) =>
           item === 'ellipsis' ? (
             <span aria-hidden="true" className="lorgar-blog-pagination__ellipsis" key={`ellipsis-${index}`}>
-              …
+              â€¦
             </span>
           ) : item === currentPage ? (
             <span aria-current="page" className="is-active" key={item}>
@@ -3334,10 +3391,10 @@ const LorgarBlogPagination = ({
         )}
         {hasNextPage ? (
           <a aria-label={uiLabel(uiStrings, 'blog.nextPage')} href={pageHref(currentPage + 1)}>
-            ›
+            â€º
           </a>
         ) : (
-          <span aria-hidden="true" className="is-disabled">›</span>
+          <span aria-hidden="true" className="is-disabled">â€º</span>
         )}
       </div>
     </nav>
@@ -3441,7 +3498,7 @@ export const LorgarArticlesIndexLayout = ({
                       key={`${topic.tagQuery}-${topic.label}`}
                     >
                       <span>{localizedTagLabel(topic.tagQuery || topic.label, uiStrings, languageCode)}</span>
-                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
+                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">Ã—</span> : null}
                     </a>
                   )
                 })}
