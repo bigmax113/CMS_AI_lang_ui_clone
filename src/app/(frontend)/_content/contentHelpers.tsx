@@ -562,6 +562,30 @@ export const buildLorgarTagFilters = (
 
   return filters
 }
+const articleCardSelect = {
+  category: true,
+  content: true,
+  contentType: true,
+  coverImage: true,
+  createdAt: true,
+  id: true,
+  languageCode: true,
+  publishedAt: true,
+  seo: true,
+  slug: true,
+  status: true,
+  summary: true,
+  tags: true,
+  title: true,
+  updatedAt: true,
+  viewCount: true,
+} as const
+
+const articleTagFilterSelect = {
+  category: true,
+  contentType: true,
+  tags: true,
+} as const
 const publicArticleAuthors = (authors?: Article['authors'] | BlogPost['authors'] | null) =>
   authorListFromValue(authors)
 
@@ -1680,22 +1704,7 @@ const articleMatchesTagQueries = (article: Article, tagQueries?: null | string |
   return !queries.length || queries.some((query) => articleMatchesTagQuery(article, query))
 }
 
-const listPublishedArticlesUncached = async ({
-  languageCode,
-  limit = 1000,
-  searchQuery,
-  sortMode = 'latest',
-  tagQuery,
-  tagQueries,
-}: {
-  languageCode?: ArticleLanguageCode | null
-  limit?: number
-  searchQuery?: null | string
-  sortMode?: ArticleSortMode
-  tagQuery?: null | string
-  tagQueries?: null | string[]
-} = {}) => {
-  const payload = await getPayload({ config: configPromise })
+const publishedArticlesWhere = (languageCode?: ArticleLanguageCode | null): Where => {
   const whereClauses: Where[] = [
     {
       status: {
@@ -1712,9 +1721,27 @@ const listPublishedArticlesUncached = async ({
     })
   }
 
-  const where: Where = {
+  return {
     and: whereClauses,
   }
+}
+const listPublishedArticlesUncached = async ({
+  languageCode,
+  limit = 1000,
+  searchQuery,
+  sortMode = 'latest',
+  tagQuery,
+  tagQueries,
+}: {
+  languageCode?: ArticleLanguageCode | null
+  limit?: number
+  searchQuery?: null | string
+  sortMode?: ArticleSortMode
+  tagQuery?: null | string
+  tagQueries?: null | string[]
+} = {}) => {
+  const payload = await getPayload({ config: configPromise })
+  const where = publishedArticlesWhere(languageCode)
   const docs: Article[] = []
   const pageLimit = Math.min(Math.max(limit, 1), 100)
   let page = 1
@@ -1727,6 +1754,7 @@ const listPublishedArticlesUncached = async ({
       limit: pageLimit,
       overrideAccess: true,
       page,
+      select: articleCardSelect,
       sort: sortMode === 'views' ? '-viewCount' : '-publishedAt',
       where,
     })
@@ -1754,7 +1782,30 @@ export const listPublishedArticles = async (...args: Parameters<typeof listPubli
     listPublishedArticlesUncached(...args),
   )
 
-export const listPublishedArticlesPage = async ({
+export const listPublishedArticleTagFilters = async ({
+  languageCode,
+}: {
+  languageCode?: ArticleLanguageCode | null
+} = {}) =>
+  getCachedFrontendQueryValue(
+    `article-tag-filters:${languageCode || 'all'}`,
+    async () => {
+      const payload = await getPayload({ config: configPromise })
+      const result = await payload.find({
+        collection: 'articles',
+        depth: 0,
+        limit: 1000,
+        overrideAccess: true,
+        select: articleTagFilterSelect,
+        sort: '-publishedAt',
+        where: publishedArticlesWhere(languageCode),
+      })
+
+      return buildLorgarTagFilters(result.docs)
+    },
+  )
+
+const listPublishedArticlesPageUncached = async ({
   languageCode,
   limit = 6,
   page = 1,
@@ -1765,24 +1816,50 @@ export const listPublishedArticlesPage = async ({
   page?: number
   sortMode?: ArticleSortMode
 } = {}) => {
+  const payload = await getPayload({ config: configPromise })
   const safeLimit = Math.min(Math.max(limit, 1), 100)
-  const allArticles = await listPublishedArticles({
-    languageCode,
-    limit: 1000,
-    sortMode,
-  })
-  const totalItems = allArticles.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / safeLimit))
-  const currentPage = Math.min(Math.max(1, page), totalPages)
-  const start = (currentPage - 1) * safeLimit
+  const sort = sortMode === 'views' ? '-viewCount' : '-publishedAt'
+  const where = publishedArticlesWhere(languageCode)
+  const requestedPage = Math.max(1, page)
+  const findPage = (nextPage: number) =>
+    payload.find({
+      collection: 'articles',
+      depth: 1,
+      limit: safeLimit,
+      overrideAccess: true,
+      page: nextPage,
+      select: articleCardSelect,
+      sort,
+      where,
+    })
+
+  let result = await findPage(requestedPage)
+  const totalItems = result.totalDocs || result.docs.length
+  const totalPages = Math.max(1, result.totalPages || 1)
+  const currentPage = Math.min(requestedPage, totalPages)
+
+  if (!result.docs.length && requestedPage !== currentPage) {
+    result = await findPage(currentPage)
+  }
+
+  const articles = result.docs.filter(articleHasPublicFrontendImage)
 
   return {
-    articles: allArticles.slice(start, start + safeLimit),
+    articles: [...articles].sort(
+      sortMode === 'views' ? compareArticlesByViewsDesc : compareArticlesByPublishedDateDesc,
+    ),
     currentPage,
     totalItems,
     totalPages,
   }
 }
+
+export const listPublishedArticlesPage = async (
+  args: Parameters<typeof listPublishedArticlesPageUncached>[0] = {},
+) =>
+  getCachedFrontendQueryValue(`published-articles-page:${JSON.stringify(args)}`, () =>
+    listPublishedArticlesPageUncached(args),
+  )
 
 export const listPublishedArticleSidebarArticles = async ({
   languageCode,

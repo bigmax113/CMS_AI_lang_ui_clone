@@ -9,7 +9,7 @@ import type { Article } from '@/payload-types'
 import {
   type ArticleSortMode,
   LorgarArticlesIndexLayout,
-  buildLorgarTagFilters,
+  listPublishedArticleTagFilters,
   listPublishedArticles,
   listPublishedArticlesPage,
 } from './contentHelpers'
@@ -65,14 +65,11 @@ export async function renderArticlesIndexPage({
   const languageCode = normalizeArticleLanguageCode(rawLanguageCode)
   const uiLanguageCode = normalizeFrontendUILanguageCode(rawLanguageCode)
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
-  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization })
   const shouldUseFilteredArchive = Boolean(searchQuery || tagQueries.length)
-  const tagFilterArticles = await listPublishedArticles({
-    languageCode,
-    limit: 1000,
-    sortMode: 'latest',
-  })
-  const tagFilters = buildLorgarTagFilters(tagFilterArticles)
+  const [uiStrings, tagFilters] = await Promise.all([
+    loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization }),
+    listPublishedArticleTagFilters({ languageCode }),
+  ])
   let articles: Article[] = []
   let totalItems = 0
   let totalPages = 1
