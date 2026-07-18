@@ -729,6 +729,24 @@ const compareArticlesByViewsDesc = (left: Article, right: Article) => {
 
 export type ArticleSortMode = 'latest' | 'views'
 
+const uniqueArticlesByID = (articles: Article[]) => {
+  const seen = new Set<string>()
+  const unique: Article[] = []
+
+  for (const article of articles) {
+    const key = String(article.id)
+
+    if (seen.has(key)) {
+      continue
+    }
+
+    seen.add(key)
+    unique.push(article)
+  }
+
+  return unique
+}
+
 const parseURL = (value: string) => {
   try {
     return new URL(value)
@@ -1709,7 +1727,7 @@ const listPublishedArticlesUncached = async ({
       limit: pageLimit,
       overrideAccess: true,
       page,
-      sort: '-publishedAt',
+      sort: sortMode === 'views' ? '-viewCount' : '-publishedAt',
       where,
     })
 
@@ -1766,6 +1784,31 @@ export const listPublishedArticlesPage = async ({
   }
 }
 
+export const listPublishedArticleSidebarArticles = async ({
+  languageCode,
+}: {
+  languageCode?: ArticleLanguageCode | null
+} = {}) =>
+  getCachedFrontendQueryValue(
+    `article-sidebar:${languageCode || 'all'}`,
+    async () => {
+      const [recent, popular] = await Promise.all([
+        listPublishedArticles({
+          languageCode,
+          limit: 12,
+          sortMode: 'latest',
+        }),
+        listPublishedArticles({
+          languageCode,
+          limit: 12,
+          sortMode: 'views',
+        }),
+      ])
+
+      return uniqueArticlesByID([...recent, ...popular])
+    },
+  )
+
 export type ArticleLanguageAlternate = {
   code: string
   displayCode: string
@@ -1781,17 +1824,49 @@ const listPublishedArticleTranslationsUncached = async (
 ): Promise<ArticleLanguageAlternate[]> => {
   const group = articleTranslationGroupFromArticle(article)
   const currentID = String(article.id)
+  const explicitGroup = typeof article.translationGroup === 'string' ? article.translationGroup.trim() : ''
+  const groupFilters: Where[] = [
+    {
+      id: {
+        equals: currentID,
+      },
+    },
+  ]
+
+  if (group) {
+    groupFilters.push({
+      translationGroup: {
+        equals: group,
+      },
+    })
+  }
+
+  if (explicitGroup && explicitGroup !== group) {
+    groupFilters.push({
+      translationGroup: {
+        equals: explicitGroup,
+      },
+    })
+  }
+
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'articles',
     depth: 0,
-    limit: 200,
+    limit: articleLanguageDefinitions.length + 4,
     overrideAccess: true,
     sort: 'languageCode',
     where: {
-      status: {
-        equals: 'published',
-      },
+      and: [
+        {
+          status: {
+            equals: 'published',
+          },
+        },
+        {
+          or: groupFilters,
+        },
+      ],
     },
   })
 

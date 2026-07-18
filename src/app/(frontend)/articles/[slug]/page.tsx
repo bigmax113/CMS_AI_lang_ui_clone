@@ -9,7 +9,7 @@ import {
   createSEOPageMetadata,
   findPreviewArticleBySlug,
   findPublishedArticleBySlug,
-  listPublishedArticles,
+  listPublishedArticleSidebarArticles,
   listPublishedArticleTranslations,
   publicSummaryText,
 } from '../../_content/contentHelpers'
@@ -100,7 +100,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
   const [translations, recentArticles, uiStrings] = await Promise.all([
     article.status === 'published' ? listPublishedArticleTranslations(article) : Promise.resolve([]),
-    listPublishedArticles(),
+    listPublishedArticleSidebarArticles({ languageCode: article.languageCode }),
     loadFrontendUIDictionary(uiLanguageCode, { preview: shouldPreviewLocalization }),
   ])
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
