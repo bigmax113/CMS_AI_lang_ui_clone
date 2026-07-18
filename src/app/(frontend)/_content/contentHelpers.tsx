@@ -753,6 +753,8 @@ const compareArticlesByViewsDesc = (left: Article, right: Article) => {
 
 export type ArticleSortMode = 'latest' | 'views'
 
+const articlePayloadSort = (sortMode: ArticleSortMode) =>
+  sortMode === 'views' ? ['-viewCount', '-publishedAt'] : '-publishedAt'
 const uniqueArticlesByID = (articles: Article[]) => {
   const seen = new Set<string>()
   const unique: Article[] = []
@@ -1755,7 +1757,7 @@ const listPublishedArticlesUncached = async ({
       overrideAccess: true,
       page,
       select: articleCardSelect,
-      sort: sortMode === 'views' ? '-viewCount' : '-publishedAt',
+      sort: articlePayloadSort(sortMode),
       where,
     })
 
@@ -1818,7 +1820,7 @@ const listPublishedArticlesPageUncached = async ({
 } = {}) => {
   const payload = await getPayload({ config: configPromise })
   const safeLimit = Math.min(Math.max(limit, 1), 100)
-  const sort = sortMode === 'views' ? '-viewCount' : '-publishedAt'
+  const sort = articlePayloadSort(sortMode)
   const where = publishedArticlesWhere(languageCode)
   const requestedPage = Math.max(1, page)
   const findPage = (nextPage: number) =>
