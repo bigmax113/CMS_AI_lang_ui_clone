@@ -32,15 +32,41 @@ try {
   await client.connect()
   connected = true
 
+  const enumValuesByType = {
+    enum_articles_language_code: ['de', 'es', 'el'],
+    enum__articles_v_version_language_code: ['de', 'es', 'el'],
+    enum_articles_status: ['review'],
+    enum__articles_v_version_status: ['review'],
+  }
+  const enumSchemas = Array.from(new Set([schemaName, 'cms_ai']))
+  const enumTypes = Object.keys(enumValuesByType)
+  const enumTypeResult = await client.query(
+    `
+      SELECT n.nspname AS schema_name, t.typname AS type_name
+      FROM pg_type t
+      JOIN pg_namespace n ON n.oid = t.typnamespace
+      WHERE n.nspname = ANY($1::text[])
+        AND t.typname = ANY($2::text[])
+    `,
+    [enumSchemas, enumTypes],
+  )
+  const enumStatements = enumTypeResult.rows
+    .flatMap((row) => {
+      const enumSchema = quoteIdent(row.schema_name)
+      const enumType = quoteIdent(row.type_name)
+
+      return (enumValuesByType[row.type_name] || []).map(
+        (value) =>
+          `ALTER TYPE ${enumSchema}.${enumType} ADD VALUE IF NOT EXISTS '${value.replaceAll("'", "''")}';`,
+      )
+    })
+    .join('\n')
+
+  if (enumStatements) {
+    await client.query(enumStatements)
+  }
+
   await client.query(`
-    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'de';
-    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'es';
-    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'el';
-    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'de';
-    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'es';
-    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'el';
-    ALTER TYPE ${schema}."enum_articles_status" ADD VALUE IF NOT EXISTS 'review';
-    ALTER TYPE ${schema}."enum__articles_v_version_status" ADD VALUE IF NOT EXISTS 'review';
     ALTER TABLE ${schema}."articles"
       ADD COLUMN IF NOT EXISTS "view_count" numeric DEFAULT 1248;
 
