@@ -11,7 +11,7 @@ import {
   normalizeArticleLanguageCode,
   stripArticleLanguagePrefix,
 } from '../lib/articleTranslations'
-import { slugifyArticleTitle } from '../lib/articleFields'
+import { repairArticleMojibake, slugifyArticleTitle } from '../lib/articleFields'
 import {
   createFrontendUITranslationBatch,
   defaultFrontendUIStrings,
@@ -125,6 +125,9 @@ type TranslateArticlesRequestBody = {
 
 const articleStatusValues = ['draft', 'published', 'review'] as const
 type ArticleStatus = (typeof articleStatusValues)[number]
+
+const payloadDraftStatusFromArticleStatus = (status: ArticleStatus): 'draft' | 'published' =>
+  status === 'published' ? 'published' : 'draft'
 
 type ArticleStatusUpdateRequestBody = {
   ids?: Array<number | string>
@@ -425,6 +428,8 @@ export const saveArticleDraftEndpoint: Endpoint = {
 
     const draft = normalizeArticleDraft(body.draft || {}, '')
     const title = draft.title?.trim()
+    const articleStatus =
+      body.status && articleStatusValues.includes(body.status) ? body.status : 'draft'
 
     if (!title || !draft.bodyMarkdown?.trim()) {
       return Response.json(
@@ -459,7 +464,8 @@ export const saveArticleDraftEndpoint: Endpoint = {
             title: optionalArticleField(draft.seoTitle),
           },
           slug,
-          status: body.status || 'draft',
+          status: articleStatus,
+          _status: payloadDraftStatusFromArticleStatus(articleStatus),
           summary: optionalArticleField(draft.summary),
           title: stripLanguageTitlePrefix(title),
           translationGroup,
@@ -609,12 +615,15 @@ export const translateArticlesEndpoint: Endpoint = {
               owner: source.owner,
               publishedAt: source.publishedAt || source.createdAt,
               seo: {
-                description: optionalArticleField(translated.seoDescription || sourceSEO.description),
+                description: optionalArticleField(
+                  translated.seoDescription || sourceSEO.description,
+                ),
                 image: sourceSEO.image,
                 title: optionalArticleField(translated.seoTitle || sourceSEO.title),
               },
               slug,
               status: 'draft',
+              _status: 'draft',
               summary: optionalArticleField(translated.summary || source.summary),
               tags: source.tags || [],
               title: stripLanguageTitlePrefix(translated.title || sourceTitle),
@@ -691,6 +700,7 @@ export const updateArticleStatusesEndpoint: Endpoint = {
           collection: 'articles',
           data: {
             status,
+            _status: payloadDraftStatusFromArticleStatus(status),
           },
           id,
           overrideAccess: false,
@@ -1234,7 +1244,7 @@ async function expandSearchQueries(args: { baseURL: string; question: string }):
 
 function textFromUnknown(value: unknown): string {
   if (typeof value === 'string') {
-    return value.trim()
+    return repairArticleMojibake(value).trim()
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
@@ -1412,11 +1422,15 @@ function ensureArticleDraftCompleteness(draft: ArticleDraft, fallbackTitle: stri
   const title = textFromUnknown(draft.title) || fallbackTitle || 'Generated article draft'
   const rawSummary = textFromUnknown(draft.summary)
   const bodySummary = excerptPlainText(draft.bodyMarkdown, 420)
-  const summary = rawSummary && !isLikelyTruncatedPlainText(rawSummary) ? rawSummary : bodySummary || rawSummary
+  const summary =
+    rawSummary && !isLikelyTruncatedPlainText(rawSummary) ? rawSummary : bodySummary || rawSummary
   const seoTitle = textFromUnknown(draft.seoTitle) || title
   const bodyExcerpt = excerptPlainText(draft.bodyMarkdown, 320)
   const seoDescriptionCandidate =
-    textFromUnknown(draft.seoDescription) || summary || bodyExcerpt || `Read the full article: ${title}.`
+    textFromUnknown(draft.seoDescription) ||
+    summary ||
+    bodyExcerpt ||
+    `Read the full article: ${title}.`
   const seoDescription =
     seoDescriptionCandidate === seoTitle || seoDescriptionCandidate === title
       ? bodyExcerpt && bodyExcerpt !== title
@@ -1453,9 +1467,42 @@ function optionalArticleField(value: unknown): string | undefined {
   return text
 }
 
+function compactErrorMessage(value: string, maxLength = 420): string {
+  const text = repairArticleMojibake(value).replace(/\s+/gu, ' ').trim()
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text
+}
+
+function errorDetailsFromRecord(record: Record<string, unknown>): string[] {
+  const details: string[] = []
+
+  for (const key of ['detail', 'constraint', 'code']) {
+    const value = textFromUnknown(record[key])
+
+    if (value) {
+      details.push(`${key}: ${value}`)
+    }
+  }
+
+  const cause = record.cause
+
+  if (cause && cause !== record) {
+    details.push(errorMessageFromUnknown(cause))
+  }
+
+  return uniqueStrings(details.filter(Boolean))
+}
+
 function errorMessageFromUnknown(error: unknown): string {
   if (error instanceof Error) {
-    return error.message
+    const record = error as Error & Record<string, unknown>
+    const details = errorDetailsFromRecord(record)
+
+    if (details.length) {
+      return compactErrorMessage(details.join('; '))
+    }
+
+    return compactErrorMessage(error.message)
   }
 
   if (error && typeof error === 'object') {
@@ -1482,19 +1529,28 @@ function errorMessageFromUnknown(error: unknown): string {
       .filter(Boolean)
 
     if (messages.length) {
-      return messages.join('; ')
+      return compactErrorMessage(messages.join('; '))
     }
 
-    return textFromUnknown(record.message) || JSON.stringify(record)
+    const details = errorDetailsFromRecord(record)
+
+    if (details.length) {
+      return compactErrorMessage(details.join('; '))
+    }
+
+    return compactErrorMessage(textFromUnknown(record.message) || JSON.stringify(record))
   }
 
-  return String(error)
+  return compactErrorMessage(String(error))
 }
-
 function resolveArticleLanguage(value?: string): { code: string; language: string } {
   const normalized = normalizeArticleLanguageCode(value)
   const byCode = Object.values(ARTICLE_TRANSLATION_LANGUAGES).find(
-    (language) => language.code.toLowerCase() === String(value || '').trim().toLowerCase(),
+    (language) =>
+      language.code.toLowerCase() ===
+      String(value || '')
+        .trim()
+        .toLowerCase(),
   )
 
   return ARTICLE_TRANSLATION_LANGUAGES[normalized] || byCode || ARTICLE_TRANSLATION_LANGUAGES.en
@@ -1503,7 +1559,6 @@ function resolveArticleLanguage(value?: string): { code: string; language: strin
 function stripLanguageTitlePrefix(value: unknown): string {
   return stripArticleLanguagePrefix(textFromUnknown(value))
 }
-
 
 function withLanguageSlugPrefix(code: string, value: unknown): string {
   const prefix = articleLanguageDisplayCode(code).toLowerCase()
@@ -2102,7 +2157,7 @@ async function reviewTranslatedArticleFields(args: {
     'Fix grammar, agreement, case, number, gender, word order, punctuation, awkward literal translations, and unnatural marketing phrasing.',
     'For Russian, Ukrainian, Polish, and Romanian, pay special attention to adjective-noun agreement and inflection in headings.',
     `Ensure all human-readable headings, including H2/H3 headings, are translated to ${args.language}. Do not leave English headings unless they are only brand/product/model/event names, URLs, or SKUs.`,
-    'Example of an error to avoid in Russian: "Более быстрый интерактивная карта". Correct it as "Более быстрая интерактивная карта" or rewrite naturally as "Интерактивная карта стала быстрее".',
+    'For Russian, Ukrainian, Polish, and Romanian, output real Unicode text only. Never return mojibake or Latin-1/UTF-8 artifacts.',
     'Do not shorten the article body and do not add new facts. Preserve headings, paragraphs, product names, model names, brands, and SEO keywords.',
     'Keep LORGAR untranslated. Keep common gaming terms in English when that sounds natural locally.',
     'Do not use long dashes. Prefer short hyphens or normal punctuation.',
@@ -2237,7 +2292,10 @@ async function generateGrokArticle(args: {
       }>
     }
     const parsedDraft = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
-    const draft = ensureArticleDraftCompleteness(normalizeArticleDraft(parsedDraft, args.title), args.title)
+    const draft = ensureArticleDraftCompleteness(
+      normalizeArticleDraft(parsedDraft, args.title),
+      args.title,
+    )
 
     return {
       baseURL,

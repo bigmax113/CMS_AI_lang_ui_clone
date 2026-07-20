@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 
-import { articleLanguageDefinitions, articleTranslationTargetDefinitions } from '../../../lib/articleTranslations'
+import {
+  articleLanguageDefinitions,
+  articleTranslationTargetDefinitions,
+} from '../../../lib/articleTranslations'
 
 const filterLanguages = articleLanguageDefinitions.map((language) => ({
   code: language.value,
@@ -179,19 +182,20 @@ export const ArticleTranslationToolbar: React.FC = () => {
       document
         .querySelectorAll<HTMLElement>('a, button, [role="button"], span')
         .forEach((element) => {
-        if (element.closest('.article-translation-toolbar')) {
-          return
-        }
+          if (element.closest('.article-translation-toolbar')) {
+            return
+          }
 
-        const label = element.textContent?.replace(/\s+/gu, ' ').trim()
+          const label = element.textContent?.replace(/\s+/gu, ' ').trim()
 
-        if (label === 'Publish' || label === 'Unpublish') {
-          const actionElement = element.closest<HTMLElement>('a, button, [role="button"]') || element
+          if (label === 'Publish' || label === 'Unpublish') {
+            const actionElement =
+              element.closest<HTMLElement>('a, button, [role="button"]') || element
 
-          actionElement.dataset.articleStatusHidden = 'true'
-          actionElement.style.display = 'none'
-        }
-      })
+            actionElement.dataset.articleStatusHidden = 'true'
+            actionElement.style.display = 'none'
+          }
+        })
     }
 
     hideDefaultPublishActions()
@@ -222,7 +226,7 @@ export const ArticleTranslationToolbar: React.FC = () => {
     setMessage(`Translating ${ids.length} article(s) to ${selectedLabels}...`)
 
     const controller = new AbortController()
-    const timeoutID = window.setTimeout(() => controller.abort(), 240_000)
+    const timeoutID = window.setTimeout(() => controller.abort(), 600_000)
 
     try {
       const response = await fetch('/api/translate-articles', {
@@ -264,7 +268,7 @@ export const ArticleTranslationToolbar: React.FC = () => {
     } catch (error) {
       setMessage(
         error instanceof DOMException && error.name === 'AbortError'
-          ? 'Translation timed out. Try one language at a time or shorten the source article.'
+          ? 'Translation timed out. Try fewer languages at once or shorten the source article.'
           : error instanceof Error
             ? error.message
             : String(error),
@@ -424,7 +428,11 @@ export const ArticleTranslationToolbar: React.FC = () => {
       <div className="article-translation-toolbar__group article-translation-toolbar__status">
         <span>Status</span>
         <div className="article-translation-toolbar__actions">
-          <button disabled={isBusy} onClick={() => void updateSelectedStatus('published', 'Published')} type="button">
+          <button
+            disabled={isBusy}
+            onClick={() => void updateSelectedStatus('published', 'Published')}
+            type="button"
+          >
             Publish selected
           </button>
           <button
@@ -458,18 +466,35 @@ export const ArticleTranslationToolbar: React.FC = () => {
   )
 }
 
+function compactMessage(value: string, maxLength = 320): string {
+  const text = value.replace(/\s+/gu, ' ').trim()
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3).trim()}...` : text
+}
+
 function errorMessageFromAPI(payload: APIResponse, status: number): string {
+  const failedMessages = payload.failed
+    ?.map((item) => {
+      const subject = item.language || item.id || 'item'
+      const error = item.error || 'failed'
+
+      return `${subject}: ${error}`
+    })
+    .filter(Boolean)
   const validationMessages = payload.errors?.map((error) => error.message).filter(Boolean)
 
+  if (failedMessages?.length) {
+    return compactMessage(failedMessages.join('; '))
+  }
+
   if (payload.error) {
-    return payload.error
+    return compactMessage(payload.error)
   }
 
   if (validationMessages?.length) {
-    return validationMessages.join('; ')
+    return compactMessage(validationMessages.join('; '))
   }
 
   return `HTTP ${status}`
 }
-
 export default ArticleTranslationToolbar

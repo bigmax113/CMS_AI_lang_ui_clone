@@ -19,6 +19,36 @@ const danglingEnglishWord = /\b(?:a|an|and|as|at|by|for|from|in|into|of|on|or|th
 const mediaURLText =
   /https?:\/\/[^\s<>"']*(?:\/wp-content\/uploads\/|\/api\/media\/|\.mp4|\.mov|\.webm)[^\s<>"']*/giu
 
+const latin1Run = /[\u0000-\u00ff]+/gu
+const mojibakeMarker = /[\u0080-\u009f\u00c2\u00c3\u00d0\u00d1\u00e2]/gu
+const residualControlCharacters = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/gu
+
+const mojibakeScore = (value: string): number => value.match(mojibakeMarker)?.length || 0
+
+const decodeLatin1RunAsUTF8 = (value: string): string => {
+  try {
+    const bytes = Uint8Array.from(Array.from(value, (character) => character.charCodeAt(0)))
+
+    return new TextDecoder('utf-8').decode(bytes)
+  } catch (_error) {
+    return value
+  }
+}
+
+export const repairArticleMojibake = (value: string): string =>
+  value
+    .replace(latin1Run, (chunk) => {
+      const originalScore = mojibakeScore(chunk)
+
+      if (!originalScore) {
+        return chunk
+      }
+
+      const repaired = decodeLatin1RunAsUTF8(chunk)
+
+      return mojibakeScore(repaired) < originalScore ? repaired : chunk
+    })
+    .replace(residualControlCharacters, ' ')
 const decodeArticleTextEntities = (value: string): string =>
   value
     .replace(/&#x([0-9a-f]+);/giu, (_match, code: string) => {
@@ -31,10 +61,13 @@ const decodeArticleTextEntities = (value: string): string =>
 
       return Number.isFinite(value) ? String.fromCodePoint(value) : ''
     })
-    .replace(/&([a-z]+);/giu, (match, entity: string) => htmlEntities[entity.toLowerCase()] || match)
+    .replace(
+      /&([a-z]+);/giu,
+      (match, entity: string) => htmlEntities[entity.toLowerCase()] || match,
+    )
 
 const normalizeArticleText = (value: string): string | undefined => {
-  const text = decodeArticleTextEntities(value)
+  const text = decodeArticleTextEntities(repairArticleMojibake(value))
     .replace(mediaURLText, ' ')
     .replace(/<[^>]+>/gu, ' ')
     .replace(/\s*\[(?:\u2026|\.{3}|&hellip;|&#8230;|&#x2026;)\]\s*$/iu, '')
@@ -105,7 +138,15 @@ export const articleTextFromLexical = (content: unknown): string => {
     const fields = isRecord(node.fields) ? node.fields : null
 
     if (fields) {
-      for (const key of ['title', 'body', 'caption', 'description', 'question', 'answer', 'heading']) {
+      for (const key of [
+        'title',
+        'body',
+        'caption',
+        'description',
+        'question',
+        'answer',
+        'heading',
+      ]) {
         const fieldText = cleanArticleText(fields[key])
 
         if (fieldText) {
