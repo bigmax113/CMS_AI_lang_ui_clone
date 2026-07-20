@@ -1475,6 +1475,11 @@ function compactErrorMessage(value: string, maxLength = 420): string {
 
 function errorDetailsFromRecord(record: Record<string, unknown>): string[] {
   const details: string[] = []
+  const message = textFromUnknown(record.message)
+
+  if (message && !message.startsWith('Failed query:')) {
+    details.push(message)
+  }
 
   for (const key of ['detail', 'constraint', 'code']) {
     const value = textFromUnknown(record[key])

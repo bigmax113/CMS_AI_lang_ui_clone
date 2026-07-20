@@ -56,7 +56,10 @@ const payloadSecret =
   process.env.PAYLOAD_ADMIN_PASSWORD ||
   'payload-ai-tester-workbench-secret-change-me'
 const databaseSchemaName = process.env.PAYLOAD_DB_SCHEMA || undefined
-const deployMigrationTimeoutMs = Number.parseInt(process.env.DEPLOY_MIGRATION_TIMEOUT_MS || '30000', 10)
+const deployMigrationTimeoutMs = Number.parseInt(
+  process.env.DEPLOY_MIGRATION_TIMEOUT_MS || '30000',
+  10,
+)
 const { Client } = pg
 const plugPlayDemoImages: Record<string, string> = {
   'PlugPlay_750x350.jpg': '/lorgar-figma/card-fallbacks/card-07.webp',
@@ -91,6 +94,14 @@ const ensureArticleViewCountSchema = async () => {
 
   try {
     await client.query(`
+      ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'de';
+      ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'es';
+      ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'el';
+      ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'de';
+      ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'es';
+      ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'el';
+      ALTER TYPE ${schema}."enum_articles_status" ADD VALUE IF NOT EXISTS 'review';
+      ALTER TYPE ${schema}."enum__articles_v_version_status" ADD VALUE IF NOT EXISTS 'review';
       ALTER TABLE ${schema}."articles"
         ADD COLUMN IF NOT EXISTS "view_count" numeric DEFAULT 1248;
 
@@ -286,7 +297,15 @@ const seedArticleDefinitions = [
     slug: 'lorgar-powers-the-rainbow-six-siege-experience-at-comic-con-baltics-2026',
     summary:
       'From May 22-24, the Lithuanian Exhibition and Congress Centre LITEXPO welcomed 36,900 visitors for the annual Comic Con Baltics 2026, where LORGAR delivered a complete Rainbow Six Siege experience.',
-    tags: ['esports', 'events', 'products', 'rainbow-six-siege', 'rankings', 'passion', 'stake-ranked'],
+    tags: [
+      'esports',
+      'events',
+      'products',
+      'rainbow-six-siege',
+      'rankings',
+      'passion',
+      'stake-ranked',
+    ],
     title: 'LORGAR Powers the Rainbow Six Siege Experience at Comic Con Baltics 2026',
   },
   {
@@ -340,7 +359,14 @@ const seedArticleDefinitions = [
     slug: 'how-to-choose-a-gaming-mouse-weight-sensor-polling-rate-and-more',
     summary:
       'A practical guide to choosing a gaming mouse by weight, sensor quality, polling rate, grip support, and everyday comfort.',
-    tags: ['for-users', 'products', 'gaming-mice', 'mouse-buying-guide', 'gaming-mousepads', 'gaming-accessories'],
+    tags: [
+      'for-users',
+      'products',
+      'gaming-mice',
+      'mouse-buying-guide',
+      'gaming-mousepads',
+      'gaming-accessories',
+    ],
     title: 'How to Choose a Gaming Mouse: Weight, Sensor, Polling Rate and More',
   },
   {
@@ -367,7 +393,14 @@ const seedArticleDefinitions = [
     slug: 'streaming-solution-for-creator-setups',
     summary:
       'A streaming solution blueprint for creators who need a practical mix of camera, microphone, desk, and comfort hardware.',
-    tags: ['solutions', 'streaming-solution', 'for-users', 'webcams', 'gaming-microphones', 'gaming-accessories'],
+    tags: [
+      'solutions',
+      'streaming-solution',
+      'for-users',
+      'webcams',
+      'gaming-microphones',
+      'gaming-accessories',
+    ],
     title: 'Streaming Solution for Creator Setups',
   },
   {
@@ -394,7 +427,15 @@ const seedArticleDefinitions = [
     slug: 'pc-gaming-solution-for-competitive-and-everyday-play',
     summary:
       'A PC gaming solution guide that connects monitors, desks, chairs, microphones, and accessories into one practical setup.',
-    tags: ['solutions', 'pc-gaming-solution', 'products', 'pc', 'monitors', 'gaming-desks', 'gaming-controllers'],
+    tags: [
+      'solutions',
+      'pc-gaming-solution',
+      'products',
+      'pc',
+      'monitors',
+      'gaming-desks',
+      'gaming-controllers',
+    ],
     title: 'PC Gaming Solution for Competitive and Everyday Play',
   },
   {
@@ -476,7 +517,8 @@ const seedArticleDefinitions = [
     summary:
       'LORGAR expands its gaming furniture line with the CHA41 gaming chair series built for long sessions, lasting comfort, and ergonomic support.',
     tags: ['products', 'gaming-chairs', 'chairs'],
-    title: 'LORGAR Introduces the CHA41 Gaming Chair Series - Built for Long Sessions, Designed to Last',
+    title:
+      'LORGAR Introduces the CHA41 Gaming Chair Series - Built for Long Sessions, Designed to Last',
   },
   {
     blocks: [
@@ -842,14 +884,20 @@ export default buildConfig({
     try {
       await ensureArticleViewCountSchema()
     } catch (err) {
-      payload.logger.warn({ err, msg: 'Skipped non-critical article view count schema preparation' })
+      payload.logger.warn({
+        err,
+        msg: 'Skipped non-critical article view count schema preparation',
+      })
     }
 
     try {
       await ensureFrontendUITranslationsSchema()
       await syncFrontendUITranslationKeys()
     } catch (err) {
-      payload.logger.warn({ err, msg: 'Skipped non-critical frontend UI localization schema preparation' })
+      payload.logger.warn({
+        err,
+        msg: 'Skipped non-critical frontend UI localization schema preparation',
+      })
     }
 
     const adminEmail = process.env.PAYLOAD_ADMIN_EMAIL || 'dev@payloadcms.com'

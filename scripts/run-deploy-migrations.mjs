@@ -33,6 +33,14 @@ try {
   connected = true
 
   await client.query(`
+    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'de';
+    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'es';
+    ALTER TYPE ${schema}."enum_articles_language_code" ADD VALUE IF NOT EXISTS 'el';
+    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'de';
+    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'es';
+    ALTER TYPE ${schema}."enum__articles_v_version_language_code" ADD VALUE IF NOT EXISTS 'el';
+    ALTER TYPE ${schema}."enum_articles_status" ADD VALUE IF NOT EXISTS 'review';
+    ALTER TYPE ${schema}."enum__articles_v_version_status" ADD VALUE IF NOT EXISTS 'review';
     ALTER TABLE ${schema}."articles"
       ADD COLUMN IF NOT EXISTS "view_count" numeric DEFAULT 1248;
 
