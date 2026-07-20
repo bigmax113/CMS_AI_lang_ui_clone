@@ -119,7 +119,7 @@ export const ArticlesCollection: CollectionConfig = {
     components: {
       beforeList: ['/admin/components/ArticleTranslationToolbar#ArticleTranslationToolbar'],
     },
-    defaultColumns: ['title', 'languageCode', 'status', 'publishedAt', 'createdAt', 'updatedAt'],
+    defaultColumns: ['title', 'languageCode', 'publishedDateDisplay', 'status', 'updatedAt'],
     group: 'CMS',
     preview: (doc, { req }) => {
       if (typeof doc.slug !== 'string') {
@@ -374,6 +374,38 @@ export const ArticlesCollection: CollectionConfig = {
       virtual: true,
     },
     {
+      name: 'publishedDateDisplay',
+      type: 'text',
+      admin: {
+        readOnly: true,
+      },
+      hooks: {
+        afterRead: [
+          ({ data }) => {
+            const value = data?.publishedAt
+
+            if (typeof value !== 'string') {
+              return ''
+            }
+
+            const date = new Date(value)
+
+            if (Number.isNaN(date.getTime())) {
+              return ''
+            }
+
+            return new Intl.DateTimeFormat('en-GB', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }).format(date)
+          },
+        ],
+      },
+      label: 'Published date',
+      virtual: true,
+    },
+    {
       name: 'publishedAt',
       type: 'date',
       admin: {
@@ -382,6 +414,7 @@ export const ArticlesCollection: CollectionConfig = {
         },
         position: 'sidebar',
       },
+      label: 'Published at',
     },
     {
       name: 'viewCount',

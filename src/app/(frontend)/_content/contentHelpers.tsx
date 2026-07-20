@@ -14,6 +14,7 @@ import {
   articleTranslationGroupFromArticle,
   inferArticleLanguageCode,
   normalizeArticleLanguageCode,
+  stripArticleLanguagePrefix,
   type ArticleLanguageCode,
 } from '@/lib/articleTranslations'
 import { isValidArticlePreviewToken } from '@/lib/articlePreview'
@@ -61,8 +62,7 @@ function getCachedFrontendQueryValue<T>(key: string, loader: () => Promise<T>): 
     return cached.value
   }
 
-  let value!: Promise<T>
-  value = loader().catch((error) => {
+  const value = loader().catch((error) => {
     const current = frontendQueryCache.get(key)
 
     if (current?.value === value) {
@@ -156,8 +156,15 @@ const publicArticleNavigationLabelsByCode: Record<
   uk: { allArticles: 'Ð£ÑÑ– ÑÑ‚Ð°Ñ‚Ñ‚Ñ–', blog: 'Ð‘Ð»Ð¾Ð³' },
 }
 
-export const publicArticleNavigationLabels = (languageCode?: null | string) =>
-  publicArticleNavigationLabelsByCode[normalizeArticleLanguageCode(languageCode)]
+export const publicArticleNavigationLabels = (languageCode?: null | string) => {
+  const fallback = publicArticleNavigationLabelsByCode.en
+  const labels = publicArticleNavigationLabelsByCode[normalizeArticleLanguageCode(languageCode)]
+
+  return {
+    allArticles: safeLocalizedLabel(labels.allArticles, fallback.allArticles),
+    blog: safeLocalizedLabel(labels.blog, fallback.blog),
+  }
+}
 
 export const formatArticleMetaDate = (value?: null | string, languageCode?: null | string) => {
   if (!value) {
@@ -712,11 +719,11 @@ const articleReadingTime = ({
   const code = normalizeArticleLanguageCode(languageCode)
 
   if (code === 'ru') {
-    return `${minutes} Ð¼Ð¸Ð½ Ñ‡Ñ‚ÐµÐ½Ð¸Ñ`
+    return `${minutes} мин чтения`
   }
 
   if (code === 'uk') {
-    return `${minutes} Ñ…Ð² Ñ‡Ð¸Ñ‚Ð°Ð½Ð½Ñ`
+    return `${minutes} хв читання`
   }
 
   return `${minutes} min read`
@@ -1087,7 +1094,7 @@ const renderNode = (node: LexicalNode, key: string): React.ReactNode => {
         <aside className="public-content__cta" key={key}>
           {typeof fields.label === 'string' ? <strong>{fields.label}</strong> : null}
           {typeof fields.description === 'string' ? <p>{fields.description}</p> : null}
-          {typeof fields.url === 'string' ? <a href={fields.url}>ÐŸÐµÑ€ÐµÐ¹Ñ‚Ð¸</a> : null}
+          {typeof fields.url === 'string' ? <a href={fields.url}>Open</a> : null}
         </aside>
       )
     }
@@ -1206,7 +1213,7 @@ export const RichText = ({ content }: { content?: Article['content'] | BlogPost[
   const root = content?.root as LexicalNode | undefined
 
   if (!root?.children?.length) {
-    return <p>ÐšÐ¾Ð½Ñ‚ÐµÐ½Ñ‚ Ð¿Ð¾ÐºÐ° Ð½Ðµ Ð·Ð°Ð¿Ð¾Ð»Ð½ÐµÐ½.</p>
+    return <p>Content is not filled in yet.</p>
   }
 
   return <div className="public-content__richtext">{renderNode(root, 'root')}</div>
@@ -1268,7 +1275,7 @@ export const ArticleMetaLine = ({
   return (
     <p className="public-content__meta">
       {names ? <span>{names}</span> : null}
-      {names && date ? <span aria-hidden="true">Â·</span> : null}
+      {names && date ? <span aria-hidden="true">·</span> : null}
       {date ? <time dateTime={publishedAt || undefined}>{date}</time> : null}
     </p>
   )
@@ -2601,6 +2608,15 @@ const brokenLocalizedLabelPattern = /(?:\?{2,}|undefined|null|\uFFFD|[\u00c2\u00
 const isBrokenLocalizedLabel = (value?: null | string) =>
   !value || brokenLocalizedLabelPattern.test(value)
 
+const safeLocalizedLabel = (value: null | string | undefined, fallback: string) => {
+  const normalized = String(value || '').trim()
+
+  return isBrokenLocalizedLabel(normalized) ? fallback : normalized
+}
+
+export const publicArticleTitle = (article: Pick<Article, 'title'> | { title?: null | string }) =>
+  safeLocalizedLabel(stripArticleLanguagePrefix(article.title), 'Untitled article')
+
 const uiLabel = (uiStrings: LorgarUIStrings, key: FrontendUIKey, languageCode?: null | string) => {
   void languageCode
   const translated = frontendUILabel(uiStrings, key)
@@ -2741,12 +2757,14 @@ const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCo
   if (key) {
     const label = uiLabel(uiStrings, key, languageCode)
 
-    if (label && label !== defaultFrontendUIStrings[key]) {
+    if (label) {
       return label
     }
   }
 
-  return localizedTagFallbacks[normalizeArticleLanguageCode(languageCode)]?.[normalized] || tagLabelFromValue(value)
+  const fallback = localizedTagFallbacks[normalizeArticleLanguageCode(languageCode)]?.[normalized]
+
+  return safeLocalizedLabel(fallback, tagLabelFromValue(value))
 }
 
 const localizedAuthorNameByLanguage: Partial<Record<ArticleLanguageCode, string>> = {
@@ -2761,7 +2779,11 @@ const publicArticleAuthorNamesForLanguage = ({
 }: {
   authors?: Article['authors'] | BlogPost['authors'] | null
   languageCode?: null | string
-}) => localizedAuthorNameByLanguage[normalizeArticleLanguageCode(languageCode)] || publicArticleAuthorNames(authors)
+}) =>
+  safeLocalizedLabel(
+    localizedAuthorNameByLanguage[normalizeArticleLanguageCode(languageCode)],
+    publicArticleAuthorNames(authors) || defaultPublicAuthorName,
+  )
 
 const lorgarOriginByLanguageCode: Record<ArticleLanguageCode, string> = {
   bg: 'https://lorgar.bg',
@@ -3409,6 +3431,7 @@ const lorgarCardFallbackImage = (article: Article) => {
 const LorgarBlogCard = ({ article, uiStrings }: { article: Article; uiStrings?: LorgarUIStrings }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const image = articlePrimaryImage(article)
+  const title = publicArticleTitle(article)
   const date = formatDate(article.publishedAt || article.createdAt, article.languageCode)
   const readMoreLabel = uiLabel(uiStrings, 'blog.readMore')
   const viewsSuffix = uiLabel(uiStrings, 'blog.viewsSuffix')
@@ -3417,7 +3440,7 @@ const LorgarBlogCard = ({ article, uiStrings }: { article: Article; uiStrings?: 
     <a className="lorgar-blog-card" href={href}>
       {isMedia(image) ? (
         <SafeImage
-          alt={image.alt || article.title}
+          alt={image.alt || title}
           className="lorgar-blog-card__image"
           fallbackSrc={lorgarCardFallbackImage(article)}
           fileName={image.filename}
@@ -3425,12 +3448,12 @@ const LorgarBlogCard = ({ article, uiStrings }: { article: Article; uiStrings?: 
           src={mediaURL(image)}
         />
       ) : (
-        <img alt={article.title} className="lorgar-blog-card__image" loading="eager" src={lorgarCardFallbackImage(article)} />
+        <img alt={title} className="lorgar-blog-card__image" loading="eager" src={lorgarCardFallbackImage(article)} />
       )}
       <span aria-hidden="true" className="lorgar-blog-card__hover">
         {readMoreLabel.toUpperCase()}
       </span>
-      <strong className="lorgar-blog-card__title">{article.title}</strong>
+      <strong className="lorgar-blog-card__title">{title}</strong>
       <span className="lorgar-blog-card__footer">
         <span className="lorgar-blog-card__stats">
           <span>
@@ -3523,15 +3546,15 @@ const LorgarBlogPagination = ({
       <div className="lorgar-blog-pagination__pages">
         {hasPreviousPage ? (
           <a aria-label={uiLabel(uiStrings, 'blog.previousPage')} href={pageHref(currentPage - 1)}>
-            â€¹
+            ‹
           </a>
         ) : (
-          <span aria-hidden="true" className="is-disabled">â€¹</span>
+          <span aria-hidden="true" className="is-disabled">‹</span>
         )}
         {paginationSequence({ currentPage, totalPages }).map((item, index) =>
           item === 'ellipsis' ? (
             <span aria-hidden="true" className="lorgar-blog-pagination__ellipsis" key={`ellipsis-${index}`}>
-              â€¦
+              …
             </span>
           ) : item === currentPage ? (
             <span aria-current="page" className="is-active" key={item}>
@@ -3545,10 +3568,10 @@ const LorgarBlogPagination = ({
         )}
         {hasNextPage ? (
           <a aria-label={uiLabel(uiStrings, 'blog.nextPage')} href={pageHref(currentPage + 1)}>
-            â€º
+            ›
           </a>
         ) : (
-          <span aria-hidden="true" className="is-disabled">â€º</span>
+          <span aria-hidden="true" className="is-disabled">›</span>
         )}
       </div>
     </nav>
@@ -3652,7 +3675,7 @@ export const LorgarArticlesIndexLayout = ({
                       key={`${topic.tagQuery}-${topic.label}`}
                     >
                       <span>{localizedTagLabel(topic.tagQuery || topic.label, uiStrings, languageCode)}</span>
-                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">Ã—</span> : null}
+                      {isActive ? <span aria-hidden="true" className="lorgar-blog-topics__remove">×</span> : null}
                     </a>
                   )
                 })}
@@ -3769,6 +3792,7 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const publishedDate = formatDate(article.publishedAt || article.createdAt, article.languageCode)
   const image = articlePrimaryImage(article)
+  const title = publicArticleTitle(article)
 
   return (
     <Link
@@ -3780,15 +3804,15 @@ const LorgarSidebarCard = ({ article }: { article: Article }) => {
     >
       {isMedia(image) ? (
         <SafeImage
-          alt={image.alt || article.title}
+          alt={image.alt || title}
           fileName={image.filename}
           src={mediaURL(image)}
         />
       ) : (
-        <img alt={article.title} loading="lazy" src={lorgarCardFallbackImage(article)} />
+        <img alt={title} loading="lazy" src={lorgarCardFallbackImage(article)} />
       )}
       <span>
-        <strong>{article.title}</strong>
+        <strong>{title}</strong>
         {publishedDate ? <small>{publishedDate}</small> : null}
       </span>
     </Link>
@@ -3913,21 +3937,22 @@ const LorgarRelatedCard = ({ article }: { article: Article }) => {
   const href = articlePublicPath(article.slug) || '/articles'
   const summary = publicLeadText({ content: article.content, summary: article.summary })
   const image = articlePrimaryImage(article)
+  const title = publicArticleTitle(article)
 
   return (
     <Link className="lorgar-related-card" href={href} prefetch={false}>
       {isMedia(image) ? (
         <SafeImage
-          alt={image.alt || article.title}
+          alt={image.alt || title}
           className="lorgar-related-card__image"
           fileName={image.filename}
           src={mediaURL(image)}
         />
       ) : (
-        <img alt={article.title} className="lorgar-related-card__image" loading="lazy" src={lorgarCardFallbackImage(article)} />
+        <img alt={title} className="lorgar-related-card__image" loading="lazy" src={lorgarCardFallbackImage(article)} />
       )}
       <span>
-        <strong>{article.title}</strong>
+        <strong>{title}</strong>
         {summary ? <p>{summary}</p> : null}
       </span>
     </Link>
@@ -3987,6 +4012,7 @@ export const LorgarArticleLayout = ({
   const publishedDate = article.publishedAt || article.createdAt
   const coverImage = articlePrimaryImage(article)
   const articleTags = publicArticleTags(article)
+  const title = publicArticleTitle(article)
   const articleViewsLabel = `${formatArticleViewCount(article)} ${uiLabel(uiStrings, 'blog.viewsSuffix')}`
 
   return (
@@ -3999,7 +4025,7 @@ export const LorgarArticleLayout = ({
               items={[
                 { href: '/articles', label: navigationLabels.blog },
                 { href: '/articles', label: navigationLabels.allArticles },
-                { href: articlePath, label: article.title },
+                { href: articlePath, label: title },
               ]}
             />
             {articleTags.length ? (
@@ -4012,18 +4038,18 @@ export const LorgarArticleLayout = ({
                 ))}
               </nav>
             ) : null}
-            <h1>{article.title}</h1>
+            <h1>{title}</h1>
             {summary ? <p className="lorgar-article-summary">{summary}</p> : null}
             <LorgarMeta article={article} publishedAt={publishedDate} />
             {isMedia(coverImage) ? (
-              <PublicImage alt={coverImage.alt || article.title} className="lorgar-article-cover" media={coverImage} />
+              <PublicImage alt={coverImage.alt || title} className="lorgar-article-cover" media={coverImage} />
             ) : (
-              <img alt={article.title} className="lorgar-article-cover" loading="eager" src={lorgarCardFallbackImage(article)} />
+              <img alt={title} className="lorgar-article-cover" loading="eager" src={lorgarCardFallbackImage(article)} />
             )}
             <LorgarArticleShare
               articleSlug={article.slug}
               path={articlePath}
-              title={article.title}
+              title={title}
               uiStrings={uiStrings}
               viewsLabel={articleViewsLabel}
             />

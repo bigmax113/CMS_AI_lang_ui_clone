@@ -11,6 +11,7 @@ import {
   findPublishedArticleBySlug,
   listPublishedArticleSidebarArticles,
   listPublishedArticleTranslations,
+  publicArticleTitle,
   publicSummaryText,
 } from '../../_content/contentHelpers'
 
@@ -72,6 +73,7 @@ export const generateMetadata = async ({ params, searchParams }: PageProps) => {
       }
     | undefined
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
+  const title = article.seo?.title ? publicArticleTitle({ title: article.seo.title }) : publicArticleTitle(article)
 
   return createSEOPageMetadata({
     canonicalURL: seo?.canonicalURL,
@@ -81,7 +83,7 @@ export const generateMetadata = async ({ params, searchParams }: PageProps) => {
     ogDescription: seo?.ogDescription,
     ogTitle: seo?.ogTitle,
     path: articlePublicPath(article.slug),
-    title: article.seo?.title || article.title,
+    title,
     twitterDescription: seo?.twitterDescription,
     twitterTitle: seo?.twitterTitle,
   })
@@ -105,6 +107,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
   ])
   const summary = publicSummaryText({ content: article.content, summary: article.summary })
   const publishedDate = article.publishedAt || article.createdAt
+  const title = article.seo?.title ? publicArticleTitle({ title: article.seo.title }) : publicArticleTitle(article)
 
   return (
     <LorgarArticleLayout
@@ -121,7 +124,7 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
         description={article.seo?.description || summary}
         image={article.seo?.image || article.coverImage}
         publishedAt={publishedDate}
-        title={article.seo?.title || article.title}
+        title={title}
         updatedAt={article.updatedAt}
         url={articlePublicPath(article.slug)}
       />

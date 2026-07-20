@@ -643,7 +643,7 @@ export const frontendUIStringDefinitions = [
     namespace: 'footer',
   },
   {
-    defaultText: 'Â© LORGAR 2026, ALL RIGHTS RESERVED',
+    defaultText: '© LORGAR 2026, ALL RIGHTS RESERVED',
     description: 'Footer copyright line.',
     key: 'footer.copyright',
     namespace: 'footer',
@@ -1049,10 +1049,20 @@ const isBrokenFrontendUITranslation = (value?: null | string): boolean => {
   return !normalized || brokenFrontendUITranslationPattern.test(normalized)
 }
 
-const buildFrontendUIBaseDictionary = (languageCode: null | string | undefined): FrontendUIStrings => ({
-  ...defaultFrontendUIStrings,
-  ...(stableFrontendUIFallbacks[normalizeFrontendUILanguageCode(languageCode)] || {}),
-})
+const buildFrontendUIBaseDictionary = (languageCode: null | string | undefined): FrontendUIStrings => {
+  const dictionary: FrontendUIStrings = { ...defaultFrontendUIStrings }
+  const fallbacks = stableFrontendUIFallbacks[normalizeFrontendUILanguageCode(languageCode)] || {}
+
+  for (const [key, value] of Object.entries(fallbacks)) {
+    const normalized = String(value || '').trim()
+
+    if (isFrontendUIKey(key) && !isBrokenFrontendUITranslation(normalized)) {
+      dictionary[key] = normalized
+    }
+  }
+
+  return dictionary
+}
 
 
 export const ensureFrontendUITranslationsSchema = async (): Promise<void> => {

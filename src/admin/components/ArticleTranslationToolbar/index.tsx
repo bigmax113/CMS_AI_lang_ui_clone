@@ -35,6 +35,7 @@ type APIResponse = {
     id?: string
     language?: string
   }>
+  deleted?: number
   status?: ArticleStatus
   total?: number
   updated?: number
@@ -69,13 +70,60 @@ function languageFilterFromLocation(): string {
   return new URLSearchParams(window.location.search).get('where[languageCode][equals]') || ''
 }
 
+function ensurePublishedDateColumnInLocation(): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const url = new URL(window.location.href)
+  const rawColumns = url.searchParams.get('columns')
+
+  if (!rawColumns) {
+    return
+  }
+
+  try {
+    const parsed = JSON.parse(rawColumns)
+
+    if (!Array.isArray(parsed)) {
+      return
+    }
+
+    const columns = parsed.filter((column): column is string => typeof column === 'string')
+    const visibleColumns = columns.filter(
+      (column) => column !== '-publishedAt' && column !== '-publishedDateDisplay',
+    )
+    const hasPublishedDateDisplay = visibleColumns.includes('publishedDateDisplay')
+
+    if (hasPublishedDateDisplay && visibleColumns.length === columns.length) {
+      return
+    }
+
+    const titleIndex = visibleColumns.indexOf('title')
+    const insertIndex = titleIndex >= 0 ? titleIndex + 1 : 0
+    const nextColumns = hasPublishedDateDisplay
+      ? visibleColumns
+      : [
+          ...visibleColumns.slice(0, insertIndex),
+          'publishedDateDisplay',
+          ...visibleColumns.slice(insertIndex),
+        ]
+
+    url.searchParams.set('columns', JSON.stringify(nextColumns))
+    window.location.replace(url.toString())
+  } catch {
+    // Payload owns this query parameter; ignore unexpected user/browser state.
+  }
+}
+
 export const ArticleTranslationToolbar: React.FC = () => {
   const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
   const [running, setRunning] = useState(false)
   const [statusRunning, setStatusRunning] = useState(false)
+  const [deleteRunning, setDeleteRunning] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [activeLanguageFilter, setActiveLanguageFilter] = useState(languageFilterFromLocation)
-  const isBusy = running || statusRunning
+  const isBusy = running || statusRunning || deleteRunning
   const selectedLabels = useMemo(
     () =>
       selectedLocales.length
@@ -102,6 +150,9 @@ export const ArticleTranslationToolbar: React.FC = () => {
   }
 
   useEffect(() => {
+    ensurePublishedDateColumnInLocation()
+    const columnIntervalID = window.setInterval(ensurePublishedDateColumnInLocation, 500)
+
     const syncFilterFromURL = () => {
       const nextFilter = languageFilterFromLocation()
 
@@ -117,7 +168,10 @@ export const ArticleTranslationToolbar: React.FC = () => {
     syncFilterFromURL()
     const intervalID = window.setInterval(syncFilterFromURL, 500)
 
-    return () => window.clearInterval(intervalID)
+    return () => {
+      window.clearInterval(columnIntervalID)
+      window.clearInterval(intervalID)
+    }
   }, [])
 
   useEffect(() => {
@@ -142,7 +196,6 @@ export const ArticleTranslationToolbar: React.FC = () => {
 
     hideDefaultPublishActions()
     const intervalID = window.setInterval(hideDefaultPublishActions, 500)
-
     return () => window.clearInterval(intervalID)
   }, [])
 
@@ -274,6 +327,59 @@ export const ArticleTranslationToolbar: React.FC = () => {
     }
   }
 
+  const deleteSelectedArticles = async () => {
+    const ids = selectedArticleIDsFromDOM()
+
+    if (!ids.length) {
+      setMessage('Select one or more rows first.')
+      return
+    }
+
+    if (!window.confirm(`Delete ${ids.length} selected article(s)? This cannot be undone.`)) {
+      return
+    }
+
+    setDeleteRunning(true)
+    setMessage(`Deleting ${ids.length} article(s)...`)
+
+    try {
+      const response = await fetch('/api/delete-articles', {
+        body: JSON.stringify({ ids }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const payload = (await response.json()) as APIResponse
+
+      if (!response.ok) {
+        throw new Error(errorMessageFromAPI(payload, response.status))
+      }
+
+      const failed = payload.failed || []
+      const deleted = payload.deleted || payload.total || 0
+
+      if (failed.length) {
+        const failedSummary = failed
+          .slice(0, 2)
+          .map((item) => `${item.id || 'item'}: ${item.error || 'failed'}`)
+          .join('; ')
+
+        setMessage(`Deleted ${deleted}, failed ${failed.length}. ${failedSummary}`)
+      } else {
+        setMessage(`Deleted ${deleted} article(s). Refreshing list...`)
+      }
+
+      if (deleted) {
+        window.setTimeout(() => window.location.reload(), 700)
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setDeleteRunning(false)
+    }
+  }
+
   return (
     <div className="article-translation-toolbar">
       <div className="article-translation-toolbar__group article-translation-toolbar__filter">
@@ -336,6 +442,14 @@ export const ArticleTranslationToolbar: React.FC = () => {
             type="button"
           >
             Unpublish selected
+          </button>
+          <button
+            className="article-translation-toolbar__button--danger"
+            disabled={isBusy}
+            onClick={() => void deleteSelectedArticles()}
+            type="button"
+          >
+            Delete selected
           </button>
         </div>
       </div>

@@ -131,6 +131,10 @@ type ArticleStatusUpdateRequestBody = {
   status?: string
 }
 
+type ArticleDeleteRequestBody = {
+  ids?: Array<number | string>
+}
+
 type LexicalChild = {
   type: string
   version: number
@@ -457,7 +461,7 @@ export const saveArticleDraftEndpoint: Endpoint = {
           slug,
           status: body.status || 'draft',
           summary: optionalArticleField(draft.summary),
-          title: withLanguageTitlePrefix(language.code, title),
+          title: stripLanguageTitlePrefix(title),
           translationGroup,
         },
         overrideAccess: false,
@@ -613,7 +617,7 @@ export const translateArticlesEndpoint: Endpoint = {
               status: 'draft',
               summary: optionalArticleField(translated.summary || source.summary),
               tags: source.tags || [],
-              title: withLanguageTitlePrefix(locale.code, translated.title || sourceTitle),
+              title: stripLanguageTitlePrefix(translated.title || sourceTitle),
               translationGroup: sourceTranslationGroup,
             },
             overrideAccess: false,
@@ -719,6 +723,67 @@ export const updateArticleStatusesEndpoint: Endpoint = {
   },
   method: 'post',
   path: '/update-article-statuses',
+}
+
+export const deleteArticlesEndpoint: Endpoint = {
+  handler: async (req) => {
+    if (!req.user) {
+      return Response.json({ error: 'Login is required.' }, { status: 401 })
+    }
+
+    let body: ArticleDeleteRequestBody
+
+    try {
+      body = typeof req.json === 'function' ? ((await req.json()) as ArticleDeleteRequestBody) : {}
+    } catch (_error) {
+      body = {}
+    }
+
+    const ids = uniqueStrings(
+      (body.ids || []).map((id) => String(id).trim()).filter(Boolean),
+    ).slice(0, 100)
+
+    if (!ids.length) {
+      return Response.json({ error: 'Select at least one article.' }, { status: 400 })
+    }
+
+    const deleted: Array<{ id: string | number; title?: string }> = []
+    const failed: Array<{ error: string; id: string }> = []
+
+    for (const id of ids) {
+      try {
+        const article = await req.payload.delete({
+          collection: 'articles',
+          id,
+          overrideAccess: false,
+          user: req.user,
+        })
+
+        deleted.push({
+          id: article.id,
+          title: article.title,
+        })
+      } catch (error) {
+        failed.push({
+          error: errorMessageFromUnknown(error),
+          id,
+        })
+      }
+    }
+
+    return Response.json(
+      {
+        deleted: deleted.length,
+        deletedArticles: deleted,
+        failed,
+        ok: failed.length === 0,
+        total: deleted.length,
+      },
+      { status: deleted.length || !failed.length ? 200 : 400 },
+    )
+  },
+  method: 'post',
+  path: '/delete-articles',
 }
 
 export const frontendUILocalizationEndpoint: Endpoint = {
@@ -1439,11 +1504,6 @@ function stripLanguageTitlePrefix(value: unknown): string {
   return stripArticleLanguagePrefix(textFromUnknown(value))
 }
 
-function withLanguageTitlePrefix(code: string, title: unknown): string {
-  const cleanTitle = stripLanguageTitlePrefix(title) || 'Untitled article'
-
-  return `[${articleLanguageDisplayCode(code)}] ${cleanTitle}`
-}
 
 function withLanguageSlugPrefix(code: string, value: unknown): string {
   const prefix = articleLanguageDisplayCode(code).toLowerCase()
