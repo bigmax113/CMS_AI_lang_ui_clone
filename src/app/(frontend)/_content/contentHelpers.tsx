@@ -2605,6 +2605,21 @@ const stableLocalizedUIFallbacks: Partial<Record<ArticleLanguageCode, Partial<Re
 
 const brokenLocalizedLabelPattern = /(?:\?{2,}|[A-Za-zÀ-ž]\?[A-Za-zÀ-ž]|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
 
+const cyrillicLocalizedLabelPattern = /[\u0400-\u052f]/u
+const latinScriptArticleLanguages = new Set<ArticleLanguageCode>([
+  'cs',
+  'de',
+  'ee',
+  'es',
+  'hu',
+  'lt',
+  'lv',
+  'pl',
+  'ro',
+  'rs',
+  'sk',
+])
+
 const isBrokenLocalizedLabel = (value?: null | string) =>
   !value || brokenLocalizedLabelPattern.test(value)
 
@@ -2612,6 +2627,16 @@ const safeLocalizedLabel = (value: null | string | undefined, fallback: string) 
   const normalized = repairArticleMojibake(String(value || '')).trim()
 
   return isBrokenLocalizedLabel(normalized) ? fallback : normalized
+}
+
+const isWrongScriptLocalizedLabel = (languageCode: null | string | undefined, value?: null | string) => {
+  const normalized = repairArticleMojibake(String(value || '')).trim()
+
+  return (
+    Boolean(normalized) &&
+    latinScriptArticleLanguages.has(normalizeArticleLanguageCode(languageCode)) &&
+    cyrillicLocalizedLabelPattern.test(normalized)
+  )
 }
 
 export const publicArticleTitle = (article: Pick<Article, 'title'> | { title?: null | string }) =>
@@ -2745,6 +2770,18 @@ const localizedTagFallbacks: Partial<Record<ArticleLanguageCode, Record<string, 
     'stake ranked': 'Stake Ranked',
   },
 }
+const isLocalizedTopicAllowedForLanguage = (
+  topic: Pick<LorgarTagFilter, 'label' | 'tagQuery'>,
+  languageCode?: null | string,
+) => {
+  const normalized = normalizedTopicFilterText(topic.tagQuery || topic.label)
+
+  return (
+    Boolean(normalized && localizedTopicLabelKeys[normalized]) ||
+    !isWrongScriptLocalizedLabel(languageCode, topic.tagQuery || topic.label)
+  )
+}
+
 const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCode?: null | string) => {
   const normalized = normalizedTopicFilterText(value)
 
@@ -3612,7 +3649,11 @@ export const LorgarArticlesIndexLayout = ({
   const visibleTagFilters = availableTagFilters.filter((topic) => {
     const topicQuery = normalizedTopicFilterText(topic.tagQuery)
 
-    return topicQuery && !hiddenTopicFilters.has(topicQuery)
+    return (
+      topicQuery &&
+      !hiddenTopicFilters.has(topicQuery) &&
+      isLocalizedTopicAllowedForLanguage(topic, languageCode)
+    )
   })
   const availableTopicSet = new Set(
     visibleTagFilters.map((topic) => normalizedTopicFilterText(topic.tagQuery)).filter(Boolean),
@@ -3621,7 +3662,12 @@ export const LorgarArticlesIndexLayout = ({
     .filter((query) => {
       const topicQuery = normalizedTopicFilterText(query)
 
-      return topicQuery && !hiddenTopicFilters.has(topicQuery) && !availableTopicSet.has(topicQuery)
+      return (
+        topicQuery &&
+        !hiddenTopicFilters.has(topicQuery) &&
+        !availableTopicSet.has(topicQuery) &&
+        isLocalizedTopicAllowedForLanguage({ label: query, tagQuery: query }, languageCode)
+      )
     })
     .map((query) => ({ label: tagLabelFromValue(query), tagQuery: query }))
   const orderedTopicFilters = [
