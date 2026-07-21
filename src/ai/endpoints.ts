@@ -592,7 +592,9 @@ export const translateArticlesEndpoint: Endpoint = {
           const rawTranslatedContent = contentPlan?.segments.length
             ? contentPlan.apply(translated.segments || [])
             : markdownToLexical(translated.bodyMarkdown || sourceBody)
-          const translatedContent = stripPayloadGeneratedIDs(rawTranslatedContent) as LexicalContent
+          const translatedContent = stripPayloadGeneratedIDs(rawTranslatedContent, {
+            insideRichText: true,
+          }) as LexicalContent
           const slug = await createUniqueArticleSlug(
             req.payload,
             withLanguageSlugPrefix(
@@ -626,7 +628,9 @@ export const translateArticlesEndpoint: Endpoint = {
               status: 'draft',
               _status: 'draft',
               summary: optionalArticleField(translated.summary || source.summary),
-              tags: stripPayloadGeneratedIDs(source.tags || []) as Article['tags'],
+              tags: stripPayloadGeneratedIDs(source.tags || [], {
+                insidePayloadArray: true,
+              }) as Article['tags'],
               title: stripLanguageTitlePrefix(translated.title || sourceTitle),
               translationGroup: sourceTranslationGroup,
             },
@@ -1796,12 +1800,18 @@ const payloadArrayRowKeys = new Set([
 
 function stripPayloadGeneratedIDs(
   value: unknown,
-  context: { insidePayloadArray?: boolean; key?: string } = {},
+  context: { insidePayloadArray?: boolean; insideRichText?: boolean; key?: string } = {},
 ): unknown {
   if (Array.isArray(value)) {
-    const insidePayloadArray = payloadArrayRowKeys.has(context.key || '')
+    const insidePayloadArray =
+      context.insidePayloadArray || payloadArrayRowKeys.has(context.key || '')
 
-    return value.map((item) => stripPayloadGeneratedIDs(item, { insidePayloadArray }))
+    return value.map((item) =>
+      stripPayloadGeneratedIDs(item, {
+        insidePayloadArray,
+        insideRichText: context.insideRichText,
+      }),
+    )
   }
 
   if (!value || typeof value !== 'object') {
@@ -1809,7 +1819,8 @@ function stripPayloadGeneratedIDs(
   }
 
   const record = value as Record<string, unknown>
-  const shouldStripID = context.insidePayloadArray || typeof record.blockType === 'string'
+  const isRichTextBlockFields = context.insideRichText && typeof record.blockType === 'string'
+  const shouldStripID = context.insidePayloadArray || isRichTextBlockFields
   const clone: Record<string, unknown> = {}
 
   for (const [key, child] of Object.entries(record)) {
@@ -1817,7 +1828,10 @@ function stripPayloadGeneratedIDs(
       continue
     }
 
-    clone[key] = stripPayloadGeneratedIDs(child, { key })
+    clone[key] = stripPayloadGeneratedIDs(child, {
+      insideRichText: context.insideRichText,
+      key,
+    })
   }
 
   return clone

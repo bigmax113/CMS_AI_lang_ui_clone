@@ -1046,9 +1046,37 @@ const stableFrontendUIFallbacks: Partial<Record<string, Partial<FrontendUIString
 const brokenFrontendUITranslationPattern =
   /(?:\?{2,}|[A-Za-zÀ-ž]\?[A-Za-zÀ-ž]|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
 
+const cyrillicFrontendUITextPattern = /[\u0400-\u052f]/u
+const latinScriptFrontendUILanguages = new Set([
+  'cs',
+  'de',
+  'ee',
+  'es',
+  'hu',
+  'lt',
+  'lv',
+  'pl',
+  'ro',
+  'rs',
+  'sk',
+])
+
 const isBrokenFrontendUITranslation = (value?: null | string): boolean => {
   const normalized = String(value || '').trim()
   return !normalized || brokenFrontendUITranslationPattern.test(normalized)
+}
+
+const isWrongScriptFrontendUITranslation = (
+  languageCode: null | string | undefined,
+  value?: null | string,
+): boolean => {
+  const normalized = String(value || '').trim()
+
+  return (
+    Boolean(normalized) &&
+    latinScriptFrontendUILanguages.has(normalizeFrontendUILanguageCode(languageCode)) &&
+    cyrillicFrontendUITextPattern.test(normalized)
+  )
 }
 
 const buildFrontendUIBaseDictionary = (
@@ -1272,7 +1300,11 @@ const loadFrontendUIDictionaryUncached = async (
   const translated = buildFrontendUIBaseDictionary(normalizedLanguageCode)
 
   for (const row of rows) {
-    if (isFrontendUIKey(row.key) && !isBrokenFrontendUITranslation(row.translated_text)) {
+    if (
+      isFrontendUIKey(row.key) &&
+      !isBrokenFrontendUITranslation(row.translated_text) &&
+      !isWrongScriptFrontendUITranslation(normalizedLanguageCode, row.translated_text)
+    ) {
       translated[row.key] = row.translated_text.trim()
     }
   }
