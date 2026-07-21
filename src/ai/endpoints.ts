@@ -1999,33 +1999,60 @@ function createHTMLTranslationPlan(html: string): {
     start: number
     translated?: string
   }> = []
-  const blockPattern =
-    /<(p|h[1-6]|li|blockquote|figcaption|td|th|caption)\b[^>]*>[\s\S]*?<\/\1>/giu
+  const tagPattern = /<[^>]*>/gu
+  let cursor = 0
+  let skipDepth = 0
 
-  for (const match of html.matchAll(blockPattern)) {
-    const source = match[0] || ''
-    const start = match.index ?? -1
+  const addTextTarget = (start: number, end: number) => {
+    if (skipDepth > 0 || end <= start) {
+      return
+    }
+
+    const raw = html.slice(start, end)
+    const leadingWhitespace = raw.match(/^\s*/u)?.[0]?.length || 0
+    const trailingWhitespace = raw.match(/\s*$/u)?.[0]?.length || 0
+    const textStart = start + leadingWhitespace
+    const textEnd = end - trailingWhitespace
+
+    if (textEnd <= textStart) {
+      return
+    }
+
+    const source = html.slice(textStart, textEnd)
 
     if (
-      start >= 0 &&
       source.length <= MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS &&
-      htmlReadableText(source)
+      htmlReadableText(source) &&
+      !looksLikeNonTranslatableToken(htmlReadableText(source))
     ) {
       targets.push({
-        end: start + source.length,
+        end: textEnd,
         source,
-        start,
+        start: textStart,
       })
     }
   }
 
-  if (!targets.length && html.length <= MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS) {
-    targets.push({
-      end: html.length,
-      source: html,
-      start: 0,
-    })
+  for (const match of html.matchAll(tagPattern)) {
+    const tag = match[0] || ''
+    const tagStart = match.index ?? -1
+
+    if (tagStart < 0) {
+      continue
+    }
+
+    addTextTarget(cursor, tagStart)
+
+    if (/^<\s*(script|style|noscript|svg|pre|code)\b/iu.test(tag)) {
+      skipDepth += 1
+    } else if (/^<\s*\/(script|style|noscript|svg|pre|code)\s*>/iu.test(tag)) {
+      skipDepth = Math.max(0, skipDepth - 1)
+    }
+
+    cursor = tagStart + tag.length
   }
+
+  addTextTarget(cursor, html.length)
 
   if (!targets.length) {
     return null
@@ -2033,21 +2060,27 @@ function createHTMLTranslationPlan(html: string): {
 
   return {
     apply: () => {
-      let cursor = 0
       let output = ''
+      let outputCursor = 0
 
       for (const target of targets) {
-        output += html.slice(cursor, target.start)
-        output += target.translated || target.source
-        cursor = target.end
+        output += html.slice(outputCursor, target.start)
+        output += target.translated ? escapeHTMLText(target.translated) : target.source
+        outputCursor = target.end
       }
 
-      return output + html.slice(cursor)
+      return output + html.slice(outputCursor)
     },
     targets,
   }
 }
 
+function escapeHTMLText(value: string): string {
+  return value
+    .replace(/&/gu, '&amp;')
+    .replace(/</gu, '&lt;')
+    .replace(/>/gu, '&gt;')
+}
 function htmlReadableText(html: string): string {
   return html
     .replace(/<script\b[\s\S]*?<\/script>/giu, ' ')
@@ -2232,7 +2265,7 @@ async function translateArticleFields(args: {
     'Return ONLY valid JSON with keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
     'If source.segments is present, return segments as an array of {id, text} with the same ids and order.',
     'Translate every human-readable segment, including H2/H3 headings, image captions, FAQ questions and answers, video titles/descriptions, CTA labels, summaries, SEO titles, and SEO descriptions.',
-    'Some segments may contain trusted HTML. For HTML segments, translate only human-visible text and preserve tags, attributes, URLs, image markup, entities, and element order.',
+    'HTML blocks are split into plain text segments before translation. Translate each segment naturally; do not add HTML tags.',
     'Do not leave English headings untranslated unless the heading is only a brand, product name, model, technology name, event name, URL, or SKU.',
     'Keep LORGAR, product names, technology names, model names, URLs, and SKUs unchanged.',
     'Preserve structure, paragraph order, heading levels, and segment IDs. Do not shorten the text or add facts.',
@@ -2325,7 +2358,7 @@ async function reviewTranslatedArticleFields(args: {
     `You are a senior native ${args.language} editor and localization QA specialist.`,
     'Review the translated article JSON against the source JSON. Return only these JSON keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
     'If source.segments is present, also return segments as {id, text} objects with the same ids and order.',
-    'For HTML segments, translate only visible text and preserve tags, attributes, URLs, image markup, entities, and element order.',
+    'HTML block text is provided as plain text segments. Do not add HTML tags to segment text.',
     '',
     'Fix grammar, agreement, case, number, gender, word order, punctuation, awkward literal translations, and unnatural marketing phrasing.',
     'For Russian, Ukrainian, Polish, and Romanian, pay special attention to adjective-noun agreement and inflection in headings.',
