@@ -602,6 +602,17 @@ export const translateArticlesEndpoint: Endpoint = {
               source.slug || translated.slug || translated.title || sourceTitle,
             ),
           )
+          const translatedBodyExcerpt = translatedArticleDraftExcerpt(translated)
+          const translatedSummary = translatedArticleFieldOrFallback(
+            translated.summary,
+            source.summary,
+            translatedBodyExcerpt,
+          )
+          const translatedSEODescription = translatedArticleFieldOrFallback(
+            translated.seoDescription,
+            sourceSEO.description,
+            translatedSummary || translatedBodyExcerpt,
+          )
           const article = await req.payload.create({
             collection: 'articles',
             data: {
@@ -618,16 +629,14 @@ export const translateArticlesEndpoint: Endpoint = {
               owner: source.owner,
               publishedAt: source.publishedAt || source.createdAt,
               seo: {
-                description: optionalArticleField(
-                  translated.seoDescription || sourceSEO.description,
-                ),
+                description: optionalArticleField(translatedSEODescription),
                 image: sourceSEO.image,
                 title: optionalArticleField(translated.seoTitle || sourceSEO.title),
               },
               slug,
               status: 'draft',
               _status: 'draft',
-              summary: optionalArticleField(translated.summary || source.summary),
+              summary: optionalArticleField(translatedSummary),
               tags: stripPayloadGeneratedIDs(source.tags || [], {
                 insidePayloadArray: true,
               }) as Article['tags'],
@@ -1569,6 +1578,59 @@ function resolveArticleLanguage(value?: string): { code: string; language: strin
 
 function stripLanguageTitlePrefix(value: unknown): string {
   return stripArticleLanguagePrefix(textFromUnknown(value))
+}
+
+function translatedArticleDraftExcerpt(draft: ArticleDraft): string {
+  const segmentText = (draft.segments || [])
+    .map((segment) => htmlReadableText(segment.text) || textFromUnknown(segment.text))
+    .filter(Boolean)
+    .join('\n\n')
+
+  return excerptPlainText(draft.bodyMarkdown || segmentText, 420)
+}
+
+function translatedArticleFieldOrFallback(
+  candidate: unknown,
+  sourceValue: unknown,
+  fallback: unknown,
+): string {
+  const text = textFromUnknown(candidate)
+
+  if (text && !looksLikeUntranslatedSourceText(text, sourceValue)) {
+    return text
+  }
+
+  return textFromUnknown(fallback)
+}
+
+function looksLikeUntranslatedSourceText(candidate: string, sourceValue: unknown): boolean {
+  const source = textFromUnknown(sourceValue)
+
+  if (!candidate || !source) {
+    return false
+  }
+
+  const normalizedCandidate = normalizeTranslationComparisonText(candidate)
+  const normalizedSource = normalizeTranslationComparisonText(source)
+
+  if (normalizedCandidate.length < 40 || normalizedSource.length < 40) {
+    return false
+  }
+
+  const sourcePrefix = normalizedSource.slice(0, 120)
+  const candidatePrefix = normalizedCandidate.slice(0, 120)
+
+  return sourcePrefix === candidatePrefix || normalizedCandidate.includes(sourcePrefix)
+}
+
+function normalizeTranslationComparisonText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/&(?:nbsp|#160);/giu, ' ')
+    .replace(/[^a-z0-9]+/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim()
 }
 
 function withLanguageSlugPrefix(code: string, value: unknown): string {
