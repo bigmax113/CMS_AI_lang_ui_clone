@@ -2264,7 +2264,7 @@ async function translateArticleFields(args: {
 
   const response = await fetch(`${baseURL}/chat/completions`, {
     body: JSON.stringify({
-      max_tokens: segments.length ? 6_000 : 4_000,
+      max_tokens: segments.length ? 12_000 : 4_000,
       messages: [
         {
           content: prompt,
@@ -2294,13 +2294,17 @@ async function translateArticleFields(args: {
   const parsed = parseModelJSONObject(payload.choices?.[0]?.message?.content || '{}')
   const translated = normalizeArticleDraft(parsed, args.title)
 
-  return reviewTranslatedArticleFields({
-    baseURL,
-    language: args.language,
-    model,
-    source,
-    translated,
-  })
+  try {
+    return await reviewTranslatedArticleFields({
+      baseURL,
+      language: args.language,
+      model,
+      source,
+      translated,
+    })
+  } catch (_error) {
+    return ensureArticleDraftCompleteness(translated, args.title)
+  }
 }
 
 async function reviewTranslatedArticleFields(args: {
@@ -2343,7 +2347,7 @@ async function reviewTranslatedArticleFields(args: {
 
   const response = await fetch(`${args.baseURL}/chat/completions`, {
     body: JSON.stringify({
-      max_tokens: args.source.segments.length ? 6_000 : 4_000,
+      max_tokens: args.source.segments.length ? 12_000 : 4_000,
       messages: [
         {
           content: reviewPrompt,
