@@ -589,9 +589,10 @@ export const translateArticlesEndpoint: Endpoint = {
             summary: textFromUnknown(source.summary),
             title: stripLanguageTitlePrefix(sourceTitle),
           })
-          const translatedContent = contentPlan?.segments.length
+          const rawTranslatedContent = contentPlan?.segments.length
             ? contentPlan.apply(translated.segments || [])
             : markdownToLexical(translated.bodyMarkdown || sourceBody)
+          const translatedContent = stripPayloadGeneratedIDs(rawTranslatedContent) as LexicalContent
           const slug = await createUniqueArticleSlug(
             req.payload,
             withLanguageSlugPrefix(
@@ -625,7 +626,7 @@ export const translateArticlesEndpoint: Endpoint = {
               status: 'draft',
               _status: 'draft',
               summary: optionalArticleField(translated.summary || source.summary),
-              tags: source.tags || [],
+              tags: stripPayloadGeneratedIDs(source.tags || []) as Article['tags'],
               title: stripLanguageTitlePrefix(translated.title || sourceTitle),
               translationGroup: sourceTranslationGroup,
             },
@@ -932,6 +933,7 @@ export const frontendUILocalizationTranslateEndpoint: Endpoint = {
       await upsertFrontendUITranslations({
         generatedBy: result.model || 'ai',
         languageCode: locale,
+        overwritePublished: false,
         status: 'review',
         translations: translatedStrings,
       })
@@ -1781,6 +1783,44 @@ function cloneLexicalContent(content: unknown): LexicalContent | null {
   } catch (_error) {
     return null
   }
+}
+
+const payloadArrayRowKeys = new Set([
+  'images',
+  'items',
+  'products',
+  'questionsToAnswer',
+  'tags',
+  'targetKeywords',
+])
+
+function stripPayloadGeneratedIDs(
+  value: unknown,
+  context: { insidePayloadArray?: boolean; key?: string } = {},
+): unknown {
+  if (Array.isArray(value)) {
+    const insidePayloadArray = payloadArrayRowKeys.has(context.key || '')
+
+    return value.map((item) => stripPayloadGeneratedIDs(item, { insidePayloadArray }))
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value
+  }
+
+  const record = value as Record<string, unknown>
+  const shouldStripID = context.insidePayloadArray || typeof record.blockType === 'string'
+  const clone: Record<string, unknown> = {}
+
+  for (const [key, child] of Object.entries(record)) {
+    if (key === 'id' && shouldStripID) {
+      continue
+    }
+
+    clone[key] = stripPayloadGeneratedIDs(child, { key })
+  }
+
+  return clone
 }
 
 function inlineTextFromChildren(children: unknown[]): string {

@@ -812,7 +812,8 @@ const stableFrontendUIFallbacks: Partial<Record<string, Partial<FrontendUIString
     'article.popularNews': '????????? ??????',
     'subscribe.aria': '????????? ?? ?????',
     'subscribe.title': '?????????? ?? ?? ????? ????',
-    'subscribe.description': '??????????? ???-?????? ?????? ? ????????? ???????? ??? ????????? ?? ????.',
+    'subscribe.description':
+      '??????????? ???-?????? ?????? ? ????????? ???????? ??? ????????? ?? ????.',
     'subscribe.placeholder': '???????? ????? ?????',
     'subscribe.submit': '???????? ??',
     'subscribe.saving': '?????????...',
@@ -831,109 +832,109 @@ const stableFrontendUIFallbacks: Partial<Record<string, Partial<FrontendUIString
     'footer.cookies': '???????? ?? ?????????',
   },
   cs: {
-    'nav.logoAria': 'Otev??t web LORGAR',
-    'nav.blogAria': 'Otev??t blog LORGAR',
-    'nav.solutions': '?E?EN?',
+    'nav.logoAria': 'Otevřít web LORGAR',
+    'nav.blogAria': 'Otevřít blog LORGAR',
+    'nav.solutions': 'ŘEŠENÍ',
     'nav.products': 'PRODUKTY',
-    'nav.forUsers': 'PRO U?IVATELE',
+    'nav.forUsers': 'PRO UŽIVATELE',
     'nav.platform': 'PLATFORMA LORGAR',
     'nav.whereToBuy': 'KDE KOUPIT',
     'nav.about': 'O LORGAR',
     'nav.blog': 'BLOG',
-    'nav.searchLabel': 'Vyhled?v?n?',
-    'nav.searchInputLabel': 'Vyhledat ?l?nky',
-    'nav.searchPlaceholder': 'Vyhled?v?n?',
+    'nav.searchLabel': 'Vyhledávání',
+    'nav.searchInputLabel': 'Vyhledat články',
+    'nav.searchPlaceholder': 'Vyhledávání',
     'nav.searchSubmit': 'Hledat',
-    'nav.openMenu': 'Otev??t menu',
-    'nav.primaryLabel': 'Hlavn? navigace',
-    'nav.languageTitleSuffix': '?l?nky',
-    'nav.solutions.streaming': 'Streamingov? ?e?en?',
-    'nav.solutions.pcGaming': '?e?en? pro PC gaming',
-    'nav.solutions.simRacingFlex': '?e?en? Sim Racing Flex',
-    'nav.solutions.simRacingPro': '?e?en? Sim Racing Pro',
-    'nav.products.all': 'V?echny produkty',
+    'nav.openMenu': 'Otevřít menu',
+    'nav.primaryLabel': 'Hlavní navigace',
+    'nav.languageTitleSuffix': 'Články',
+    'nav.solutions.streaming': 'Streamingové řešení',
+    'nav.solutions.pcGaming': 'Řešení pro PC gaming',
+    'nav.solutions.simRacingFlex': 'Řešení Sim Racing Flex',
+    'nav.solutions.simRacingPro': 'Řešení Sim Racing Pro',
+    'nav.products.all': 'Všechny produkty',
     'nav.products.pc': 'PC',
     'nav.products.monitors': 'Monitory',
-    'nav.products.mice': 'My?i',
-    'nav.products.keyboards': 'Kl?vesnice',
+    'nav.products.mice': 'Myši',
+    'nav.products.keyboards': 'Klávesnice',
     'nav.products.headsets': 'Headsety',
-    'nav.products.controllers': 'Ovlada?e',
-    'nav.products.mousepads': 'Podlo?ky pod my?',
-    'nav.products.chairs': '?idle',
+    'nav.products.controllers': 'Ovladače',
+    'nav.products.mousepads': 'Podložky pod myš',
+    'nav.products.chairs': 'Židle',
     'nav.products.desks': 'Stoly',
     'nav.products.webcams': 'Webkamery',
     'nav.products.microphones': 'Mikrofony',
-    'nav.products.racingCockpits': 'Z?vodn? kokpity',
-    'nav.products.racingAccessories': 'Z?vodn? p??slu?enstv?',
+    'nav.products.racingCockpits': 'Závodní kokpity',
+    'nav.products.racingAccessories': 'Závodní příslušenství',
     'blog.coverAria': 'Blog LORGAR',
     'blog.coverEyebrow': 'Blog',
     'blog.coverTitle': 'BLOG',
-    'blog.topicsTitle': 'T?mata',
-    'blog.clearFilters': 'Vymazat v?echny filtry',
-    'blog.latestNews': 'Nejnov?j?? zpr?vy',
-    'blog.popularNews': 'Obl?ben? zpr?vy',
-    'blog.readMore': '??st d?l',
-    'blog.moreArticles': 'Dal?? ?l?nky',
-    'blog.noResults': 'Nebyly nalezeny ??dn? ?l?nky.',
-    'blog.viewsSuffix': 'zobrazen?',
-    'blog.articlesAria': 'Seznam ?l?nk?',
-    'blog.pagesAria': 'Str?nky ?l?nk?',
-    'blog.previousPage': 'P?edchoz? str?nka',
-    'blog.nextPage': 'Dal?? str?nka',
-    'tag.all': 'V?e',
-    'tag.article': '?l?nek',
-    'tag.blogPost': 'Blogov? p??sp?vek',
-    'tag.productContent': 'Produktov? obsah',
-    'tag.featured': 'Doporu?en?',
+    'blog.topicsTitle': 'Témata',
+    'blog.clearFilters': 'Vymazat všechny filtry',
+    'blog.latestNews': 'Nejnovější zprávy',
+    'blog.popularNews': 'Oblíbené zprávy',
+    'blog.readMore': 'Číst dál',
+    'blog.moreArticles': 'Další články',
+    'blog.noResults': 'Nebyly nalezeny žádné články.',
+    'blog.viewsSuffix': 'zobrazení',
+    'blog.articlesAria': 'Seznam článků',
+    'blog.pagesAria': 'Stránky článků',
+    'blog.previousPage': 'Předchozí stránka',
+    'blog.nextPage': 'Další stránka',
+    'tag.all': 'Vše',
+    'tag.article': 'Článek',
+    'tag.blogPost': 'Blogový příspěvek',
+    'tag.productContent': 'Produktový obsah',
+    'tag.featured': 'Doporučené',
     'tag.news': 'Novinky',
-    'tag.releaseNote': 'Pozn?mka k vyd?n?',
+    'tag.releaseNote': 'Poznámka k vydání',
     'tag.esports': 'Esporty',
-    'tag.events': 'Ud?losti',
+    'tag.events': 'Události',
     'tag.products': 'Produkty',
     'tag.rainbowSixSiege': 'Rainbow Six Siege',
-    'tag.rankings': '?eb???ky',
-    'tag.passion': 'V??e?',
+    'tag.rankings': 'Žebříčky',
+    'tag.passion': 'Vášeň',
     'tag.stakeRanked': 'Stake Ranked',
     'tag.platform': 'Platforma',
     'tag.performanceLab': 'Performance Lab',
-    'tag.partners': 'Partne?i',
-    'tag.partnerships': 'Partnerstv?',
+    'tag.partners': 'Partneři',
+    'tag.partnerships': 'Partnerství',
     'tag.innovation': 'Inovace',
-    'tag.corporate': 'Firemn?',
-    'tag.ecosystem': 'Ekosyst?m',
+    'tag.corporate': 'Firemní',
+    'tag.ecosystem': 'Ekosystém',
     'tag.cyprus': 'Kypr',
-    'tag.gamingDevices': 'Hern? za??zen?',
-    'tag.gamingTournament': 'Hern? turnaj',
-    'tag.gamingChairs': 'Hern? ?idle',
-    'tag.chairs': '?idle',
+    'tag.gamingDevices': 'Herní zařízení',
+    'tag.gamingTournament': 'Herní turnaj',
+    'tag.gamingChairs': 'Herní židle',
+    'tag.chairs': 'Židle',
     'tag.astralEsports': 'Astral Esports',
     'article.tagsLabel': 'Tagy:',
-    'article.shareLabel': 'Sd?let:',
-    'article.shareAriaLabel': 'Sd?let ?l?nek',
+    'article.shareLabel': 'Sdílet:',
+    'article.shareAriaLabel': 'Sdílet článek',
     'article.reactionsLabel': 'Reakce:',
-    'article.reactionsAriaLabel': 'Reakce na ?l?nek',
-    'article.likeAriaLabel': 'To se mi l?b?',
-    'article.recentNews': 'Nejnov?j?? zpr?vy',
-    'article.popularNews': 'Obl?ben? zpr?vy',
-    'subscribe.aria': 'P?ihl??en? k blogu',
-    'subscribe.title': 'P?ihlaste se k odb?ru blogu',
-    'subscribe.description': 'Dost?vejte nejnov?j?? zpr?vy a post?ehy p??mo do sv? schr?nky.',
+    'article.reactionsAriaLabel': 'Reakce na článek',
+    'article.likeAriaLabel': 'To se mi líbí',
+    'article.recentNews': 'Nejnovější zprávy',
+    'article.popularNews': 'Oblíbené zprávy',
+    'subscribe.aria': 'Přihlášení k blogu',
+    'subscribe.title': 'Přihlaste se k odběru blogu',
+    'subscribe.description': 'Dostávejte nejnovější zprávy a postřehy přímo do své schránky.',
     'subscribe.placeholder': 'Zadejte e-mail',
-    'subscribe.submit': 'P?IHL?SIT',
-    'subscribe.saving': 'Ukl?d?n?...',
-    'subscribe.emailAriaLabel': 'E-mailov? adresa',
-    'cta.title': 'M?te z?jem spolupracovat s LORGAR?',
-    'cta.becomePartner': 'STA?TE SE PARTNEREM',
-    'cta.contactUs': 'KONTAKTUJTE N?S',
-    'footer.forUsers': 'PRO U?IVATELE',
+    'subscribe.submit': 'PŘIHLÁSIT',
+    'subscribe.saving': 'Ukládání...',
+    'subscribe.emailAriaLabel': 'E-mailová adresa',
+    'cta.title': 'Máte zájem spolupracovat s LORGAR?',
+    'cta.becomePartner': 'STAŇTE SE PARTNEREM',
+    'cta.contactUs': 'KONTAKTUJTE NÁS',
+    'footer.forUsers': 'PRO UŽIVATELE',
     'footer.forPartners': 'PRO PARTNERY',
     'footer.platform': 'PLATFORMA LORGAR',
     'footer.whereToBuy': 'KDE KOUPIT',
     'footer.about': 'O LORGAR',
-    'footer.copyright': '? LORGAR 2026. V?ECHNA PR?VA VYHRAZENA',
-    'footer.warranty': 'Z?RU?N? PODM?NKY A Z?RU?N? LISTY',
-    'footer.privacy': 'Z?SADY OCHRANY OSOBN?CH ?DAJ?',
-    'footer.cookies': 'Z?SADY COOKIES',
+    'footer.copyright': '© LORGAR 2026. VŠECHNA PRÁVA VYHRAZENA',
+    'footer.warranty': 'ZÁRUČNÍ PODMÍNKY A ZÁRUČNÍ LISTY',
+    'footer.privacy': 'ZÁSADY OCHRANY OSOBNÍCH ÚDAJŮ',
+    'footer.cookies': 'ZÁSADY COOKIES',
   },
   uk: {
     'nav.logoAria': '???????? ???? LORGAR',
@@ -1042,14 +1043,17 @@ const stableFrontendUIFallbacks: Partial<Record<string, Partial<FrontendUIString
   },
 }
 
-const brokenFrontendUITranslationPattern = /(?:\?{2,}|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
+const brokenFrontendUITranslationPattern =
+  /(?:\?{2,}|[A-Za-zÀ-ž]\?[A-Za-zÀ-ž]|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
 
 const isBrokenFrontendUITranslation = (value?: null | string): boolean => {
   const normalized = String(value || '').trim()
   return !normalized || brokenFrontendUITranslationPattern.test(normalized)
 }
 
-const buildFrontendUIBaseDictionary = (languageCode: null | string | undefined): FrontendUIStrings => {
+const buildFrontendUIBaseDictionary = (
+  languageCode: null | string | undefined,
+): FrontendUIStrings => {
   const dictionary: FrontendUIStrings = { ...defaultFrontendUIStrings }
   const fallbacks = stableFrontendUIFallbacks[normalizeFrontendUILanguageCode(languageCode)] || {}
 
@@ -1063,7 +1067,6 @@ const buildFrontendUIBaseDictionary = (languageCode: null | string | undefined):
 
   return dictionary
 }
-
 
 export const ensureFrontendUITranslationsSchema = async (): Promise<void> => {
   await withFrontendUIClient(async (client, schema) => {
@@ -1175,7 +1178,10 @@ export const upsertFrontendUILanguage = async (args: {
   language?: null | string
   value?: null | string
 }): Promise<FrontendUILanguageOption> => {
-  const rawLanguageCode = String(args.value || '').trim().toLowerCase().replaceAll('_', '-')
+  const rawLanguageCode = String(args.value || '')
+    .trim()
+    .toLowerCase()
+    .replaceAll('_', '-')
   const languageCode = normalizeFrontendUILanguageCode(rawLanguageCode)
 
   if (!rawLanguageCode || rawLanguageCode !== languageCode) {
@@ -1274,7 +1280,6 @@ const loadFrontendUIDictionaryUncached = async (
   return translated
 }
 
-
 type FrontendUIDictionaryCacheEntry = {
   expiresAt: number
   value: ReturnType<typeof loadFrontendUIDictionaryUncached>
@@ -1283,7 +1288,9 @@ type FrontendUIDictionaryCacheEntry = {
 const FRONTEND_UI_DICTIONARY_CACHE_TTL_MS = 10_000
 const frontendUIDictionaryCache = new Map<string, FrontendUIDictionaryCacheEntry>()
 
-export const loadFrontendUIDictionary = async (...args: Parameters<typeof loadFrontendUIDictionaryUncached>) => {
+export const loadFrontendUIDictionary = async (
+  ...args: Parameters<typeof loadFrontendUIDictionaryUncached>
+) => {
   const [languageCode, options] = args
   const normalizedLanguageCode = normalizeFrontendUILanguageCode(languageCode)
   const previewKey = options?.preview ? 'preview' : 'published'
@@ -1373,11 +1380,13 @@ export const listFrontendUILocalization = async (args: {
 export const upsertFrontendUITranslations = async (args: {
   generatedBy?: string
   languageCode?: null | string
+  overwritePublished?: boolean
   status?: FrontendUITranslationStatus
   translations: Record<string, string>
 }): Promise<void> => {
   const languageCode = normalizeFrontendUILanguageCode(args.languageCode)
   const status = normalizeFrontendUITranslationStatus(args.status)
+  const preservePublished = args.overwritePublished === false
   await syncFrontendUITranslationKeys()
 
   await withFrontendUIClient(async (client, schema) => {
@@ -1392,16 +1401,41 @@ export const upsertFrontendUITranslations = async (args: {
             (key, language_code, translated_text, status, generated_by, updated_at, published_at)
           VALUES ($1, $2, $3, $4, $5, now(), CASE WHEN $4 = 'published' THEN now() ELSE NULL END)
           ON CONFLICT (key, language_code) DO UPDATE SET
-            translated_text = EXCLUDED.translated_text,
-            status = EXCLUDED.status,
-            generated_by = EXCLUDED.generated_by,
-            updated_at = now(),
+            translated_text = CASE
+              WHEN $6 AND ${schema}."frontend_ui_phrase_translations".status = 'published'
+                THEN ${schema}."frontend_ui_phrase_translations".translated_text
+              ELSE EXCLUDED.translated_text
+            END,
+            status = CASE
+              WHEN $6 AND ${schema}."frontend_ui_phrase_translations".status = 'published'
+                THEN ${schema}."frontend_ui_phrase_translations".status
+              ELSE EXCLUDED.status
+            END,
+            generated_by = CASE
+              WHEN $6 AND ${schema}."frontend_ui_phrase_translations".status = 'published'
+                THEN ${schema}."frontend_ui_phrase_translations".generated_by
+              ELSE EXCLUDED.generated_by
+            END,
+            updated_at = CASE
+              WHEN $6 AND ${schema}."frontend_ui_phrase_translations".status = 'published'
+                THEN ${schema}."frontend_ui_phrase_translations".updated_at
+              ELSE now()
+            END,
             published_at = CASE
+              WHEN $6 AND ${schema}."frontend_ui_phrase_translations".status = 'published'
+                THEN ${schema}."frontend_ui_phrase_translations".published_at
               WHEN EXCLUDED.status = 'published' THEN COALESCE(${schema}."frontend_ui_phrase_translations".published_at, now())
               ELSE ${schema}."frontend_ui_phrase_translations".published_at
             END;
         `,
-        [key, languageCode, translatedText.trim(), status, args.generatedBy || null],
+        [
+          key,
+          languageCode,
+          translatedText.trim(),
+          status,
+          args.generatedBy || null,
+          preservePublished,
+        ],
       )
     }
   })
@@ -1589,6 +1623,4 @@ const withFrontendUIClient = async <T>(
 const quoteDatabaseIdentifier = (value: string): string => `"${value.replaceAll('"', '""')}"`
 
 const unquoteDatabaseIdentifier = (value: string): string =>
-  value.startsWith('"') && value.endsWith('"')
-    ? value.slice(1, -1).replaceAll('""', '"')
-    : value
+  value.startsWith('"') && value.endsWith('"') ? value.slice(1, -1).replaceAll('""', '"') : value

@@ -5,7 +5,7 @@ import React from 'react'
 import { getPayload, type Where } from 'payload'
 
 import type { Article, Author, BlogPost, Media, Site } from '@/payload-types'
-import { excerptArticleText, isLikelyTruncatedArticleText } from '@/lib/articleFields'
+import { excerptArticleText, isLikelyTruncatedArticleText, repairArticleMojibake } from '@/lib/articleFields'
 import {
   articleLanguageDefinitions,
   articleLanguageDisplayCodeByCode,
@@ -222,7 +222,7 @@ const mediaFileURL = (media?: Media | null | number) => {
   return mediaURL(media) || media.url || null
 }
 
-const textField = (value: unknown) => (typeof value === 'string' ? value.trim() : '')
+const textField = (value: unknown) => (typeof value === 'string' ? repairArticleMojibake(value).trim() : '')
 
 const absoluteURL = (value?: null | string) => {
   if (!value) {
@@ -2603,13 +2603,13 @@ const stableLocalizedUIFallbacks: Partial<Record<ArticleLanguageCode, Partial<Re
   },
 }
 
-const brokenLocalizedLabelPattern = /(?:\?{2,}|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
+const brokenLocalizedLabelPattern = /(?:\?{2,}|[A-Za-zÀ-ž]\?[A-Za-zÀ-ž]|undefined|null|\uFFFD|[\u00c2\u00c3\u00d0\u00d1\u00e2])/i
 
 const isBrokenLocalizedLabel = (value?: null | string) =>
   !value || brokenLocalizedLabelPattern.test(value)
 
 const safeLocalizedLabel = (value: null | string | undefined, fallback: string) => {
-  const normalized = String(value || '').trim()
+  const normalized = repairArticleMojibake(String(value || '')).trim()
 
   return isBrokenLocalizedLabel(normalized) ? fallback : normalized
 }
