@@ -1867,6 +1867,15 @@ function collectBlockTranslationTargets(
     })
   }
 
+  if (blockType === 'htmlEmbed') {
+    if (collectHTMLTranslationTargets(fields, addTarget)) {
+      return
+    }
+
+    addField('html')
+    return
+  }
+
   if (blockType === 'imageBlock') {
     addField('caption')
     return
@@ -1948,6 +1957,105 @@ function collectBlockTranslationTargets(
       addField(key)
     }
   })
+}
+
+function collectHTMLTranslationTargets(
+  fields: Record<string, unknown>,
+  addTarget: (kind: string, value: unknown, apply: (text: string) => void) => void,
+): boolean {
+  const html = textFromUnknown(fields.html)
+  const plan = createHTMLTranslationPlan(html)
+
+  if (!plan) {
+    return false
+  }
+
+  plan.targets.forEach((target, index) => {
+    addTarget(`htmlEmbed.html.${index + 1}`, target.source, (translatedText) => {
+      target.translated = translatedText
+      fields.html = plan.apply()
+    })
+  })
+
+  return true
+}
+
+function createHTMLTranslationPlan(html: string): {
+  apply: () => string
+  targets: Array<{
+    end: number
+    source: string
+    start: number
+    translated?: string
+  }>
+} | null {
+  if (!html || !htmlReadableText(html)) {
+    return null
+  }
+
+  const targets: Array<{
+    end: number
+    source: string
+    start: number
+    translated?: string
+  }> = []
+  const blockPattern =
+    /<(p|h[1-6]|li|blockquote|figcaption|td|th|caption)\b[^>]*>[\s\S]*?<\/\1>/giu
+
+  for (const match of html.matchAll(blockPattern)) {
+    const source = match[0] || ''
+    const start = match.index ?? -1
+
+    if (
+      start >= 0 &&
+      source.length <= MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS &&
+      htmlReadableText(source)
+    ) {
+      targets.push({
+        end: start + source.length,
+        source,
+        start,
+      })
+    }
+  }
+
+  if (!targets.length && html.length <= MAX_ARTICLE_TRANSLATION_SEGMENT_CHARS) {
+    targets.push({
+      end: html.length,
+      source: html,
+      start: 0,
+    })
+  }
+
+  if (!targets.length) {
+    return null
+  }
+
+  return {
+    apply: () => {
+      let cursor = 0
+      let output = ''
+
+      for (const target of targets) {
+        output += html.slice(cursor, target.start)
+        output += target.translated || target.source
+        cursor = target.end
+      }
+
+      return output + html.slice(cursor)
+    },
+    targets,
+  }
+}
+
+function htmlReadableText(html: string): string {
+  return html
+    .replace(/<script\b[\s\S]*?<\/script>/giu, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/giu, ' ')
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/&(?:nbsp|#160);/giu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim()
 }
 
 function addProductCardTargets(
@@ -2124,6 +2232,7 @@ async function translateArticleFields(args: {
     'Return ONLY valid JSON with keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
     'If source.segments is present, return segments as an array of {id, text} with the same ids and order.',
     'Translate every human-readable segment, including H2/H3 headings, image captions, FAQ questions and answers, video titles/descriptions, CTA labels, summaries, SEO titles, and SEO descriptions.',
+    'Some segments may contain trusted HTML. For HTML segments, translate only human-visible text and preserve tags, attributes, URLs, image markup, entities, and element order.',
     'Do not leave English headings untranslated unless the heading is only a brand, product name, model, technology name, event name, URL, or SKU.',
     'Keep LORGAR, product names, technology names, model names, URLs, and SKUs unchanged.',
     'Preserve structure, paragraph order, heading levels, and segment IDs. Do not shorten the text or add facts.',
@@ -2212,6 +2321,7 @@ async function reviewTranslatedArticleFields(args: {
     `You are a senior native ${args.language} editor and localization QA specialist.`,
     'Review the translated article JSON against the source JSON. Return only these JSON keys: title, summary, bodyMarkdown, seoTitle, seoDescription, segments.',
     'If source.segments is present, also return segments as {id, text} objects with the same ids and order.',
+    'For HTML segments, translate only visible text and preserve tags, attributes, URLs, image markup, entities, and element order.',
     '',
     'Fix grammar, agreement, case, number, gender, word order, punctuation, awkward literal translations, and unnatural marketing phrasing.',
     'For Russian, Ukrainian, Polish, and Romanian, pay special attention to adjective-noun agreement and inflection in headings.',
