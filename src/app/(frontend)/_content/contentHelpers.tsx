@@ -2906,9 +2906,23 @@ const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCo
 }
 
 const localizedAuthorNameByLanguage: Partial<Record<ArticleLanguageCode, string>> = {
-  bg: 'Ð¡Ñ‚ÐµÐ»Ð° ÐÐ¸ÐºÐ¾Ð»Ð¾Ð²Ð°',
-  cs: 'LukÃ¡Å¡ DvoÅ™Ã¡k',
-  uk: 'ÐžÐ»ÐµÐºÑÐ°Ð½Ð´Ñ€ Ð‘Ð¾Ð½Ð´Ð°Ñ€ÐµÐ½ÐºÐ¾',
+  bg: 'Стела Николова',
+  cs: 'Lukáš Dvořák',
+  de: 'Maximilian Weber',
+  ee: 'Kristjan Tamm',
+  el: 'Νίκος Παπαδόπουλος',
+  en: 'Matthew King',
+  es: 'Carlos García',
+  hu: 'Gábor Kovács',
+  kz: 'Айдана Нұрланова',
+  lt: 'Mantas Petrauskas',
+  lv: 'Jānis Ozoliņš',
+  pl: 'Piotr Kowalski',
+  ro: 'Andrei Popescu',
+  rs: 'Marko Petrović',
+  ru: 'Алексей Иванов',
+  sk: 'Martin Novák',
+  uk: 'Олександр Бондаренко',
 }
 
 const publicArticleAuthorNamesForLanguage = ({

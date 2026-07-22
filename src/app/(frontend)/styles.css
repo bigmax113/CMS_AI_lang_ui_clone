@@ -23,6 +23,7 @@ body,
 }
 
 body {
+  background: #02030a;
   font-family: system-ui;
   font-size: 18px;
   line-height: 32px;
@@ -34,6 +35,10 @@ body {
     font-size: 15px;
     line-height: 24px;
   }
+}
+
+main {
+  background: #02030a;
 }
 
 html:has(.public-content--lorgar),
@@ -10669,13 +10674,19 @@ main:has(.public-content--lorgar),
   border-radius: 0 !important;
 }
 
-/* Remove the remaining frame around article sidebar recommendation blocks. */
+/* Keep the sidebar panel frameless, but preserve a single frame per news card. */
 .public-content--lorgar .lorgar-sidebar__panel--recent,
-.public-content--lorgar .lorgar-sidebar__panel--popular,
-.public-content--lorgar .lorgar-sidebar__panel--recent .lorgar-sidebar-card,
-.public-content--lorgar .lorgar-sidebar__panel--popular .lorgar-sidebar-card {
+.public-content--lorgar .lorgar-sidebar__panel--popular {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.public-content--lorgar .lorgar-sidebar__panel--recent .lorgar-sidebar-card,
+.public-content--lorgar .lorgar-sidebar__panel--popular .lorgar-sidebar-card {
+  background: var(--lorgar-bg) !important;
+  border: 1px solid rgba(152, 164, 255, 0.3) !important;
+  border-radius: 16px !important;
   box-shadow: none !important;
 }
