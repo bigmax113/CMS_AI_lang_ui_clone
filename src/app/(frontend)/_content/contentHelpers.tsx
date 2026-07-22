@@ -690,9 +690,6 @@ const articlePrimaryImage = (article: Pick<Article, 'content' | 'coverImage' | '
     : null) ||
   primaryImageFromContent(article.content)
 
-const articleHasPublicFrontendImage = (article: Pick<Article, 'content' | 'coverImage' | 'seo'>) =>
-  Boolean(articlePrimaryImage(article))
-
 const articleReadingTime = ({
   content,
   languageCode,
@@ -1775,7 +1772,6 @@ const listPublishedArticlesUncached = async ({
 
   const filteredArticles = docs.filter(
     (article) =>
-      articleHasPublicFrontendImage(article) &&
       articleMatchesSearchQuery(article, searchQuery) &&
       articleMatchesTagQueries(article, tagQueries?.length ? tagQueries : tagQuery),
   ).slice(0, limit)
@@ -1851,7 +1847,7 @@ const listPublishedArticlesPageUncached = async ({
     result = await findPage(currentPage)
   }
 
-  const articles = result.docs.filter(articleHasPublicFrontendImage)
+  const articles = result.docs
 
   return {
     articles: [...articles].sort(
@@ -2770,6 +2766,104 @@ const localizedTagFallbacks: Partial<Record<ArticleLanguageCode, Record<string, 
     'stake ranked': 'Stake Ranked',
   },
 }
+
+const preferredLocalizedTagFallbacks: Partial<Record<ArticleLanguageCode, Record<string, string>>> = {
+  bg: {
+    'for users': 'За потребители',
+    guide: 'Ръководство',
+    'gaming accessories': 'Гейминг аксесоари',
+    'gaming keyboards': 'Гейминг клавиатури',
+    'gaming mice': 'Гейминг мишки',
+    'gaming mousepads': 'Гейминг подложки',
+    'mouse buying guide': 'Ръководство за избор на мишка',
+    uncategorized: 'Без категория',
+  },
+  ee: {
+    'for users': 'Kasutajatele',
+    guide: 'Juhend',
+    'gaming accessories': 'Mänguritarvikud',
+    'gaming keyboards': 'Mänguriklaviatuurid',
+    'gaming mice': 'Mängurihiired',
+    'gaming mousepads': 'Mänguri hiirematid',
+    'mouse buying guide': 'Hiire ostujuhend',
+    products: 'Tooted',
+    'product content': 'Tootesisu',
+    uncategorized: 'Kategooriata',
+  },
+  el: {
+    'blog post': 'Ανάρτηση blog',
+    'for users': 'Για χρήστες',
+    guide: 'Οδηγός',
+    'gaming accessories': 'Gaming αξεσουάρ',
+    'gaming keyboards': 'Gaming πληκτρολόγια',
+    'gaming mice': 'Gaming ποντίκια',
+    'gaming mousepads': 'Gaming mousepads',
+    'mouse buying guide': 'Οδηγός αγοράς ποντικιού',
+    products: 'Προϊόντα',
+    'product content': 'Περιεχόμενο προϊόντος',
+    uncategorized: 'Χωρίς κατηγορία',
+  },
+  kz: {
+    'for users': 'Пайдаланушыларға',
+    guide: 'Нұсқаулық',
+    'gaming accessories': 'Ойын аксессуарлары',
+    'gaming keyboards': 'Ойын пернетақталары',
+    'gaming mice': 'Ойын тышқандары',
+    'gaming mousepads': 'Ойын тінтуір төсеніштері',
+    'mouse buying guide': 'Тышқан таңдау нұсқаулығы',
+    products: 'Өнімдер',
+    'product content': 'Өнім мазмұны',
+    uncategorized: 'Санатсыз',
+  },
+  lt: {
+    'for users': 'Naudotojams',
+    guide: 'Gidas',
+    'gaming accessories': 'Žaidimų priedai',
+    'gaming keyboards': 'Žaidimų klaviatūros',
+    'gaming mice': 'Žaidimų pelės',
+    'gaming mousepads': 'Žaidimų pelės kilimėliai',
+    'mouse buying guide': 'Pelės pasirinkimo gidas',
+    products: 'Produktai',
+    'product content': 'Produktų turinys',
+    uncategorized: 'Be kategorijos',
+  },
+  lv: {
+    'for users': 'Lietotājiem',
+    guide: 'Ceļvedis',
+    'gaming accessories': 'Spēļu aksesuāri',
+    'gaming keyboards': 'Spēļu tastatūras',
+    'gaming mice': 'Spēļu peles',
+    'gaming mousepads': 'Spēļu peļu paliktņi',
+    'mouse buying guide': 'Peles izvēles ceļvedis',
+    products: 'Produkti',
+    'product content': 'Produktu saturs',
+    uncategorized: 'Bez kategorijas',
+  },
+  pl: {
+    'for users': 'Dla użytkowników',
+    guide: 'Poradnik',
+    'gaming accessories': 'Akcesoria gamingowe',
+    'gaming keyboards': 'Klawiatury gamingowe',
+    'gaming mice': 'Myszy gamingowe',
+    'gaming mousepads': 'Podkładki gamingowe',
+    'mouse buying guide': 'Poradnik wyboru myszy',
+    products: 'Produkty',
+    'product content': 'Treści produktowe',
+    uncategorized: 'Bez kategorii',
+  },
+  rs: {
+    'for users': 'Za korisnike',
+    guide: 'Vodič',
+    'gaming accessories': 'Gejming dodaci',
+    'gaming keyboards': 'Gejming tastature',
+    'gaming mice': 'Gejming miševi',
+    'gaming mousepads': 'Gejming podloge za miš',
+    'mouse buying guide': 'Vodič za kupovinu miša',
+    products: 'Proizvodi',
+    'product content': 'Sadržaj o proizvodima',
+    uncategorized: 'Bez kategorije',
+  },
+}
 const isLocalizedTopicAllowedForLanguage = (
   topic: Pick<LorgarTagFilter, 'label' | 'tagQuery'>,
   languageCode?: null | string,
@@ -2784,9 +2878,16 @@ const isLocalizedTopicAllowedForLanguage = (
 
 const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCode?: null | string) => {
   const normalized = normalizedTopicFilterText(value)
+  const language = normalizeArticleLanguageCode(languageCode)
 
   if (!normalized) {
     return tagLabelFromValue(value)
+  }
+
+  const preferredFallback = preferredLocalizedTagFallbacks[language]?.[normalized]
+
+  if (preferredFallback) {
+    return safeLocalizedLabel(preferredFallback, tagLabelFromValue(value))
   }
 
   const key = localizedTopicLabelKeys[normalized]
@@ -2799,7 +2900,7 @@ const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCo
     }
   }
 
-  const fallback = localizedTagFallbacks[normalizeArticleLanguageCode(languageCode)]?.[normalized]
+  const fallback = localizedTagFallbacks[language]?.[normalized]
 
   return safeLocalizedLabel(fallback, tagLabelFromValue(value))
 }
@@ -2947,6 +3048,12 @@ const LorgarBlogBadge = ({ className }: { className?: string }) => (
   </span>
 )
 
+const localizedArticlesRootPath = (languageCode?: null | string) => {
+  const normalizedLanguageCode = normalizeArticleLanguageCode(languageCode)
+
+  return normalizedLanguageCode === 'en' ? '/articles' : `/${normalizedLanguageCode}/articles`
+}
+
 const LorgarBrand = ({
   className,
   languageCode,
@@ -2964,7 +3071,12 @@ const LorgarBrand = ({
     >
       <LorgarLogo className="lorgar-header__logo" />
     </ExternalLink>
-    <Link aria-label={uiLabel(uiStrings, 'nav.blogAria')} className="lorgar-brand__blog" href="/articles" prefetch={false}>
+    <Link
+      aria-label={uiLabel(uiStrings, 'nav.blogAria')}
+      className="lorgar-brand__blog"
+      href={localizedArticlesRootPath(languageCode)}
+      prefetch={false}
+    >
       <LorgarBlogBadge className="lorgar-blog-badge" />
     </Link>
   </div>
@@ -3303,8 +3415,8 @@ const lorgarArticlesPath = ({
     const tagSegment = lorgarTagPathSegment(tags[0])
     const queryString = params.toString()
     const basePath = tagSegment
-      ? `/${normalizedLanguageCode}/articles/${tagSegment}`
-      : `/${normalizedLanguageCode}/articles`
+      ? `${localizedArticlesRootPath(normalizedLanguageCode)}/${tagSegment}`
+      : localizedArticlesRootPath(normalizedLanguageCode)
 
     return `${basePath}${queryString ? `?${queryString}` : ''}`
   }
@@ -4069,8 +4181,8 @@ export const LorgarArticleLayout = ({
           <article className="lorgar-article-main">
             <Breadcrumbs
               items={[
-                { href: '/articles', label: navigationLabels.blog },
-                { href: '/articles', label: navigationLabels.allArticles },
+                { href: localizedArticlesRootPath(article.languageCode), label: navigationLabels.blog },
+                { href: localizedArticlesRootPath(article.languageCode), label: navigationLabels.allArticles },
                 { href: articlePath, label: title },
               ]}
             />

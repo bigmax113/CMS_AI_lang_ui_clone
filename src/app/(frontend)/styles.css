@@ -10668,3 +10668,14 @@ main:has(.public-content--lorgar),
   border: 0 !important;
   border-radius: 0 !important;
 }
+
+/* Remove the remaining frame around article sidebar recommendation blocks. */
+.public-content--lorgar .lorgar-sidebar__panel--recent,
+.public-content--lorgar .lorgar-sidebar__panel--popular,
+.public-content--lorgar .lorgar-sidebar__panel--recent .lorgar-sidebar-card,
+.public-content--lorgar .lorgar-sidebar__panel--popular .lorgar-sidebar-card {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

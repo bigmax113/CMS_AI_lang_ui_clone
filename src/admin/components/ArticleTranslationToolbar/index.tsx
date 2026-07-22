@@ -120,7 +120,7 @@ function ensurePublishedDateColumnInLocation(): void {
 }
 
 export const ArticleTranslationToolbar: React.FC = () => {
-  const [selectedLocales, setSelectedLocales] = useState<string[]>(['en'])
+  const [selectedLocales, setSelectedLocales] = useState<string[]>([])
   const [running, setRunning] = useState(false)
   const [statusRunning, setStatusRunning] = useState(false)
   const [deleteRunning, setDeleteRunning] = useState(false)
