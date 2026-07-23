@@ -5,9 +5,9 @@ import path from 'node:path'
 
 const languages = ['en', 'bg', 'cs', 'uk']
 const artifactsRoot = path.resolve('..', 'migration_artifacts')
-const exportDir = path.join(artifactsRoot, 'wp-migration-20260603-full', 'wp-export')
 const runStamp = new Date().toISOString().replace(/[:.]/g, '-')
 const args = parseArgs(process.argv.slice(2))
+const exportDir = path.resolve(args.input || path.join(artifactsRoot, 'wp-migration-20260603-full', 'wp-export'))
 const outputDir = path.resolve(args.output || path.join(artifactsRoot, `wp-cover-image-backfill-${runStamp}`))
 const dryRun = !args.apply
 const maxArticles = Number(args.limit || 0)
