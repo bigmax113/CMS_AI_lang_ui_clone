@@ -7745,6 +7745,8 @@ main:has(.public-content--lorgar),
 .public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear:hover,
 .public-content--lorgar.public-content--index .lorgar-blog-topics .lorgar-blog-topics__clear:focus-visible {
   background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
   color: #c132ff !important;
   text-decoration-color: #c132ff !important;
 }
