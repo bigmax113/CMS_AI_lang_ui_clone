@@ -3,11 +3,16 @@ import {
   articleLanguageLabelByCode,
   normalizeArticleLanguageCode,
 } from '@/lib/articleTranslations'
-import { loadFrontendUIDictionary, normalizeFrontendUILanguageCode } from '@/lib/frontendUITranslations'
+import {
+  frontendUILabel,
+  loadFrontendUIDictionary,
+  normalizeFrontendUILanguageCode,
+} from '@/lib/frontendUITranslations'
 import type { Article } from '@/payload-types'
 
 import {
   type ArticleSortMode,
+  createSEOPageMetadata,
   LorgarArticlesIndexLayout,
   listPublishedArticleTagFilters,
   listPublishedArticles,
@@ -36,6 +41,26 @@ const parsePage = (value: string | string[] | undefined) => {
   const page = Number.parseInt(firstQueryValue(value) || '1', 10)
 
   return Number.isFinite(page) && page > 0 ? page : 1
+}
+
+export async function generateArticlesIndexMetadata({
+  routeLanguageCode,
+  searchParams,
+}: ArticlesIndexRouteOptions) {
+  const query = await searchParams
+  const rawLanguageCode = routeLanguageCode || firstQueryValue(query?.lang) || 'en'
+  const uiLanguageCode = normalizeFrontendUILanguageCode(rawLanguageCode)
+  const shouldPreviewLocalization = firstQueryValue(query?.previewLocalization) === 'true'
+  const uiStrings = await loadFrontendUIDictionary(uiLanguageCode, {
+    preview: shouldPreviewLocalization,
+  })
+
+  return createSEOPageMetadata({
+    description: 'Published articles, guides, news, and product content.',
+    path: routeLanguageCode ? `/${uiLanguageCode}/articles` : '/articles',
+    title: frontendUILabel(uiStrings, 'seo.title'),
+    type: 'website',
+  })
 }
 
 const routeTagToQuery = (value?: null | string) => {

@@ -1,4 +1,4 @@
-﻿import pg from 'pg'
+import pg from 'pg'
 
 import { articleLanguageDefinitions } from './articleTranslations'
 
@@ -30,6 +30,12 @@ type FrontendUILocalizationRow = {
 }
 
 export const frontendUIStringDefinitions = [
+  {
+    defaultText: 'Blog - Gaming Accessories LORGAR Blog',
+    description: 'SEO TITLE for the LORGAR blog index page.',
+    key: 'seo.title',
+    namespace: 'seo',
+  },
   {
     defaultText: 'Open LORGAR website',
     description: 'Accessible label for the LORGAR logo link.',
