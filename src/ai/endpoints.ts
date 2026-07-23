@@ -613,6 +613,7 @@ export const translateArticlesEndpoint: Endpoint = {
             sourceSEO.description,
             translatedSummary || translatedBodyExcerpt,
           )
+          const translatedCreatedAt = new Date().toISOString()
           const article = await req.payload.create({
             collection: 'articles',
             data: {
@@ -627,7 +628,7 @@ export const translateArticlesEndpoint: Endpoint = {
               coverImage: source.coverImage,
               languageCode: targetLanguageCode,
               owner: source.owner,
-              publishedAt: source.publishedAt || source.createdAt,
+              publishedAt: translatedCreatedAt,
               seo: {
                 description: optionalArticleField(translatedSEODescription),
                 image: sourceSEO.image,

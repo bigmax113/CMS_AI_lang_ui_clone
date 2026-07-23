@@ -593,14 +593,6 @@ const articleTagFilterSelect = {
   contentType: true,
   tags: true,
 } as const
-const publicArticleAuthors = (authors?: Article['authors'] | BlogPost['authors'] | null) =>
-  authorListFromValue(authors)
-
-const publicArticleAuthorNames = (authors?: Article['authors'] | BlogPost['authors'] | null) =>
-  publicArticleAuthors(authors)
-    .map((author) => author.name)
-    .filter(Boolean)
-    .join(', ') || defaultPublicAuthorName
 
 const contentUploadMedia = (content: Article['content'] | BlogPost['content'] | null | undefined) => {
   const root = content?.root as LexicalNode | undefined
@@ -2908,33 +2900,16 @@ const localizedTagLabel = (value: string, uiStrings: LorgarUIStrings, languageCo
 const localizedAuthorNameByLanguage: Partial<Record<ArticleLanguageCode, string>> = {
   bg: 'Стела Николова',
   cs: 'Lukáš Dvořák',
-  de: 'Maximilian Weber',
-  ee: 'Kristjan Tamm',
-  el: 'Νίκος Παπαδόπουλος',
-  en: 'Matthew King',
-  es: 'Carlos García',
-  hu: 'Gábor Kovács',
-  kz: 'Айдана Нұрланова',
-  lt: 'Mantas Petrauskas',
-  lv: 'Jānis Ozoliņš',
-  pl: 'Piotr Kowalski',
-  ro: 'Andrei Popescu',
-  rs: 'Marko Petrović',
-  ru: 'Алексей Иванов',
-  sk: 'Martin Novák',
   uk: 'Олександр Бондаренко',
 }
-
 const publicArticleAuthorNamesForLanguage = ({
-  authors,
   languageCode,
 }: {
-  authors?: Article['authors'] | BlogPost['authors'] | null
   languageCode?: null | string
 }) =>
   safeLocalizedLabel(
     localizedAuthorNameByLanguage[normalizeArticleLanguageCode(languageCode)],
-    publicArticleAuthorNames(authors) || defaultPublicAuthorName,
+    defaultPublicAuthorName,
   )
 
 const lorgarOriginByLanguageCode: Record<ArticleLanguageCode, string> = {
@@ -3912,7 +3887,7 @@ const LorgarMeta = ({
   publishedAt?: null | string
 }) => {
   const date = formatArticleMetaDate(publishedAt, article.languageCode)
-  const authorNames = publicArticleAuthorNamesForLanguage({ authors: article.authors, languageCode: article.languageCode })
+  const authorNames = publicArticleAuthorNamesForLanguage({ languageCode: article.languageCode })
 
   return (
     <div className="lorgar-meta">
