@@ -3372,22 +3372,6 @@ const LorgarPrimaryNav = ({
   </nav>
 )
 
-const lorgarTagPathSegment = (value?: null | string) => {
-  const base = normalizedTopicFilterText(value)
-
-  if (!base) {
-    return ''
-  }
-
-  const asciiSlug = base
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-
-  return asciiSlug || encodeURIComponent(base.replace(/\s+/g, '-'))
-}
-
 const lorgarArticlesPath = ({
   languageCode,
   page,
@@ -3405,7 +3389,7 @@ const lorgarArticlesPath = ({
   const query = searchQuery?.trim()
   const tags = uniqueTopicQueries(tagQuery)
   const params = new URLSearchParams()
-  const canUseStaticPath = !query && tags.length <= 1
+  const basePath = localizedArticlesRootPath(normalizedLanguageCode)
 
   if (sortMode === 'views') {
     params.set('sort', 'views')
@@ -3414,18 +3398,6 @@ const lorgarArticlesPath = ({
   if (page && page > 1) {
     params.set('page', String(page))
   }
-
-  if (canUseStaticPath) {
-    const tagSegment = lorgarTagPathSegment(tags[0])
-    const queryString = params.toString()
-    const basePath = tagSegment
-      ? `${localizedArticlesRootPath(normalizedLanguageCode)}/${tagSegment}`
-      : localizedArticlesRootPath(normalizedLanguageCode)
-
-    return `${basePath}${queryString ? `?${queryString}` : ''}`
-  }
-
-  params.set('lang', normalizedLanguageCode)
 
   if (query) {
     params.set('q', query)
@@ -3439,7 +3411,7 @@ const lorgarArticlesPath = ({
 
   const queryString = params.toString()
 
-  return `/articles${queryString ? `?${queryString}` : ''}`
+  return `${basePath}${queryString ? `?${queryString}` : ''}`
 }
 
 const lorgarLanguageLinks = ({
