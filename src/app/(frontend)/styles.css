@@ -10692,6 +10692,10 @@ main:has(.public-content--lorgar),
 }
 
 /* Article pages should not show a light divider under the header. */
+.public-content.public-content--lorgar:not(.public-content--index) {
+  background: var(--lorgar-bg) !important;
+}
+
 .public-content--lorgar:not(.public-content--index) .lorgar-header {
   border-bottom: 0 !important;
   box-shadow: none !important;
