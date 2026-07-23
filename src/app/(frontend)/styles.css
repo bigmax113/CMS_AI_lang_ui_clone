@@ -10696,6 +10696,10 @@ main:has(.public-content--lorgar),
   background: var(--lorgar-bg) !important;
 }
 
+.public-content--lorgar:not(.public-content--index) .lorgar-article-shell {
+  background: transparent;
+}
+
 .public-content--lorgar:not(.public-content--index) .lorgar-header {
   border-bottom: 0 !important;
   box-shadow: none !important;
