@@ -94,7 +94,8 @@ function ensurePublishedDateColumnInLocation(): void {
 
     const columns = parsed.filter((column): column is string => typeof column === 'string')
     const visibleColumns = columns.filter(
-      (column) => column !== '-publishedAt' && column !== '-publishedDateDisplay',
+      (column) =>
+        column !== 'publishedAt' && column !== '-publishedAt' && column !== '-publishedDateDisplay',
     )
     const hasPublishedDateDisplay = visibleColumns.includes('publishedDateDisplay')
 

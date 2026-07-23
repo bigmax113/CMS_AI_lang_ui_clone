@@ -382,7 +382,14 @@ export const ArticlesCollection: CollectionConfig = {
       hooks: {
         afterRead: [
           ({ data }) => {
-            const value = data?.publishedAt
+            const createdAt = typeof data?.createdAt === 'string' ? data.createdAt : ''
+            const languageCode = typeof data?.languageCode === 'string' ? data.languageCode : ''
+            const publishedAt = typeof data?.publishedAt === 'string' ? data.publishedAt : ''
+            const status = typeof data?.status === 'string' ? data.status : ''
+            const value =
+              status !== 'published' && languageCode && languageCode !== 'en' && createdAt
+                ? createdAt
+                : publishedAt || createdAt
 
             if (typeof value !== 'string') {
               return ''
