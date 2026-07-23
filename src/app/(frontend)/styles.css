@@ -10700,3 +10700,23 @@ main:has(.public-content--lorgar),
   border-bottom: 0 !important;
   box-shadow: none !important;
 }
+
+/* WP import guard: very long keyword tags must not stretch the Topics row. */
+.public-content--lorgar.public-content--index .lorgar-blog-topics__items {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a,
+.public-content--lorgar.public-content--index .lorgar-blog-topics a:first-of-type,
+.public-content--lorgar .lorgar-article-tags a {
+  max-width: min(100%, 360px) !important;
+}
+
+.public-content--lorgar.public-content--index .lorgar-blog-topics a > span:first-child,
+.public-content--lorgar .lorgar-article-tags a {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}

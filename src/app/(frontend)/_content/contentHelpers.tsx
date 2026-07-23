@@ -522,7 +522,7 @@ const publicArticleTags = (article: Pick<Article, 'category' | 'contentType' | '
         .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
         .join(' '),
     )
-    .filter((value) => normalizedTopicFilterText(value) !== 'all')
+    .filter((value) => normalizedTopicFilterText(value) !== 'all' && isPublicTopicLabelAllowed(value))
 
   return [...new Set(values)]
 }
@@ -532,6 +532,21 @@ export type LorgarTagFilter = {
   tagQuery: string
 }
 
+const maxPublicTopicLabelLength = 72
+const maxPublicTopicWordCount = 8
+
+const isPublicTopicLabelAllowed = (value?: null | string) => {
+  const label = textField(value)
+
+  if (!label) {
+    return false
+  }
+
+  return (
+    label.length <= maxPublicTopicLabelLength &&
+    label.split(/\s+/).filter(Boolean).length <= maxPublicTopicWordCount
+  )
+}
 
 const tagLabelFromValue = (value: string) =>
   value
