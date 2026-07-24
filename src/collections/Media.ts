@@ -12,11 +12,14 @@ const hasDriveOAuthEnv =
   hasEnvValue(['GOOGLE_DRIVE_OAUTH_TOKEN_JSON', 'GOOGLE_DRIVE_OAUTH_TOKEN_JSON_B64']) &&
   (hasEnvValue(['GOOGLE_DRIVE_OAUTH_CLIENT_JSON', 'GOOGLE_DRIVE_OAUTH_CLIENT_JSON_B64']) ||
     hasEnvValue(['GOOGLE_DRIVE_OAUTH_TOKEN_JSON', 'GOOGLE_DRIVE_OAUTH_TOKEN_JSON_B64']))
-const driveStorageEnabled = process.env.GOOGLE_DRIVE_STORAGE_ENABLED
+const driveStorageRequested = process.env.GOOGLE_DRIVE_STORAGE_ENABLED
   ? process.env.GOOGLE_DRIVE_STORAGE_ENABLED === 'true'
   : hasDriveOAuthEnv
+const driveStorageEnabled = driveStorageRequested && hasDriveOAuthEnv
+const driveStorageMisconfigured = driveStorageRequested && !hasDriveOAuthEnv
 const drivePublicReadEnabled = process.env.GOOGLE_DRIVE_PUBLIC_READ === 'true'
-const driveStorageRequired = process.env.MEDIA_EXTERNAL_STORAGE_REQUIRED === 'true'
+const driveStorageRequired =
+  process.env.MEDIA_EXTERNAL_STORAGE_REQUIRED === 'true' && driveStorageEnabled
 
 type GoogleOAuthClientConfig = {
   installed?: {
@@ -364,7 +367,7 @@ const responseFromStoredMedia = async (
     )
   }
 
-  if (driveFileID) {
+  if (driveFileID && hasDriveOAuthEnv) {
     return streamGoogleDriveFile({
       fileID: driveFileID,
       filename: typeof doc.filename === 'string' ? doc.filename : undefined,
@@ -850,6 +853,12 @@ export const Media: CollectionConfig = {
           return nextData
         }
 
+        if (driveStorageMisconfigured) {
+          nextData.driveStorageError =
+            'Google Drive storage is enabled but OAuth credentials are unavailable. The database/local fallback was used.'
+          nextData.driveStorageStatus = 'drive-failed'
+        }
+
         if (driveStorageEnabled && mimeType) {
           try {
             const uploaded = await uploadBufferToGoogleDrive({
@@ -871,7 +880,7 @@ export const Media: CollectionConfig = {
               throw error
             }
           }
-        } else if (!driveStorageEnabled) {
+        } else if (!driveStorageRequested) {
           nextData.driveStorageStatus = 'drive-disabled'
         }
 
