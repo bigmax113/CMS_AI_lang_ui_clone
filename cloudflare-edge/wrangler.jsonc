@@ -7,7 +7,7 @@
   "preview_urls": true,
   "routes": [
     {
-      "pattern": "blog.bigmax113.com",
+      "pattern": "lorgar.bigmax113.com",
       "custom_domain": true
     }
   ],
